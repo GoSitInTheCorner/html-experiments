@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>AI Model Comparison</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap');
+:root{
+  --bg:#070709;--s1:#0f0f12;--s2:#16161b;--s3:#1e1e25;--b:#28283a;
+  --cyan:#00e5ff;--green:#39ff6e;--amber:#ffb800;--red:#ff4466;--purple:#b06fff;
+  --text:#eeeef8;--muted:#66668a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* scanline texture */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:999}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--b);flex-shrink:0;background:var(--bg)}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:6px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap}
+#title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;letter-spacing:.04em;flex:1}
+#title span{color:var(--cyan)}
+#updated{font-size:9px;color:var(--muted);text-align:right;line-height:1.4}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none;background:var(--bg)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:72px;padding:9px 4px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+.view{display:none;padding:12px 12px 80px;flex-direction:column;gap:10px}
+.view.active{display:block}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;flex-shrink:0}
+.filter-bar::-webkit-scrollbar{display:none}
+.chip{padding:4px 11px;border-radius:20px;border:1px solid var(--b);background:var(--s1);color:var(--muted);font-size:10px;cursor:pointer;white-space:nowrap;letter-spacing:.04em}
+.chip.on{background:rgba(0,229,255,.08);border-color:var(--cyan);color:var(--cyan)}
+
+/* ── MODEL CARDS ── */
+.model-card{background:var(--s1);border:1px solid var(--b);border-radius:14px;overflow:hidden;transition:border-color .2s}
+.model-card:active{border-color:var(--cyan)}
+.mc-head{padding:13px 14px 10px;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid var(--b)}
+.mc-logo{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;font-weight:700;letter-spacing:-.02em}
+.mc-title{flex:1;min-width:0}
+.mc-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-maker{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:1px}
+.mc-tier{font-size:9px;padding:3px 8px;border-radius:20px;letter-spacing:.06em;font-weight:600;flex-shrink:0}
+.tier-flagship{background:rgba(255,184,0,.12);color:var(--amber);border:1px solid rgba(255,184,0,.25)}
+.tier-balanced{background:rgba(0,229,255,.10);color:var(--cyan);border:1px solid rgba(0,229,255,.2)}
+.tier-fast{background:rgba(57,255,110,.10);color:var(--green);border:1px solid rgba(57,255,110,.2)}
+.tier-open{background:rgba(176,111,255,.10);color:var(--purple);border:1px solid rgba(176,111,255,.2)}
+.tier-local{background:rgba(57,255,110,.08);color:var(--green);border:1px solid rgba(57,255,110,.2)}
+
+.mc-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--b)}
+.mc-stat{padding:9px 14px;border-right:1px solid var(--b)}
+.mc-stat:nth-child(even){border-right:none}
+.stat-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px}
+.stat-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:600;line-height:1}
+.stat-sub{font-size:9px;color:var(--muted);margin-top:2px}
+
+.mc-bench{padding:10px 14px;border-bottom:1px solid var(--b)}
+.bench-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.bench-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.bench-name{font-size:9px;color:var(--muted);width:80px;flex-shrink:0}
+.bench-bar-wrap{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.bench-bar{height:100%;border-radius:3px;transition:width .6s ease}
+.bench-score{font-size:10px;font-weight:500;width:36px;text-align:right;flex-shrink:0}
+
+.mc-tags{padding:10px 14px;display:flex;flex-wrap:wrap;gap:5px}
+.mc-tag{font-size:9px;padding:2px 8px;border-radius:20px;background:var(--s3);color:var(--muted);border:1px solid var(--b)}
+.mc-tag.best{background:rgba(57,255,110,.08);color:var(--green);border-color:rgba(57,255,110,.2)}
+
+/* ── COMPARE VIEW ── */
+.compare-table{background:var(--s1);border:1px solid var(--b);border-radius:14px;overflow:hidden}
+.compare-row{display:grid;grid-template-columns:120px repeat(4,1fr);border-bottom:1px solid var(--b)}
+.compare-row:last-child{border-bottom:none}
+.compare-row.header{background:var(--s2)}
+.cr-cell{padding:9px 10px;font-size:10px;border-right:1px solid var(--b);display:flex;align-items:center}
+.cr-cell:last-child{border-right:none}
+.cr-cell.label{color:var(--muted);font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.cr-cell.model-header{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;flex-direction:column;align-items:flex-start;gap:2px}
+.cr-cell.model-header span{font-size:8px;color:var(--muted);font-family:'DM Mono',monospace;font-weight:400}
+.cr-cell.best{color:var(--green)}
+.cr-cell.good{color:var(--cyan)}
+.cr-cell.mid{color:var(--text)}
+.cr-cell.low{color:var(--muted)}
+.win-indicator{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-right:5px}
+
+/* ── USE CASE VIEW ── */
+.use-card{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:12px 14px}
+.use-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.use-icon{font-size:18px}
+.use-rec{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.use-rank{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;width:20px;flex-shrink:0;color:var(--muted)}
+.use-rank.r1{color:var(--amber)}
+.use-rank.r2{color:var(--silver,#aaa)}
+.use-rank.r3{color:var(--bronze,#cd7f32)}
+.use-model{flex:1;font-size:12px}
+.use-why{font-size:9px;color:var(--muted);margin-top:1px}
+.use-badge{font-size:9px;padding:2px 7px;border-radius:20px;background:var(--s3);color:var(--cyan);flex-shrink:0}
+
+/* ── PRICING VIEW ── */
+.price-card{background:var(--s1);border:1px solid var(--b);border-radius:12px;overflow:hidden}
+.price-head{padding:10px 14px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.price-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}
+.price-tier{font-size:9px;color:var(--muted)}
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.price-cell{padding:8px 14px;border-right:1px solid var(--b);border-bottom:1px solid var(--b)}
+.price-cell:nth-child(even){border-right:none}
+.price-cell:last-child,.price-cell:nth-last-child(2){border-bottom:none}
+.price-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.price-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:600}
+.price-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.price-val.cheap{color:var(--green)}
+.price-val.mid{color:var(--cyan)}
+.price-val.prem{color:var(--amber)}
+.price-val.expense{color:var(--red)}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">← Hub</button>
+  <div id="title">AI <span>Models</span></div>
+  <div id="updated">Updated<br>Feb 2026</div>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('cards')">Models</div>
+  <div class="tab" onclick="showTab('compare')">Compare</div>
+  <div class="tab" onclick="showTab('usecases')">Use Cases</div>
+  <div class="tab" onclick="showTab('pricing')">Pricing</div>
+</div>
+
+<div id="content">
+
+  <!-- MODELS CARDS -->
+  <div class="view active" id="v-cards">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div id="cards-list"></div>
+  </div>
+
+  <!-- SIDE-BY-SIDE COMPARE -->
+  <div class="view" id="v-compare">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Top 4 flagship models head-to-head</div>
+    <div class="compare-table" id="compare-table"></div>
+  </div>
+
+  <!-- USE CASES -->
+  <div class="view" id="v-usecases">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Best model picks by task</div>
+    <div id="usecase-list"></div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="view" id="v-pricing">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:2px">API pricing per million tokens (Feb 2026)</div>
+    <div id="pricing-list"></div>
+  </div>
+
+</div>
+
+<script>
+const MODELS = [
+  {
+    id:'claude-opus',name:'Claude Opus 4.6',maker:'Anthropic',tier:'flagship',
+    logo:'A',logoColor:'#c97a6a',logoText:'#fff',
+    context:'200K',contextMax:'1M (beta)',speed:'Medium',
+    inputPrice:15,outputPrice:75,
+    subs:'$20/mo Pro',
+    benchmarks:[
+      {name:'SWE-bench',score:80.9,max:100,best:true},
+      {name:'GPQA Diam.',score:84,max:100},
+      {name:'AIME 2025',score:90,max:100},
+      {name:'MMMU',score:76.5,max:100},
+    ],
+    best:['Coding','Agentic tasks','Long reasoning','Safety'],
+    tags:['Extended thinking','Tool use','Files & docs','Vision'],
+    notes:'Industry-leading coding. Best for complex multi-step agentic workflows. Highest cost.'
+  },
+  {
+    id:'gpt5',name:'GPT-5.2 Codex',maker:'OpenAI',tier:'flagship',
+    logo:'G',logoColor:'#10a37f',logoText:'#fff',
+    context:'128K',contextMax:'Compaction',speed:'Fast',
+    inputPrice:10,outputPrice:30,
+    subs:'$20/mo Plus',
+    benchmarks:[
+      {name:'SWE-bench',score:76.3,max:100},
+      {name:'GPQA Diam.',score:83,max:100},
+      {name:'AIME 2025',score:94.6,max:100,best:true},
+      {name:'MMMU',score:85.4,max:100,best:true},
+    ],
+    best:['Multimodal','Creative writing','Broad knowledge','Ecosystem'],
+    tags:['Vision','Audio','DALL-E','Plugins','Code interpreter'],
+    notes:'Best ecosystem & integrations. Leads on multimodal tasks. Widest third-party support.'
+  },
+  {
+    id:'gemini-pro',name:'Gemini 3 Pro',maker:'Google',tier:'flagship',
+    logo:'Gm',logoColor:'#4285f4',logoText:'#fff',
+    context:'1M',contextMax:'1M native',speed:'Fast',
+    inputPrice:2.5,outputPrice:15,
+    subs:'$20/mo One AI',
+    benchmarks:[
+      {name:'SWE-bench',score:76.2,max:100},
+      {name:'GPQA Diam.',score:84,max:100},
+      {name:'AIME 2025',score:95.0,max:100,best:true},
+      {name:'MMMU',score:79.6,max:100},
+    ],
+    best:['Context length','Math','Multimodal','Google integration'],
+    tags:['1M context','Search grounding','Video','Workspace'],
+    notes:'Largest native context window. Best math benchmarks. Deeply integrated with Google.'
+  },
+  {
+    id:'grok',name:'Grok 4.1',maker:'xAI',tier:'flagship',
+    logo:'X',logoColor:'#1a1a1a',logoText:'#fff',
+    context:'131K',contextMax:'131K',speed:'Fast',
+    inputPrice:3,outputPrice:15,
+    subs:'$30/mo SuperGrok',
+    benchmarks:[
+      {name:'SWE-bench',score:74.9,max:100},
+      {name:'GPQA Diam.',score:82,max:100},
+      {name:'AIME 2025',score:88,max:100},
+      {name:'MMMU',score:77,max:100},
+    ],
+    best:['Real-time info','Unfiltered answers','X/Twitter integration'],
+    tags:['Real-time web','X data','DeepSearch','Image gen'],
+    notes:'Built into X platform. Strong reasoning. Most unfiltered of major models. Lower cost than peers.'
+  },
+  {
+    id:'deepseek',name:'DeepSeek V3.2',maker:'DeepSeek',tier:'open',
+    logo:'DS',logoColor:'#2244aa',logoText:'#fff',
+    context:'128K',contextMax:'128K',speed:'Fast',
+    inputPrice:0.27,outputPrice:1.10,
+    subs:'Open source',
+    benchmarks:[
+      {name:'SWE-bench',score:71,max:100},
+      {name:'GPQA Diam.',score:79,max:100},
+      {name:'AIME 2025',score:82,max:100},
+      {name:'MMMU',score:74,max:100},
+    ],
+    best:['Cost efficiency','Self-hosting','Chinese language','Research'],
+    tags:['MIT license','Self-hostable','Chain-of-thought','Open weights'],
+    notes:'Revolutionary price/performance. MIT licensed. Can be self-hosted. Best open-source option.',gpuReq:'5GB VRAM (7B) · 10GB (14B) · 20GB (32B)',hwSizes:'4.7GB (7B) · 9.0GB (14B) · 20GB (32B) · 43GB (70B) · 404GB (671B)',hwNote:'ollama run deepseek-v3 pulls 7B by default (4.7GB). MIT license.',ollamaCmd:'ollama run deepseek-v3:7b'
+  },
+  {
+    id:'claude-sonnet',name:'Claude Sonnet 4.6',maker:'Anthropic',tier:'balanced',
+    logo:'A',logoColor:'#c97a6a',logoText:'#fff',
+    context:'200K',contextMax:'200K',speed:'Fast',
+    inputPrice:3,outputPrice:15,
+    subs:'$20/mo Pro',
+    benchmarks:[
+      {name:'SWE-bench',score:72.7,max:100},
+      {name:'GPQA Diam.',score:80,max:100},
+      {name:'AIME 2025',score:78,max:100},
+      {name:'MMMU',score:74,max:100},
+    ],
+    best:['Balanced cost/quality','API use','Coding','Writing'],
+    tags:['Extended thinking','Vision','Tool use','Fast'],
+    notes:'Best balance of speed, quality and cost. Ideal for most production API applications.'
+  },
+  {
+    id:'gemini-flash',name:'Gemini 2.5 Flash',maker:'Google',tier:'fast',
+    logo:'Gm',logoColor:'#4285f4',logoText:'#fff',
+    context:'1M',contextMax:'1M',speed:'Very fast',
+    inputPrice:0.60,outputPrice:3.50,
+    subs:'Free / $20/mo',
+    benchmarks:[
+      {name:'SWE-bench',score:55,max:100},
+      {name:'GPQA Diam.',score:72,max:100},
+      {name:'AIME 2025',score:70,max:100},
+      {name:'Speed',score:96,max:100,best:true},
+    ],
+    best:['Speed','Low cost','1M context','High volume'],
+    tags:['482 t/s','Real-time','Audio','Free tier'],
+    notes:'Fastest major model at 482 tokens/sec. Massive context at low cost. Best for real-time apps.'
+  },
+  {
+    id:'gpt-mini',name:'GPT-4.1 Mini',maker:'OpenAI',tier:'fast',
+    logo:'G',logoColor:'#10a37f',logoText:'#fff',
+    context:'128K',contextMax:'128K',speed:'Very fast',
+    inputPrice:0.40,outputPrice:1.60,
+    subs:'Free / $20/mo',
+    benchmarks:[
+      {name:'SWE-bench',score:52,max:100},
+      {name:'GPQA Diam.',score:68,max:100},
+      {name:'AIME 2025',score:65,max:100},
+      {name:'Speed',score:92,max:100},
+    ],
+    best:['Cost','Speed','Simple tasks','High volume'],
+    tags:['75% cache discount','Batch API','Simple tasks','Ecosystem'],
+    notes:'Cheap and fast GPT option with access to full OpenAI ecosystem. 75% prompt caching discount.'
+  },
+  {
+    id:'llama4',name:'Llama 4 Scout',maker:'Meta',tier:'open',
+    logo:'M',logoColor:'#0668e1',logoText:'#fff',
+    context:'10M',contextMax:'10M',speed:'Fast',
+    inputPrice:0,outputPrice:0,
+    subs:'Free / self-host',
+    benchmarks:[
+      {name:'SWE-bench',score:65,max:100},
+      {name:'GPQA Diam.',score:73,max:100},
+      {name:'Context',score:100,max:100,best:true},
+      {name:'MMMU',score:71,max:100},
+    ],
+    best:['Context window','Self-hosting','Research','Free use'],
+    tags:['10M context','Apache 2.0','Self-hostable','Multimodal'],
+    notes:'Largest context window of any model (10M tokens). Fully open weights under Apache 2.0 license.'
+  },
+
+  // ── OPEN SOURCE / FREE ──────────────────────────────────────────────
+  {
+    id:'glm47',name:'GLM-4.7 (Thinking)',maker:'Zhipu AI / Z.ai',tier:'open',
+    logo:'Z',logoColor:'#1a6bcc',logoText:'#fff',
+    context:'200K',contextMax:'200K',speed:'Medium',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / self-host',
+    hf:'THUDM/GLM-4.7',ollama:'',
+    benchmarks:[
+      {name:'SWE-bench',score:77.8,max:100,best:true},
+      {name:'GPQA Diam.',score:86.0,max:100,best:true},
+      {name:'AIME 2025',score:95.7,max:100,best:true},
+      {name:'HumanEval',score:94.2,max:100,best:true},
+    ],
+    best:['Coding agents','Math','Scientific Q&A','Instruction following'],
+    tags:['Thinking mode','200K context','Tool use','IFEval 88%'],
+    notes:'S-tier open source. Leads most coding/math benchmarks among open models. 94.2% HumanEval — highest on leaderboard. 200K context. MIT-adjacent license.',
+    gpuReq:'Not on Ollama — multi-GPU server required (40GB+ GPU + 165GB RAM)',hwNote:'Install from HuggingFace. Needs A100 40GB + 165GB system RAM for offloading.',hwSizes:'~105GB (Q4, HuggingFace THUDM/GLM-4.7)',ollamaCmd:'# Not on Ollama — HuggingFace GGUF only',license:'Open'
+  },
+  {
+    id:'glm5',name:'GLM-5 (Reasoning)',maker:'Zhipu AI / Z.ai',tier:'open',
+    logo:'Z',logoColor:'#1a6bcc',logoText:'#fff',
+    context:'203K',contextMax:'203K',speed:'Medium',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / self-host',
+    benchmarks:[
+      {name:'SWE-bench',score:76.0,max:100},
+      {name:'GPQA Diam.',score:85.7,max:100},
+      {name:'AIME 2025',score:94.0,max:100},
+      {name:'Arena Elo',score:1451,max:1500,best:true},
+    ],
+    best:['Chatbot quality','Human preference','Reasoning','Long context'],
+    tags:['Chatbot Arena #1','203K context','Open license','Reasoning traces'],
+    notes:'Highest Chatbot Arena Elo (1451) of any open model — meaning humans prefer it most. Excellent all-around reasoning. Best if you want human-feeling dialogue.',
+    gpuReq:'Not on Ollama — cloud API recommended',hwNote:'Deploy via Z.ai API or HuggingFace. Similar requirements to GLM-4.7.',hwSizes:'~105GB estimated (HuggingFace)',license:'Open'
+  },
+  {
+    id:'minimax',name:'MiniMax M2.5',maker:'MiniMax',tier:'open',
+    logo:'Mx',logoColor:'#6644cc',logoText:'#fff',
+    context:'205K',contextMax:'205K',speed:'Medium',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / self-host',
+    benchmarks:[
+      {name:'SWE-bench',score:80.2,max:100,best:true},
+      {name:'GPQA Diam.',score:85.2,max:100},
+      {name:'AIME 2025',score:86.3,max:100},
+      {name:'LiveCode',score:89.6,max:100,best:true},
+    ],
+    best:['Software engineering','Code review','Bug fixing','Real-world repos'],
+    tags:['80.2% SWE-bench','230B params','205K context','Agentic coding'],
+    notes:'Highest SWE-bench Verified (80.2) of ANY open-source model — best for resolving real GitHub issues. 230B params, 205K context. Strong production engineering model.',
+    gpuReq:'Not on Ollama — 96GB VRAM min (3× RTX 3090)',hwNote:'Minimum: 3× RTX 3090 cluster. Use MiniMax API for easy access.',hwSizes:'~101GB (Q3, HuggingFace) · ~192GB (FP8)',license:'Custom open'
+  },
+  {
+    id:'kimi-k2',name:'Kimi K2.5',maker:'Moonshot AI',tier:'open',
+    logo:'K',logoColor:'#0088cc',logoText:'#fff',
+    context:'256K',contextMax:'256K',speed:'Fast',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / API',
+    benchmarks:[
+      {name:'AIME 2025',score:96,max:100,best:true},
+      {name:'GPQA Diam.',score:84,max:100},
+      {name:'LiveCode',score:86,max:100},
+      {name:'SWE-bench',score:72,max:100},
+    ],
+    best:['Math olympiad','Agentic coding','Tool use','Reasoning'],
+    tags:['96% AIME 2025','256K context','Agent workflows','MoE'],
+    notes:'96% on AIME 2025 — highest math score of any open model. Tailored for agentic coding and tool-use workflows. 256K context window.',
+    gpuReq:'Not on Ollama — 1T params, extreme hardware required',hwNote:'1T parameter model. Min: 24GB GPU + 256GB RAM at ~2 tok/s. Use Moonshot API.',hwSizes:'~240GB (1.8-bit quant, HuggingFace)',license:'Custom open'
+  },
+  {
+    id:'mimo',name:'MiMo-V2-Flash',maker:'Xiaomi',tier:'open',
+    logo:'Mi',logoColor:'#ff6900',logoText:'#fff',
+    context:'256K',contextMax:'256K',speed:'Very fast',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / self-host',
+    benchmarks:[
+      {name:'LiveCode',score:87,max:100,best:true},
+      {name:'AIME 2025',score:84,max:100},
+      {name:'GPQA Diam.',score:80,max:100},
+      {name:'Speed',score:95,max:100},
+    ],
+    best:['Coding speed','Agentic tasks','Reasoning efficiency','MoE'],
+    tags:['309B total / 15B active','MoE','Ultra-fast','256K context'],
+    notes:'309B total parameters but only 15B active per token (MoE). Ultra-fast reasoning at low inference cost. Best speed/capability ratio among open models.',
+    gpuReq:'Not on Ollama — 80GB+ VRAM, multi-GPU',hwNote:'309B MoE. All weights must load even though only 15B active per token.',hwSizes:'~185GB (Q4 MoE, HuggingFace)',license:'Apache 2.0'
+  },
+  {
+    id:'qwen3-235b',name:'Qwen3-235B-A22B',maker:'Alibaba',tier:'open',
+    logo:'Q',logoColor:'#7b2ff7',logoText:'#fff',
+    context:'128K',contextMax:'1M (Jul 2025)',speed:'Fast',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / self-host',
+    benchmarks:[
+      {name:'MATH-500',score:97.8,max:100,best:true},
+      {name:'AIME 2025',score:92.3,max:100},
+      {name:'GPQA Diam.',score:83,max:100},
+      {name:'Multilingual',score:90,max:100},
+    ],
+    best:['Math','Multilingual','Hybrid thinking','Agent use'],
+    tags:['235B / 22B active','Thinking mode toggle','119 languages','Apache 2.0'],
+    notes:'Hybrid thinking mode — switch between chain-of-thought and instant response per prompt. 97.8% MATH-500. 119 languages. Apache 2.0 license. Fits on single A100 in MoE mode.',
+    gpuReq:'160GB+ VRAM/RAM combined (235B) · 20GB for 32B',hwNote:'142GB for 235B (Ollama verified). Practical pick: qwen3:32b = 20GB on RTX 3090.',hwSizes:'523MB (0.6B) · 2.5GB (4B) · 5.2GB (8B) · 9.3GB (14B) · 20GB (32B) · 142GB (235B)',license:'Apache 2.0',ollamaCmd:'ollama run qwen3:32b'
+  },
+  {
+    id:'deepseek-r1',name:'DeepSeek-R1',maker:'DeepSeek',tier:'open',
+    logo:'DS',logoColor:'#2244aa',logoText:'#fff',
+    context:'128K',contextMax:'128K',speed:'Medium',
+    inputPrice:0.55,outputPrice:2.19,
+    subs:'Open weights / MIT',
+    benchmarks:[
+      {name:'AIME 2025',score:87.5,max:100},
+      {name:'MATH-500',score:97.3,max:100,best:true},
+      {name:'GPQA Diam.',score:83.3,max:100},
+      {name:'SWE-bench',score:72.6,max:100},
+    ],
+    best:['Reasoning','Math','Thinking traces','Self-hosting'],
+    tags:['MIT license','Chain-of-thought','Distilled variants','Ollama ready'],
+    notes:'Pioneering open reasoning model. MIT licensed. Distilled variants (8B–70B) run on consumer GPUs. Full model competes with o1. Available via ollama, Together.ai, etc.',
+    gpuReq:'5GB VRAM (7B) · 10GB (14B) · 24GB (32B) · multi-GPU (70B+)',hwNote:'Default pulls 5.2GB (8B). 671B full = 404GB, needs data center.',hwSizes:'1.1GB (1.5B) · 4.7GB (7B) · 5.2GB (8B) · 9.0GB (14B) · 20GB (32B) · 43GB (70B) · 404GB (671B)',license:'MIT',ollamaCmd:'ollama run deepseek-r1'
+  },
+  {
+    id:'llama4-maverick',name:'Llama 4 Maverick',maker:'Meta',tier:'open',
+    logo:'M',logoColor:'#0668e1',logoText:'#fff',
+    context:'1M',contextMax:'1M',speed:'Fast',
+    inputPrice:0,outputPrice:0,
+    subs:'Meta Llama license (free)',
+    benchmarks:[
+      {name:'MMMU',score:73.5,max:100},
+      {name:'GPQA Diam.',score:76,max:100},
+      {name:'AIME 2025',score:80,max:100},
+      {name:'Context',score:100,max:100,best:true},
+    ],
+    best:['Multimodal','1M context','Agent tasks','Open ecosystem'],
+    tags:['1M context','Multimodal','17B×128E MoE','Apache 2.0'],
+    notes:'Maverick = 17B active / 128 experts. 1M token context. Multimodal. Larger and more capable sibling to Scout. Best for long-document multimodal pipelines.',
+    gpuReq:'245GB download · 256GB+ VRAM/RAM combined',hwNote:'Scout = 67GB, Maverick = 245GB. Both need high-end server hardware.',hwSizes:'67GB (Scout Q4) · 245GB (Maverick Q4)',license:'Llama 4 Community',ollamaCmd:'ollama run llama4:scout'
+  },
+  {
+    id:'mistral-small',tier_extra:'local',name:'Mistral Small 3.2',maker:'Mistral AI',tier:'open',
+    logo:'Ms',logoColor:'#ff7000',logoText:'#fff',
+    context:'128K',contextMax:'128K',speed:'Very fast',
+    inputPrice:0.10,outputPrice:0.30,
+    subs:'Apache 2.0 / self-host',
+    benchmarks:[
+      {name:'MMLU',score:81,max:100},
+      {name:'GPQA Diam.',score:68,max:100},
+      {name:'HumanEval',score:80,max:100},
+      {name:'Speed',score:94,max:100,best:true},
+    ],
+    best:['Edge deployment','Speed','Function calling','Local use'],
+    tags:['24B params','128K context','Apache 2.0','Vision support','Ollama ready'],
+    notes:'Best Mistral open model. 24B dense, vision-capable, 128K context. Apache 2.0. Fastest quality-model for local inference. Great for function calling and instruction following.',
+    gpuReq:'16GB VRAM min · 24GB recommended',hwNote:'Fits RTX 4090 or 32GB MacBook. Apache 2.0.',hwSizes:'13GB (22B Q4) · 14GB (24B Q4)',license:'Apache 2.0',ollamaCmd:'ollama run mistral-small'
+  },
+  {
+    id:'gemma3',tier_extra:'local',name:'Gemma 3 (27B)',maker:'Google',tier:'open',
+    logo:'Gm',logoColor:'#4285f4',logoText:'#fff',
+    context:'128K',contextMax:'128K',speed:'Fast',
+    inputPrice:0,outputPrice:0,
+    subs:'Gemma license (free)',
+    benchmarks:[
+      {name:'MMLU',score:78.7,max:100},
+      {name:'GPQA Diam.',score:71,max:100},
+      {name:'HumanEval',score:79,max:100},
+      {name:'Multilingual',score:88,max:100,best:true},
+    ],
+    best:['Local multimodal','Multilingual','Consumer GPU','Responsible AI'],
+    tags:['5 sizes: 1B–27B','Multimodal','128K','Gemma license','Ollama ready'],
+    notes:'Google open model built on Gemini 2.0 tech. 27B beats Llama-405B on LMArena. 5 sizes from 270M (phone) to 27B. Excellent multilingual support. 4-bit quant fits RTX 3090.',
+    gpuReq:'4GB (4B) · 10GB (12B) · 20GB (27B) VRAM',hwNote:'Default pulls 3.3GB (4B). 270M model runs on phones. 27B needs RTX 3090.',hwSizes:'292MB (270M) · 815MB (1B) · 3.3GB (4B) · 8.1GB (12B) · 17GB (27B)',license:'Gemma (permissive)',ollamaCmd:'ollama run gemma3:27b'
+  },
+  {
+    id:'phi4',tier_extra:'local',name:'Phi-4 (16B)',maker:'Microsoft',tier:'open',
+    logo:'Φ',logoColor:'#00a1f1',logoText:'#fff',
+    context:'16K',contextMax:'16K',speed:'Very fast',
+    inputPrice:0,outputPrice:0,
+    subs:'MIT license',
+    benchmarks:[
+      {name:'MATH-500',score:91.7,max:100,best:true},
+      {name:'GPQA Diam.',score:72,max:100},
+      {name:'HumanEval',score:84,max:100},
+      {name:'Size eff.',score:97,max:100,best:true},
+    ],
+    best:['Consumer GPU','Math','Reasoning','Lightweight deployment'],
+    tags:['16B params','MIT license','Synthetic training','Phi-4-reasoning variant','Ollama ready'],
+    notes:'Punches way above its weight. 16B params compete with 70B models on reasoning. Synthetic data training approach. MIT licensed. Excellent for on-device / laptop inference.',
+    gpuReq:'10GB VRAM min · 12GB recommended',hwNote:'9.1GB download. Runs on RTX 3060 12GB, Mac M1 Pro (16GB). phi4-reasoning = 11GB.',hwSizes:'9.1GB (Q4_K_M) · 11GB (Q8) · 29GB (FP16)',license:'MIT',ollamaCmd:'ollama run phi4'
+  },
+  {
+    id:'qwen3-coder',name:'Qwen3-Coder (480B)',maker:'Alibaba',tier:'open',
+    logo:'Q',logoColor:'#7b2ff7',logoText:'#fff',
+    context:'256K',contextMax:'256K',speed:'Medium',
+    inputPrice:0,outputPrice:0,
+    subs:'Open weights / self-host',
+    benchmarks:[
+      {name:'LiveCode',score:91,max:100,best:true},
+      {name:'SWE-bench',score:78,max:100},
+      {name:'AIME 2025',score:85,max:100},
+      {name:'Context',score:93,max:100},
+    ],
+    best:['Code agents','Long horizon coding','Tool calling','Codebase exploration'],
+    tags:['480B MoE / 35B active','256K context','Apache 2.0','Agentic coding'],
+    notes:'State-of-the-art open coding MoE. 480B total / 35B active. 256K context. Designed for agentic coding with tool use, multi-file edits, and execution recovery.',
+    gpuReq:'Not on Ollama main library (480B) · 30B variant = 19GB',hwNote:'480B full model needs cloud. Practical: qwen3-coder-next:30b = 19GB on RTX 3090.',hwSizes:'~19GB (qwen3-coder-next 30B on Ollama) · ~295GB (480B HuggingFace)',license:'Apache 2.0'
+  },
+  {
+    id:'falcon3',tier_extra:'local',name:'Falcon 3 (10B)',maker:'TII Abu Dhabi',tier:'open',
+    logo:'F',logoColor:'#00a388',logoText:'#fff',
+    context:'32K',contextMax:'32K',speed:'Very fast',
+    inputPrice:0,outputPrice:0,
+    subs:'TII Falcon license (free)',
+    benchmarks:[
+      {name:'MMLU',score:79.6,max:100},
+      {name:'HumanEval',score:76,max:100},
+      {name:'ARC-C',score:72,max:100},
+      {name:'Laptop compat.',score:98,max:100,best:true},
+    ],
+    best:['Laptop inference','Low resource','Edge devices','Commercial use'],
+    tags:['Runs on MacBook','Falcon license','14T tokens','Mamba variant available'],
+    notes:'Built to run on regular laptops. 3B model runs on MacBook Air. 14T training tokens. No hidden license gotchas. Mamba architecture variant available for faster long-sequence inference.',
+    gpuReq:'3GB VRAM (3B) · 8GB (10B)',hwNote:'Not on ollama.com. Install from HuggingFace. 3B runs on any laptop with 3GB VRAM.',hwSizes:'~2GB (3B Q4) · ~4GB (7B Q4) · ~6GB (10B Q4)',license:'TII Falcon (permissive)',ollamaCmd:'# Not on Ollama library yet — use HuggingFace GGUF'
+  },
+  {
+    id:'commandr',name:'Command R+ (104B)',maker:'Cohere',tier:'open',
+    logo:'C',logoColor:'#d94f4f',logoText:'#fff',
+    context:'128K',contextMax:'128K',speed:'Medium',
+    inputPrice:0,outputPrice:0,
+    subs:'CC BY-NC 4.0 / API',
+    benchmarks:[
+      {name:'RAG quality',score:88,max:100,best:true},
+      {name:'MMLU',score:75.7,max:100},
+      {name:'Tool use',score:86,max:100,best:true},
+      {name:'Multilingual',score:84,max:100},
+    ],
+    best:['RAG pipelines','Enterprise chat','Tool use','Multi-step agents'],
+    tags:['128K context','10 languages','Grounded generation','Cohere ecosystem'],
+    notes:'Enterprise-focused. Best-in-class for RAG (retrieval-augmented generation) and grounded generation. Tool use built-in. Supports 10 languages. Free for research, paid for commercial API.',
+    gpuReq:'48GB VRAM (104B) · 24GB (35B)',hwNote:'command-r = 20GB (2× RTX 3090). command-r-plus = 59GB, needs 4× RTX 3090 or A100.',hwSizes:'20GB (35B command-r Q4) · 59GB (104B command-r-plus Q4)',license:'CC BY-NC 4.0'
+  },
+  {
+    id:'openai-oss',name:'OpenAI o1 OSS (120B)',maker:'OpenAI',tier:'open',
+    logo:'G',logoColor:'#10a37f',logoText:'#fff',
+    context:'200K',contextMax:'200K',speed:'Medium',
+    inputPrice:0,outputPrice:0,
+    subs:'Apache 2.0',
+    benchmarks:[
+      {name:'AIME 2025',score:91,max:100},
+      {name:'GPQA Diam.',score:82,max:100},
+      {name:'HumanEval',score:87,max:100},
+      {name:'Tool use',score:90,max:100,best:true},
+    ],
+    best:['Reasoning','Tool use','First OpenAI open model','Configurable effort'],
+    tags:['Apache 2.0','20B & 120B sizes','Tool trained','Configurable reasoning','Ollama ready'],
+    notes:"OpenAI's first open source model. Available in 20B and 120B. Configurable reasoning effort (low/medium/high). Apache 2.0 licensed. Trained specifically for tool use.",
+    gpuReq:'14GB VRAM (20B) · 80GB (120B)',hwNote:'Ollama tag: gpt-oss. 20B = 12GB, runs on single RTX 3090/4090. 120B needs multi-GPU.',hwSizes:'12GB (20B Q4) · 74GB (120B Q4)',license:'Apache 2.0',ollamaCmd:'ollama run gpt-oss'
+  },
+];
+
+const USECASES = [
+  {icon:'💻',title:'Coding & Dev',picks:[
+    {rank:1,model:'Claude Opus 4.6',why:'80.9% SWE-bench. Best multi-file, agentic coding.',badge:'Best'},
+    {rank:2,model:'GPT-5.2 Codex',why:'Strong on diffs, patches & debugging.',badge:'Runner-up'},
+    {rank:3,model:'Gemini 3 Pro',why:'Huge context for entire codebases.',badge:'Context king'},
+  ]},
+  {icon:'✍️',title:'Writing & Content',picks:[
+    {rank:1,model:'Claude Opus 4.6',why:'Most nuanced, human-feeling prose.',badge:'Best voice'},
+    {rank:2,model:'GPT-5.2 Codex',why:'Strong creative range, diverse styles.',badge:'Creative'},
+    {rank:3,model:'Grok 4.1',why:'Unfiltered, distinctive perspective.',badge:'Bold takes'},
+  ]},
+  {icon:'🔬',title:'Research & Analysis',picks:[
+    {rank:1,model:'Gemini 3 Pro',why:'1M context, ingests entire papers/docs.',badge:'Best context'},
+    {rank:2,model:'Claude Opus 4.6',why:'Deep reasoning, thorough analysis.',badge:'Thorough'},
+    {rank:3,model:'GPT-5.2 Codex',why:'Broad knowledge, web search.',badge:'Up-to-date'},
+  ]},
+  {icon:'🧮',title:'Math & Reasoning',picks:[
+    {rank:1,model:'Gemini 3 Pro',why:'95% AIME 2025. Best math of any model.',badge:'Best'},
+    {rank:2,model:'GPT-5.2 Codex',why:'94.6% AIME. Extended thinking mode.',badge:'Runner-up'},
+    {rank:3,model:'Claude Opus 4.6',why:'90% AIME. Strong chain-of-thought.',badge:'Deep think'},
+  ]},
+  {icon:'🖼️',title:'Vision & Multimodal',picks:[
+    {rank:1,model:'GPT-5.2 Codex',why:'85.4% MMMU. Leads vision benchmarks.',badge:'Best'},
+    {rank:2,model:'Gemini 3 Pro',why:'Native video, audio, image, text.',badge:'Most modes'},
+    {rank:3,model:'Claude Opus 4.6',why:'Strong for diagrams & code screenshots.',badge:'Practical'},
+  ]},
+  {icon:'💰',title:'Budget / High Volume',picks:[
+    {rank:1,model:'DeepSeek V3.2',why:'$0.27/M input — 95% cheaper than Claude Opus.',badge:'Cheapest'},
+    {rank:2,model:'Gemini 2.5 Flash',why:'$0.60/M with 1M context & top speed.',badge:'Best value'},
+    {rank:3,model:'GPT-4.1 Mini',why:'$0.40/M + 75% caching discount.',badge:'OpenAI budget'},
+  ]},
+  {icon:'⚡',title:'Speed / Real-time',picks:[
+    {rank:1,model:'Gemini 2.5 Flash',why:'482 tokens/sec. Fastest major model.',badge:'Fastest'},
+    {rank:2,model:'GPT-4.1 Mini',why:'Sub-second latency for simple tasks.',badge:'Quick'},
+    {rank:3,model:'Grok 4.1',why:'Fast tier with real-time X/web data.',badge:'Real-time'},
+  ]},
+  {icon:'🏠',title:'On-device / Private',picks:[
+    {rank:1,model:'Llama 4 Scout',why:'Apache 2.0, full self-hosting, 10M context.',badge:'Open'},
+    {rank:2,model:'DeepSeek V3.2',why:'MIT license, self-hostable on GPU infra.',badge:'MIT'},
+    {rank:3,model:'Gemini 2.5 Flash',why:'Smallest capable hosted option.',badge:'Hosted'},
+  ]},
+];
+
+let activeFilter = 'open';
+
+function renderFilters(){
+  const tiers=['all','flagship','balanced','fast','open','local'];
+  document.getElementById('filter-bar').innerHTML=tiers.map(t=>
+    '<div class="chip'+(t===activeFilter?' on':'')+'" onclick="setFilter(\''+t+'\')">'+
+    (t==='all'?'All':t==='local'?'Laptop/Local':t.charAt(0).toUpperCase()+t.slice(1))+'</div>'
+  ).join('');
+}
+
+function setFilter(f){
+  activeFilter=f;
+  renderFilters();
+  renderCards();
+}
+
+function barColor(score,isBest){
+  if(isBest)return'var(--green)';
+  if(score>=85)return'var(--cyan)';
+  if(score>=70)return'var(--amber)';
+  return'var(--muted)';
+}
+
+function renderCards(){
+  const list = MODELS.filter(m=>activeFilter==='all'||m.tier===activeFilter||m.tier_extra===activeFilter);
+  document.getElementById('cards-list').innerHTML = list.map(m=>{
+    const priceStr = m.inputPrice===0?'Free':
+      '$'+m.inputPrice+'/$'+m.outputPrice;
+    const priceClass = m.inputPrice===0?'best':m.inputPrice<1?'best':m.inputPrice<5?'good':'mid';
+    return '<div class="model-card" style="margin-bottom:10px">'
+      +'<div class="mc-head">'
+      +'<div class="mc-logo" style="background:'+m.logoColor+';color:'+m.logoText+'">'+m.logo+'</div>'
+      +'<div class="mc-title">'
+      +'<div class="mc-name">'+m.name+'</div>'
+      +'<div class="mc-maker">'+m.maker+'</div>'
+      +'</div>'
+      +'<div class="mc-tier tier-'+m.tier+'">'+m.tier+'</div>'
+      +'</div>'
+
+      +'<div class="mc-stats">'
+      +'<div class="mc-stat"><div class="stat-label">Context</div><div class="stat-val" style="font-size:13px">'+m.context+'</div><div class="stat-sub">'+m.contextMax+'</div></div>'
+      +'<div class="mc-stat"><div class="stat-label">Speed</div><div class="stat-val" style="font-size:13px">'+m.speed+'</div><div class="stat-sub">generation</div></div>'
+      +(m.gpuReq?'<div class="mc-stat"><div class="stat-label">GPU / HW</div><div class="stat-val" style="font-size:10px;line-height:1.3">'+m.gpuReq+'</div></div>':'')+'<div class="mc-stat" style="'+(m.gpuReq?'':'')+'grid-column:span 1"><div class="stat-label">API price</div><div class="stat-val '+priceClass+'" style="font-size:12px">'+priceStr+'</div><div class="stat-sub">per 1M tokens</div></div>'
+      +'<div class="mc-stat"><div class="stat-label">Consumer</div><div class="stat-val" style="font-size:11px">'+m.subs+'</div></div>'
+      +'</div>'
+
+      +'<div class="mc-bench">'
+      +'<div class="bench-label">Benchmarks</div>'
+      +m.benchmarks.map(b=>'<div class="bench-row">'
+        +'<div class="bench-name">'+b.name+'</div>'
+        +'<div class="bench-bar-wrap"><div class="bench-bar" style="width:'+b.score+'%;background:'+barColor(b.score,b.best)+'"></div></div>'
+        +'<div class="bench-score" style="color:'+barColor(b.score,b.best)+'">'+b.score+'%</div>'
+        +'</div>').join('')
+      +'</div>'
+
+      +'<div class="mc-tags">'
+      +m.best.map(t=>'<div class="mc-tag best">✓ '+t+'</div>').join('')
+      +m.tags.map(t=>'<div class="mc-tag">'+t+'</div>').join('')
+      +(m.license?'<div class="mc-tag" style="color:#39ff6e;border-color:rgba(57,255,110,.25)">📄 '+m.license+'</div>':'')
+      +(m.ollamaCmd?'<div class="mc-tag" style="color:var(--cyan);border-color:rgba(0,229,255,.25)">🖥 '+m.ollamaCmd+'</div>':'')
+      +(m.gpuReq?'<div class="mc-tag">💾 '+m.gpuReq+'</div>':'')
+      +'</div>'
+
+      +(m.gpuReq?
+        '<div style="background:#0a0a0e;border-top:2px solid var(--cyan);padding:10px 14px">'
+        +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#00e5ff;margin-bottom:8px">⚙ Hardware Requirements — Verified from Ollama.com</div>'
+        +'<div style="margin-bottom:6px"><div style="font-size:8px;color:var(--muted);margin-bottom:3px">VRAM / MEMORY NEEDED</div>'
+        +'<div style="font-size:11px;font-weight:500;color:#ffb800">'+m.gpuReq+'</div></div>'
+        +(m.hwSizes?'<div style="margin-bottom:6px"><div style="font-size:8px;color:var(--muted);margin-bottom:3px">DOWNLOAD SIZES (by variant)</div>'
+        +'<div style="font-size:10px;color:#00e5ff;line-height:1.6">'+m.hwSizes+'</div></div>':'')
+        +(m.ollamaCmd&&!m.ollamaCmd.startsWith('#')?
+          '<div style="background:#0d130d;border:1px solid rgba(57,255,110,.2);border-radius:6px;padding:6px 10px;margin-bottom:6px">'
+          +'<div style="font-size:8px;color:#39ff6e;margin-bottom:2px">OLLAMA COMMAND</div>'
+          +'<div style="font-size:11px;color:#39ff6e;font-weight:500">$ '+m.ollamaCmd+'</div></div>'
+        :(m.ollamaCmd?'<div style="background:#130a0a;border:1px solid rgba(255,70,70,.2);border-radius:6px;padding:6px 10px;margin-bottom:6px">'
+          +'<div style="font-size:9px;color:#ff6666">'+m.ollamaCmd+'</div></div>':''))
+        +(m.hwNote?'<div style="font-size:9px;color:var(--muted);line-height:1.6">'+m.hwNote+'</div>':'')
+        +'</div>'
+      :'')
+      +'<div style="padding:8px 14px 12px;font-size:10px;color:var(--muted);border-top:1px solid var(--b);line-height:1.6">'+m.notes+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderCompare(){
+  const top4 = MODELS.filter(m=>['claude-opus','gpt5','gemini-pro','grok'].includes(m.id));
+  const rows = [
+    {label:'Context',fn:m=>m.context,best:m=>m.id==='gemini-pro'},
+    {label:'SWE-bench',fn:m=>m.benchmarks[0].score+'%',best:m=>m.id==='claude-opus'},
+    {label:'AIME Math',fn:m=>m.benchmarks[2].score+'%',best:m=>m.id==='gemini-pro'},
+    {label:'MMMU Vision',fn:m=>m.benchmarks[3].score+'%',best:m=>m.id==='gpt5'},
+    {label:'Input $/M',fn:m=>'$'+m.inputPrice,best:m=>m.id==='grok'},
+    {label:'Output $/M',fn:m=>'$'+m.outputPrice,best:m=>m.id==='grok'},
+    {label:'Speed',fn:m=>m.speed,best:m=>m.id==='gpt5'},
+    {label:'Best For',fn:m=>m.best[0]},
+  ];
+
+  let html = '<div class="compare-row header">'
+    +'<div class="cr-cell label">Feature</div>'
+    +top4.map(m=>'<div class="cr-cell model-header">'+m.name.split(' ').slice(0,2).join(' ')+'<span>'+m.maker+'</span></div>').join('')
+    +'</div>';
+
+  rows.forEach(row=>{
+    html+='<div class="compare-row">'
+      +'<div class="cr-cell label">'+row.label+'</div>'
+      +top4.map(m=>{
+        const isBest=row.best&&row.best(m);
+        return '<div class="cr-cell'+(isBest?' best':'')+'">'+
+          (isBest?'<div class="win-indicator"></div>':'')+
+          row.fn(m)+'</div>';
+      }).join('')
+      +'</div>';
+  });
+
+  document.getElementById('compare-table').innerHTML=html;
+}
+
+function renderUseCases(){
+  document.getElementById('usecase-list').innerHTML = USECASES.map(u=>
+    '<div class="use-card" style="margin-bottom:10px">'
+    +'<div class="use-title"><div class="use-icon">'+u.icon+'</div>'+u.title+'</div>'
+    +u.picks.map(p=>'<div class="use-rec">'
+      +'<div class="use-rank r'+p.rank+'">'+p.rank+'</div>'
+      +'<div class="use-model">'+p.model+'<div class="use-why">'+p.why+'</div></div>'
+      +'<div class="use-badge">'+p.badge+'</div>'
+      +'</div>').join('')
+    +'</div>'
+  ).join('');
+}
+
+function renderPricing(){
+  const sorted=[...MODELS].sort((a,b)=>a.inputPrice-b.inputPrice);
+  document.getElementById('pricing-list').innerHTML = sorted.map(m=>{
+    const ic=m.inputPrice===0?'cheap':m.inputPrice<1?'cheap':m.inputPrice<4?'mid':m.inputPrice<10?'prem':'expense';
+    const oc=m.outputPrice===0?'cheap':m.outputPrice<2?'cheap':m.outputPrice<8?'mid':m.outputPrice<20?'prem':'expense';
+    return '<div class="price-card" style="margin-bottom:8px">'
+      +'<div class="price-head">'
+      +'<div><div class="price-name">'+m.name+'</div><div class="price-tier">'+m.maker+' · '+m.tier+'</div></div>'
+      +'<div class="mc-tier tier-'+m.tier+'">'+m.tier+'</div>'
+      +'</div>'
+      +'<div class="price-grid">'
+      +'<div class="price-cell"><div class="price-label">Input / 1M tokens</div>'
+      +'<div class="price-val '+ic+'">'+(m.inputPrice===0?'Free':'$'+m.inputPrice)+'</div></div>'
+      +'<div class="price-cell"><div class="price-label">Output / 1M tokens</div>'
+      +'<div class="price-val '+oc+'">'+(m.outputPrice===0?'Free':'$'+m.outputPrice)+'</div></div>'
+      +'<div class="price-cell"><div class="price-label">Consumer sub</div>'
+      +'<div class="price-val mid" style="font-size:12px">'+m.subs+'</div></div>'
+      +'<div class="price-cell"><div class="price-label">Context window</div>'
+      +'<div class="price-val mid" style="font-size:13px">'+m.context+'</div></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['cards','compare','usecases','pricing'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-'+t).classList.add('active');
+}
+
+renderFilters();
+renderCards();
+renderCompare();
+renderUseCases();
+renderPricing();
+</script>
+</body>
+</html>
