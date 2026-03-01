@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Tesla Charging</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#0a0a0a;--s1:#111;--s2:#1a1a1a;--s3:#222;--b:#2a2a2a;
+  --red:#e82020;--green:#20c060;--blue:#3399ff;--gold:#f0b840;
+  --text:#f5f5f5;--muted:#888;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;display:flex;flex-direction:column;overflow:hidden}
+
+#topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--b);flex-shrink:0}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace}
+#title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:.06em;flex:1}
+#title span{color:var(--red)}
+#add-btn{background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:70px;padding:10px 4px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--red);border-bottom-color:var(--red)}
+
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+.view{display:none;padding:14px 14px 80px}
+.view.active{display:block}
+
+/* battery */
+#battery-wrap{background:var(--s1);border:1px solid var(--b);border-radius:16px;padding:20px;margin-bottom:12px;text-align:center}
+.batt-label{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+#batt-pct-big{font-family:'Rajdhani',sans-serif;font-size:56px;font-weight:700;line-height:1;margin-bottom:2px}
+#batt-range{font-size:12px;color:var(--muted)}
+#batt-bar-wrap{width:200px;height:10px;background:var(--s3);border-radius:5px;overflow:hidden;margin:12px auto 0}
+#batt-bar{height:100%;border-radius:5px;transition:width .5s ease}
+.batt-meta{display:flex;margin-top:16px}
+.batt-meta-item{flex:1;text-align:center;border-right:1px solid var(--b)}
+.batt-meta-item:last-child{border-right:none}
+.batt-meta-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px}
+.batt-meta-val{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600}
+
+/* stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:14px}
+.stat-card.full{grid-column:span 2}
+.stat-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.stat-val{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;line-height:1}
+.stat-val.red{color:var(--red)}
+.stat-val.green{color:var(--green)}
+.stat-val.gold{color:var(--gold)}
+.stat-sub{font-size:9px;color:var(--muted);margin-top:3px}
+
+.chart-wrap{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:12px}
+.chart-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+canvas{width:100%}
+
+/* charge log */
+.charge-item{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.charge-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.charge-icon.home{background:rgba(51,153,255,.12);border:1px solid rgba(51,153,255,.25)}
+.charge-icon.super{background:rgba(232,32,32,.12);border:1px solid rgba(232,32,32,.25)}
+.charge-icon.public{background:rgba(32,192,96,.12);border:1px solid rgba(32,192,96,.25)}
+.charge-info{flex:1;min-width:0}
+.charge-loc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.charge-date{font-size:10px;color:var(--muted);margin-top:1px}
+.charge-soc{font-size:9px;color:var(--muted);margin-top:1px}
+.charge-right{text-align:right;flex-shrink:0}
+.charge-kwh{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700}
+.charge-cost{font-size:10px;color:var(--muted)}
+.charge-del{background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;line-height:1}
+
+/* compare */
+.compare-card{background:var(--s1);border:1px solid var(--b);border-radius:16px;overflow:hidden;margin-bottom:12px}
+.compare-head{padding:12px 16px;background:var(--s2);border-bottom:1px solid var(--b)}
+.compare-head-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:.04em}
+.compare-head-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.compare-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--b);gap:12px}
+.compare-row:last-child{border-bottom:none}
+.compare-icon{font-size:22px;width:34px;text-align:center;flex-shrink:0}
+.compare-info{flex:1}
+.compare-label{font-size:12px;font-weight:500}
+.compare-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.compare-cost{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700}
+.compare-cost.ev{color:var(--green)}
+.compare-cost.gas{color:var(--red)}
+.savings-banner{background:rgba(32,192,96,.08);border-top:1px solid rgba(32,192,96,.15);padding:14px 16px;text-align:center}
+.savings-num{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--green)}
+.savings-label{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* settings */
+.sec-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 8px}
+.settings-card{background:var(--s1);border:1px solid var(--b);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.setting-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--b);gap:10px}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:11px;color:var(--muted);flex:1}
+.setting-input{background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--text);text-align:right;width:90px}
+.setting-input:focus{color:var(--red)}
+.setting-suffix{font-size:11px;color:var(--muted)}
+
+/* modal */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border:1px solid var(--b);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px;padding-bottom:40px;max-height:90vh;overflow-y:auto}
+#modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px}
+.modal-field{margin-bottom:12px}
+.modal-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.modal-input{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:14px;color:var(--text);outline:none}
+.modal-input:focus{border-color:var(--red)}
+select.modal-input option{background:var(--s2)}
+.type-row{display:flex;gap:8px}
+.type-btn{flex:1;padding:10px 4px;border:1px solid var(--b);border-radius:8px;background:var(--s2);color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;text-align:center}
+.type-btn.on{border-color:var(--red);background:rgba(232,32,32,.1);color:var(--red)}
+.modal-row{display:flex;gap:8px}
+.modal-row .modal-input{flex:1}
+.modal-save{width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.06em;margin-top:8px}
+.modal-cancel{width:100%;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;padding:10px}
+
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px;line-height:1.8}
+.empty-icon{font-size:40px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title"><span>&#9889;</span> TESLA</div>
+  <button id="add-btn" onclick="openModal()">+ Charge</button>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('dash')">Dashboard</div>
+  <div class="tab" onclick="showTab('log')">History</div>
+  <div class="tab" onclick="showTab('vs')">EV vs Gas</div>
+  <div class="tab" onclick="showTab('settings')">Settings</div>
+</div>
+
+<div id="content">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="v-dash">
+    <div id="battery-wrap">
+      <div class="batt-label">Current Battery</div>
+      <div id="batt-pct-big">80%</div>
+      <div id="batt-bar-wrap"><div id="batt-bar"></div></div>
+      <div id="batt-range">-- mi estimated range</div>
+      <div class="batt-meta">
+        <div class="batt-meta-item"><div class="batt-meta-label">Last kWh</div><div class="batt-meta-val" id="last-kwh">--</div></div>
+        <div class="batt-meta-item"><div class="batt-meta-label">Last Cost</div><div class="batt-meta-val" id="last-cost">--</div></div>
+        <div class="batt-meta-item"><div class="batt-meta-label">Sessions</div><div class="batt-meta-val" id="last-sessions">0</div></div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Charged</div>
+        <div class="stat-val" id="s-kwh">0</div>
+        <div class="stat-sub">kWh all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-val green" id="s-cost">$0</div>
+        <div class="stat-sub">charging costs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg $/kWh</div>
+        <div class="stat-val" id="s-avg">--</div>
+        <div class="stat-sub">blended rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Miles Driven</div>
+        <div class="stat-val gold" id="s-miles">0</div>
+        <div class="stat-sub">estimated from kWh</div>
+      </div>
+      <div class="stat-card full" style="border-left:3px solid var(--green)">
+        <div class="stat-label">Estimated Gas Savings</div>
+        <div class="stat-val green" id="s-savings">$0.00</div>
+        <div class="stat-sub" id="s-savings-sub">vs gas car equivalent</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Monthly Charging Cost</div>
+      <canvas id="monthly-chart" height="150"></canvas>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Charge Type Breakdown</div>
+      <canvas id="type-chart" height="110"></canvas>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="view" id="v-log">
+    <div id="log-list"></div>
+  </div>
+
+  <!-- EV vs GAS -->
+  <div class="view" id="v-vs">
+
+    <div class="compare-card">
+      <div class="compare-head">
+        <div class="compare-head-title">Cost Per Mile</div>
+        <div class="compare-head-sub">Your vehicle vs equivalent gas car</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-icon">&#9889;</div>
+        <div class="compare-info">
+          <div class="compare-label">Your Tesla (Electric)</div>
+          <div class="compare-sub" id="ev-sub">-- kWh/mi x $--/kWh</div>
+        </div>
+        <div class="compare-cost ev" id="ev-cpm">--</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-icon">&#9981;</div>
+        <div class="compare-info">
+          <div class="compare-label">Gas Car Equivalent</div>
+          <div class="compare-sub" id="gas-sub">-- MPG x $--/gal</div>
+        </div>
+        <div class="compare-cost gas" id="gas-cpm">--</div>
+      </div>
+      <div class="savings-banner">
+        <div class="savings-num" id="savings-pct">--%</div>
+        <div class="savings-label">cheaper per mile driving electric</div>
+      </div>
+    </div>
+
+    <div class="compare-card">
+      <div class="compare-head">
+        <div class="compare-head-title">Annual Cost</div>
+        <div class="compare-head-sub" id="annual-sub">Based on -- mi/yr</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-icon">&#9889;</div>
+        <div class="compare-info"><div class="compare-label">EV Annual Fuel</div></div>
+        <div class="compare-cost ev" id="ev-annual">--</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-icon">&#9981;</div>
+        <div class="compare-info"><div class="compare-label">Gas Annual Fuel</div></div>
+        <div class="compare-cost gas" id="gas-annual">--</div>
+      </div>
+      <div class="savings-banner">
+        <div class="savings-num" id="annual-savings">--</div>
+        <div class="savings-label">saved per year on fuel</div>
+      </div>
+    </div>
+
+    <div class="compare-card">
+      <div class="compare-head">
+        <div class="compare-head-title">5-Year Fuel Savings</div>
+      </div>
+      <div style="text-align:center;padding:18px">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:52px;font-weight:700;color:var(--green)" id="fiveyear">--</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">total saved on fuel over 5 years</div>
+      </div>
+      <canvas id="savings-chart" height="160" style="padding:0 14px 14px"></canvas>
+    </div>
+
+    <div class="chart-wrap" style="text-align:center">
+      <div class="chart-title">CO2 Avoided vs Gas Car</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:40px;font-weight:700;color:var(--green);padding:8px 0" id="co2">0 lbs</div>
+      <div style="font-size:9px;color:var(--muted)">CO2 avoided vs a 25 MPG gas car</div>
+    </div>
+
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="v-settings">
+    <div class="sec-title">Vehicle</div>
+    <div class="settings-card">
+      <div class="setting-row">
+        <div class="setting-label">Tesla Model</div>
+        <select class="setting-input" id="cfg-model" onchange="saveSettings()">
+          <option value="M3SR">Model 3 SR</option>
+          <option value="M3LR">Model 3 LR</option>
+          <option value="M3P">Model 3 Performance</option>
+          <option value="MY">Model Y RWD</option>
+          <option value="MYLR" selected>Model Y LR</option>
+          <option value="MYP">Model Y Performance</option>
+          <option value="MS">Model S</option>
+          <option value="MSP">Model S Plaid</option>
+          <option value="MX">Model X</option>
+          <option value="CT">Cybertruck</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Battery Capacity</div>
+        <input class="setting-input" id="cfg-battery" type="number" value="82" oninput="saveSettings()">
+        <span class="setting-suffix">kWh</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">EPA Range</div>
+        <input class="setting-input" id="cfg-range" type="number" value="330" oninput="saveSettings()">
+        <span class="setting-suffix">mi</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Efficiency</div>
+        <input class="setting-input" id="cfg-eff" type="number" value="0.28" step="0.01" oninput="saveSettings()">
+        <span class="setting-suffix">kWh/mi</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Current Battery %</div>
+        <input class="setting-input" id="cfg-soc" type="number" value="80" min="0" max="100" oninput="saveSettings()">
+        <span class="setting-suffix">%</span>
+      </div>
+    </div>
+
+    <div class="sec-title">Electricity Rates</div>
+    <div class="settings-card">
+      <div class="setting-row">
+        <div class="setting-label">Home Rate</div>
+        <input class="setting-input" id="cfg-home-rate" type="number" value="0.13" step="0.01" oninput="saveSettings()">
+        <span class="setting-suffix">$/kWh</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Supercharger Rate</div>
+        <input class="setting-input" id="cfg-super-rate" type="number" value="0.28" step="0.01" oninput="saveSettings()">
+        <span class="setting-suffix">$/kWh</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Public Charger Rate</div>
+        <input class="setting-input" id="cfg-pub-rate" type="number" value="0.35" step="0.01" oninput="saveSettings()">
+        <span class="setting-suffix">$/kWh</span>
+      </div>
+    </div>
+
+    <div class="sec-title">Gas Comparison</div>
+    <div class="settings-card">
+      <div class="setting-row">
+        <div class="setting-label">Gas Price</div>
+        <input class="setting-input" id="cfg-gas" type="number" value="3.50" step="0.05" oninput="saveSettings()">
+        <span class="setting-suffix">$/gal</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Comparison MPG</div>
+        <input class="setting-input" id="cfg-mpg" type="number" value="28" oninput="saveSettings()">
+        <span class="setting-suffix">MPG</span>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Annual Miles</div>
+        <input class="setting-input" id="cfg-miles" type="number" value="12000" oninput="saveSettings()">
+        <span class="setting-suffix">mi/yr</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="overlayClick(event)">
+  <div id="modal">
+    <div id="modal-title">Log Charge Session</div>
+    <div class="modal-field">
+      <div class="modal-label">Charge Type</div>
+      <div class="type-row">
+        <div class="type-btn on" id="tb-home" onclick="setType('home')">&#127968; Home</div>
+        <div class="type-btn" id="tb-super" onclick="setType('super')">&#9889; Supercharger</div>
+        <div class="type-btn" id="tb-public" onclick="setType('public')">&#128268; Public</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">kWh Added</div>
+      <input class="modal-input" id="m-kwh" type="number" placeholder="e.g. 45.2" step="0.1">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Battery % (Start &#8594; End)</div>
+      <div class="modal-row">
+        <input class="modal-input" id="m-start" type="number" placeholder="20" min="0" max="100">
+        <input class="modal-input" id="m-end" type="number" placeholder="90" min="0" max="100">
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Cost Paid (auto-calculated if blank)</div>
+      <input class="modal-input" id="m-cost" type="number" placeholder="$0.00" step="0.01">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Location (optional)</div>
+      <input class="modal-input" id="m-loc" type="text" placeholder="e.g. Home, Vegas Supercharger">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Date</div>
+      <input class="modal-input" id="m-date" type="date">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Notes (optional)</div>
+      <input class="modal-input" id="m-notes" type="text" placeholder="e.g. Road trip, pre-trip top-off">
+    </div>
+    <button class="modal-save" onclick="saveCharge()">Save Session</button>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'tesla_charges_v2';
+
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||{charges:[],cfg:{}}; }catch{ return {charges:[],cfg:{}}; } }
+function save(d){ localStorage.setItem(STORE_KEY,JSON.stringify(d)); }
+
+let D = load();
+let mType = 'home';
+
+/* ── DEFAULTS ── */
+const DEF = { model:'MYLR',battery:82,range:330,eff:0.28,soc:80, homeRate:0.13,superRate:0.28,pubRate:0.35, gas:3.50,mpg:28,miles:12000 };
+function C(k){ return D.cfg[k]!==undefined ? D.cfg[k] : DEF[k]; }
+function ge(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(ge(id).value)||0; }
+
+/* ── SETTINGS ── */
+function loadSettings(){
+  ge('cfg-model').value      = C('model');
+  ge('cfg-battery').value    = C('battery');
+  ge('cfg-range').value      = C('range');
+  ge('cfg-eff').value        = C('eff');
+  ge('cfg-soc').value        = C('soc');
+  ge('cfg-home-rate').value  = C('homeRate');
+  ge('cfg-super-rate').value = C('superRate');
+  ge('cfg-pub-rate').value   = C('pubRate');
+  ge('cfg-gas').value        = C('gas');
+  ge('cfg-mpg').value        = C('mpg');
+  ge('cfg-miles').value      = C('miles');
+}
+
+function saveSettings(){
+  D.cfg = {
+    model:      ge('cfg-model').value,
+    battery:    num('cfg-battery'),
+    range:      num('cfg-range'),
+    eff:        num('cfg-eff'),
+    soc:        num('cfg-soc'),
+    homeRate:   num('cfg-home-rate'),
+    superRate:  num('cfg-super-rate'),
+    pubRate:    num('cfg-pub-rate'),
+    gas:        num('cfg-gas'),
+    mpg:        num('cfg-mpg'),
+    miles:      num('cfg-miles'),
+  };
+  save(D);
+  renderAll();
+}
+
+/* ── MODAL ── */
+function openModal(){
+  ge('m-date').value = new Date().toISOString().split('T')[0];
+  ['m-kwh','m-start','m-end','m-cost','m-loc','m-notes'].forEach(id=>ge(id).value='');
+  setType('home');
+  ge('modal-overlay').classList.add('open');
+}
+function closeModal(){ ge('modal-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===ge('modal-overlay')) closeModal(); }
+function setType(t){
+  mType=t;
+  ['home','super','public'].forEach(x=>ge('tb-'+x).classList.toggle('on',x===t));
+}
+
+function saveCharge(){
+  const kwh = parseFloat(ge('m-kwh').value);
+  if(!kwh||kwh<=0){ alert('Enter kWh added'); return; }
+  const rates = {home:C('homeRate'),super:C('superRate'),public:C('pubRate')};
+  const cost = parseFloat(ge('m-cost').value) || parseFloat((kwh*rates[mType]).toFixed(2));
+  const socEnd = parseFloat(ge('m-end').value)||null;
+  if(socEnd) D.cfg.soc = socEnd;
+
+  D.charges.unshift({
+    id: Date.now(),
+    type: mType,
+    kwh, cost,
+    socStart: parseFloat(ge('m-start').value)||null,
+    socEnd,
+    loc: ge('m-loc').value || typeLabel(mType),
+    date: ge('m-date').value,
+    notes: ge('m-notes').value,
+  });
+  save(D);
+  closeModal();
+  renderAll();
+}
+
+function deleteCharge(id){
+  if(!confirm('Delete this charge session?')) return;
+  D.charges = D.charges.filter(c=>c.id!==id);
+  save(D);
+  renderAll();
+}
+
+function typeLabel(t){ return t==='home'?'Home':t==='super'?'Supercharger':'Public Charger'; }
+function typeIcon(t){ return t==='home'?'&#127968;':t==='super'?'&#9889;':'&#128268;'; }
+function typeColor(t){ return t==='home'?'#3399ff':t==='super'?'#e82020':'#20c060'; }
+
+/* ── RENDER DASHBOARD ── */
+function renderDash(){
+  const soc = C('soc'), range = C('range');
+  const estMi = Math.round(soc/100*range);
+  ge('batt-pct-big').textContent = soc+'%';
+  ge('batt-pct-big').style.color = soc>50?'var(--green)':soc>20?'var(--gold)':'var(--red)';
+  ge('batt-bar').style.width = soc+'%';
+  ge('batt-bar').style.background = soc>50?'var(--green)':soc>20?'var(--gold)':'var(--red)';
+  ge('batt-range').textContent = '~'+estMi+' mi estimated range';
+
+  const charges = D.charges;
+  const last = charges[0];
+  ge('last-kwh').textContent   = last ? last.kwh.toFixed(1)+' kWh' : '--';
+  ge('last-cost').textContent  = last ? '$'+last.cost.toFixed(2) : '--';
+  ge('last-sessions').textContent = charges.length;
+
+  const totalKwh  = charges.reduce((s,c)=>s+c.kwh, 0);
+  const totalCost = charges.reduce((s,c)=>s+c.cost, 0);
+  const avgRate   = totalKwh>0 ? totalCost/totalKwh : 0;
+  const totalMiles= totalKwh / C('eff');
+
+  const gasCpm  = C('gas') / C('mpg');
+  const evCpm   = avgRate>0 ? avgRate*C('eff') : C('homeRate')*C('eff');
+  const savings = totalMiles * (gasCpm - evCpm);
+
+  ge('s-kwh').textContent     = totalKwh.toFixed(1)+' kWh';
+  ge('s-cost').textContent    = '$'+totalCost.toFixed(2);
+  ge('s-avg').textContent     = avgRate>0 ? '$'+avgRate.toFixed(3) : '--';
+  ge('s-miles').textContent   = Math.round(totalMiles).toLocaleString();
+  ge('s-savings').textContent = '$'+Math.max(0,savings).toFixed(2);
+  ge('s-savings-sub').textContent = 'vs '+C('mpg')+' MPG @ $'+C('gas')+'/gal over '+Math.round(totalMiles).toLocaleString()+' mi';
+
+  drawMonthly(charges);
+  drawTypes(charges);
+}
+
+/* ── RENDER LOG ── */
+function renderLog(){
+  const el = ge('log-list');
+  if(!D.charges.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div>No charges logged yet.<br>Tap + Charge to add your first session.</div>';
+    return;
+  }
+  el.innerHTML = D.charges.map(c=>{
+    const col = typeColor(c.type);
+    return '<div class="charge-item">'
+      +'<div class="charge-icon '+c.type+'">'+typeIcon(c.type)+'</div>'
+      +'<div class="charge-info">'
+        +'<div class="charge-loc">'+escH(c.loc)+'</div>'
+        +'<div class="charge-date">'+fmtDate(c.date)+(c.notes?' &middot; '+escH(c.notes):'')+'</div>'
+        +(c.socStart&&c.socEnd?'<div class="charge-soc">'+c.socStart+'% &rarr; '+c.socEnd+'%</div>':'')
+      +'</div>'
+      +'<div class="charge-right">'
+        +'<div class="charge-kwh" style="color:'+col+'">'+c.kwh.toFixed(1)+' kWh</div>'
+        +'<div class="charge-cost">$'+c.cost.toFixed(2)+' &middot; $'+(c.cost/c.kwh).toFixed(3)+'/kWh</div>'
+      +'</div>'
+      +'<button class="charge-del" onclick="deleteCharge('+c.id+')">&#215;</button>'
+      +'</div>';
+  }).join('');
+}
+
+/* ── RENDER EV vs GAS ── */
+function renderVsGas(){
+  const eff = C('eff'), homeRate = C('homeRate');
+  const gas = C('gas'), mpg = C('mpg'), miles = C('miles');
+
+  const evCpm  = eff * homeRate * 100;
+  const gasCpm = (gas/mpg) * 100;
+  const pct    = ((gasCpm-evCpm)/gasCpm*100);
+
+  ge('ev-cpm').textContent  = evCpm.toFixed(1)+'&#162;/mi';
+  ge('gas-cpm').textContent = gasCpm.toFixed(1)+'&#162;/mi';
+  ge('ev-sub').textContent  = eff+' kWh/mi x $'+homeRate+'/kWh';
+  ge('gas-sub').textContent = mpg+' MPG x $'+gas+'/gal';
+  ge('savings-pct').textContent = pct.toFixed(0)+'%';
+
+  const evAnn  = (evCpm/100)*miles;
+  const gasAnn = (gasCpm/100)*miles;
+  ge('ev-annual').textContent   = '$'+evAnn.toFixed(0);
+  ge('gas-annual').textContent  = '$'+gasAnn.toFixed(0);
+  ge('annual-savings').textContent = '$'+(gasAnn-evAnn).toFixed(0);
+  ge('annual-sub').textContent  = 'Based on '+miles.toLocaleString()+' mi/yr';
+  ge('fiveyear').textContent    = '$'+((gasAnn-evAnn)*5).toFixed(0);
+
+  const totalKwh = D.charges.reduce((s,c)=>s+c.kwh,0);
+  const totalMi  = totalKwh / eff;
+  const gasCO2   = (totalMi/mpg)*19.6;
+  const evCO2    = totalKwh*0.852;
+  ge('co2').textContent = Math.max(0,gasCO2-evCO2).toFixed(0)+' lbs';
+
+  drawSavingsChart(evCpm, gasCpm, miles);
+}
+
+/* ── CHARTS ── */
+function mkCanvas(id){
+  const c=ge(id); if(!c) return null;
+  const dpr=window.devicePixelRatio||1;
+  const pw=c.parentElement.clientWidth-28;
+  const h=parseInt(c.getAttribute('height'));
+  c.width=pw*dpr; c.height=h*dpr;
+  c.style.width=pw+'px'; c.style.height=h+'px';
+  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,pw,h);
+  return {ctx,w:pw,h};
+}
+
+function drawMonthly(charges){
+  const r=mkCanvas('monthly-chart'); if(!r)return;
+  const {ctx,w,h}=r;
+  const months=[];
+  const now=new Date();
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    months.push({label:d.toLocaleDateString('en-US',{month:'short'}),key,cost:0,kwh:0});
+  }
+  charges.forEach(c=>{ const m=months.find(m=>m.key===c.date.slice(0,7)); if(m){m.cost+=c.cost;m.kwh+=c.kwh;} });
+
+  const maxC=Math.max(...months.map(m=>m.cost),1);
+  const pad={t:14,r:8,b:26,l:42};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const bw=cw/6*0.55, gap=cw/6;
+
+  for(let i=0;i<=3;i++){
+    const y=pad.t+ch*(1-i/3);
+    ctx.strokeStyle='#1e1e1e'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+    ctx.fillStyle='#666'; ctx.font='9px DM Mono'; ctx.textAlign='right';
+    ctx.fillText('$'+(maxC*i/3).toFixed(0),pad.l-4,y+3);
+  }
+
+  months.forEach((m,i)=>{
+    const bh=Math.max(0,m.cost/maxC*ch);
+    const x=pad.l+i*gap+(gap-bw)/2;
+    const y=pad.t+ch-bh;
+    if(m.cost>0){
+      const g=ctx.createLinearGradient(0,y,0,y+bh);
+      g.addColorStop(0,'#e82020'); g.addColorStop(1,'#3a0808');
+      ctx.fillStyle=g; ctx.fillRect(x,y,bw,bh);
+      ctx.fillStyle='#e82020'; ctx.font='8px DM Mono'; ctx.textAlign='center';
+      ctx.fillText('$'+m.cost.toFixed(0),x+bw/2,y-3);
+    }
+    ctx.fillStyle='#666'; ctx.font='9px DM Mono'; ctx.textAlign='center';
+    ctx.fillText(m.label,x+bw/2,h-6);
+  });
+}
+
+function drawTypes(charges){
+  const r=mkCanvas('type-chart'); if(!r)return;
+  const {ctx,w,h}=r;
+  const T={home:{kwh:0},super:{kwh:0},public:{kwh:0}};
+  charges.forEach(c=>{ if(T[c.type]) T[c.type].kwh+=c.kwh; });
+  const total=Object.values(T).reduce((s,t)=>s+t.kwh,0)||1;
+  const rows=[['Home',T.home.kwh,'#3399ff'],['Supercharger',T.super.kwh,'#e82020'],['Public',T.public.kwh,'#20c060']];
+  const bh=22, gap=12, maxW=w-100;
+  rows.forEach(([label,val,col],i)=>{
+    const y=i*(bh+gap)+8;
+    const bw=val/total*maxW;
+    ctx.fillStyle=col+'15'; ctx.fillRect(0,y,maxW,bh);
+    if(val>0){ ctx.fillStyle=col+'55'; ctx.fillRect(0,y,bw,bh); }
+    ctx.fillStyle=col; ctx.font='11px DM Mono'; ctx.textAlign='left';
+    ctx.fillText(label,6,y+bh/2+4);
+    ctx.fillStyle='#888'; ctx.font='9px DM Mono'; ctx.textAlign='right';
+    ctx.fillText(val.toFixed(1)+' kWh ('+(val/total*100).toFixed(0)+'%)',w-4,y+bh/2+4);
+  });
+}
+
+function drawSavingsChart(evCpm,gasCpm,miles){
+  const r=mkCanvas('savings-chart'); if(!r)return;
+  const {ctx,w,h}=r;
+  const pad={t:14,r:8,b:26,l:52};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const yrs=5;
+  const evPts=[],gasPts=[];
+  for(let y=1;y<=yrs;y++){evPts.push((evCpm/100)*miles*y);gasPts.push((gasCpm/100)*miles*y);}
+  const maxV=Math.max(...gasPts)||1;
+  const px=i=>pad.l+i/(yrs-1)*cw;
+  const py=v=>pad.t+ch-v/maxV*ch;
+
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch*i/4;
+    ctx.strokeStyle='#1e1e1e'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+    ctx.fillStyle='#666'; ctx.font='8px DM Mono'; ctx.textAlign='right';
+    const v=maxV*(1-i/4);
+    ctx.fillText('$'+(v>=1000?(v/1000).toFixed(0)+'K':v.toFixed(0)),pad.l-4,y+3);
+  }
+
+  // Savings fill
+  ctx.globalAlpha=0.12; ctx.fillStyle='#20c060';
+  ctx.beginPath();
+  evPts.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+  gasPts.slice().reverse().forEach((v,i)=>ctx.lineTo(px(yrs-1-i),py(v)));
+  ctx.closePath(); ctx.fill(); ctx.globalAlpha=1;
+
+  // Gas line
+  ctx.beginPath(); ctx.strokeStyle='#e82020'; ctx.lineWidth=2.5;
+  gasPts.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+  ctx.stroke();
+
+  // EV line
+  ctx.beginPath(); ctx.strokeStyle='#20c060'; ctx.lineWidth=2.5;
+  evPts.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+  ctx.stroke();
+
+  // Dots + labels
+  for(let i=0;i<yrs;i++){
+    ctx.fillStyle='#e82020'; ctx.beginPath(); ctx.arc(px(i),py(gasPts[i]),3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#20c060'; ctx.beginPath(); ctx.arc(px(i),py(evPts[i]),3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#666'; ctx.font='8px DM Mono'; ctx.textAlign='center';
+    ctx.fillText('Y'+(i+1),px(i),h-6);
+  }
+
+  // Legend
+  ctx.fillStyle='#e82020'; ctx.fillRect(pad.l,2,18,3);
+  ctx.fillStyle='#888'; ctx.font='8px DM Mono'; ctx.textAlign='left'; ctx.fillText('Gas',pad.l+22,6);
+  ctx.fillStyle='#20c060'; ctx.fillRect(pad.l+55,2,18,3);
+  ctx.fillStyle='#888'; ctx.fillText('EV',pad.l+77,6);
+}
+
+/* ── HELPERS ── */
+function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d){ if(!d)return'--'; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+
+/* ── TABS ── */
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['dash','log','vs','settings'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+}
+
+function renderAll(){ renderDash(); renderLog(); renderVsGas(); }
+
+loadSettings();
+renderAll();
+window.addEventListener('resize', renderAll);
+</script>
+</body>
+</html>

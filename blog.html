@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Blog Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Karla:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap');
+:root{
+  --bg:#faf8f4;--s1:#ffffff;--s2:#f4f1eb;--s3:#ebe7de;--b:#d8d0c4;
+  --ink:#1c1710;--muted:#8a7f6a;--soft:#6a5e4a;
+  --teal:#0f7b7b;--teal2:#0fa0a0;--amber:#c07a00;--red:#b03020;--green:#2a6a2a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--ink);font-family:'Karla',sans-serif;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:2px solid var(--ink);flex-shrink:0;z-index:2;position:relative;background:var(--bg)}
+#back-btn{background:transparent;border:1.5px solid var(--b);color:var(--muted);border-radius:4px;padding:4px 9px;font-size:10px;cursor:pointer;font-family:'Karla',sans-serif}
+#title{font-family:'Lora',serif;font-size:19px;font-weight:600;flex:1;letter-spacing:-.01em}
+.toolbar-btn{padding:5px 11px;border-radius:4px;font-size:10px;border:1.5px solid var(--b);background:transparent;color:var(--muted);cursor:pointer;font-family:'Karla',sans-serif;white-space:nowrap;font-weight:500;transition:all .15s}
+.toolbar-btn:hover{border-color:var(--teal);color:var(--teal)}
+.toolbar-btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:2px solid var(--ink);flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:2;background:var(--bg)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:60px;padding:9px 4px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;font-weight:600}
+.tab.active{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;z-index:1;position:relative}
+.view{display:none;height:100%}
+.view.active{display:flex;flex-direction:column}
+
+/* ── EDITOR ── */
+#editor-container{flex:1;display:flex;flex-direction:column;min-height:0;padding:14px}
+.editor-meta{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+.editor-meta-left{min-width:0}
+#post-title{width:100%;background:transparent;border:none;outline:none;font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);font-style:italic;padding:0;margin-bottom:6px}
+#post-title::placeholder{color:var(--b)}
+.meta-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.meta-input{background:var(--s2);border:1px solid var(--b);border-radius:4px;padding:4px 8px;font-family:'Karla',sans-serif;font-size:11px;color:var(--ink);outline:none;min-width:80px}
+.meta-input:focus{border-color:var(--teal)}
+.word-count{font-size:10px;color:var(--muted);align-self:center;white-space:nowrap}
+
+.editor-toolbar{display:flex;gap:4px;padding:6px 0;border-top:1px solid var(--b);border-bottom:1px solid var(--b);margin-bottom:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.editor-toolbar::-webkit-scrollbar{display:none}
+.tb-btn{padding:4px 8px;border-radius:4px;font-size:11px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;font-family:'Karla',sans-serif;font-weight:700;white-space:nowrap;transition:all .1s;flex-shrink:0}
+.tb-btn:hover{background:var(--s2);border-color:var(--b);color:var(--ink)}
+
+#editor-body{flex:1;background:var(--s1);border:1.5px solid var(--b);border-radius:8px;padding:14px;font-family:'Lora',serif;font-size:15px;line-height:1.85;color:var(--ink);outline:none;overflow-y:auto;min-height:200px;white-space:pre-wrap;word-break:break-word;resize:none}
+#editor-body[contenteditable]:focus{border-color:var(--teal)}
+#editor-body:empty:before{content:attr(data-placeholder);color:var(--b);pointer-events:none;position:absolute}
+#editor-body-wrap{flex:1;position:relative;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+
+.seo-bar{flex-shrink:0;padding:8px 14px;border-top:1px solid var(--b);display:flex;align-items:center;gap:10px;font-size:10px;color:var(--muted);background:var(--bg)}
+.seo-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.seo-score{font-weight:700}
+.seo-score.green{color:var(--green)}
+.seo-score.amber{color:var(--amber)}
+.seo-score.red{color:var(--red)}
+
+/* ── LIBRARY ── */
+.view-scroll{padding:12px 12px 80px;overflow-y:auto;flex:1}
+.post-card{background:var(--s1);border:1.5px solid var(--b);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s;display:flex;gap:10px;align-items:flex-start}
+.post-card:hover{border-color:var(--teal)}
+.post-card-info{flex:1;min-width:0}
+.pc-title{font-family:'Lora',serif;font-size:15px;font-weight:600;font-style:italic;line-height:1.2;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-meta{font-size:10px;color:var(--muted);line-height:1.6}
+.pc-excerpt{font-size:11px;color:var(--soft);line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.status-pill{font-size:8px;padding:2px 7px;border-radius:20px;display:inline-block;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.sp-draft{background:#f0ebe0;border:1px solid #c8b898;color:#7a6030}
+.sp-published{background:#e0f0e0;border:1px solid #90c090;color:#2a6a2a}
+.pc-del{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px;flex-shrink:0;align-self:flex-start}
+
+/* ── OUTLINE / TEMPLATES ── */
+.template-card{background:var(--s1);border:1.5px solid var(--b);border-radius:8px;padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.template-card:hover{border-color:var(--teal)}
+.tc-type{font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;font-weight:600}
+.tc-title{font-family:'Lora',serif;font-size:15px;font-weight:600;font-style:italic;margin-bottom:5px}
+.tc-outline{font-size:11px;color:var(--soft);line-height:1.7}
+.tc-use{font-size:10px;margin-top:8px;padding:5px 12px;border:1px solid var(--teal);color:var(--teal);background:transparent;border-radius:4px;cursor:pointer;font-family:'Karla',sans-serif;font-weight:600}
+
+/* ── SEO PANEL ── */
+.seo-panel{padding:12px 12px 80px;overflow-y:auto;flex:1}
+.seo-section{background:var(--s1);border:1.5px solid var(--b);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.seo-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;color:var(--muted)}
+.seo-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--s2)}
+.seo-item:last-child{border-bottom:none}
+.si-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.si-dot.pass{background:var(--green)}
+.si-dot.warn{background:var(--amber)}
+.si-dot.fail{background:var(--red)}
+.si-text{font-size:11px;color:var(--soft);line-height:1.5}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(28,23,16,.7);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border-top:3px solid var(--ink);border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:18px;padding-bottom:40px;max-height:80vh;overflow-y:auto}
+#modal-title{font-family:'Lora',serif;font-size:18px;font-weight:600;font-style:italic;margin-bottom:12px}
+.mf{margin-bottom:10px}
+.ml{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;font-weight:600}
+.mi{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:6px;padding:8px 12px;font-family:'Karla',sans-serif;font-size:13px;color:var(--ink);outline:none}
+.mi:focus{border-color:var(--teal)}
+select.mi option{background:var(--s2)}
+.msave{width:100%;padding:12px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;font-family:'Karla',sans-serif;letter-spacing:.02em}
+.mcancel{width:100%;background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:8px;font-family:'Karla',sans-serif}
+
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.sec-title{font-family:'Lora',serif;font-size:16px;font-weight:600;font-style:italic}
+.sec-btn{font-size:10px;padding:5px 11px;border:1.5px solid var(--b);color:var(--muted);background:transparent;cursor:pointer;font-family:'Karla',sans-serif;border-radius:4px;font-weight:600}
+.sec-btn:hover{border-color:var(--teal);color:var(--teal)}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title">Blog Studio</div>
+  <button class="toolbar-btn" onclick="saveDraft()">Save</button>
+  <button class="toolbar-btn primary" onclick="publishPost()">Publish</button>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('write')">Write</div>
+  <div class="tab" onclick="showTab('library')">Library</div>
+  <div class="tab" onclick="showTab('templates')">Templates</div>
+  <div class="tab" onclick="showTab('seo')">SEO</div>
+</div>
+
+<div id="content">
+
+  <!-- ── WRITE TAB ── -->
+  <div class="view active" id="v-write">
+    <div id="editor-container">
+      <div class="editor-meta">
+        <div class="editor-meta-left">
+          <input id="post-title" type="text" placeholder="Your post title...">
+          <div class="meta-row">
+            <input class="meta-input" id="post-slug" type="text" placeholder="post-slug">
+            <input class="meta-input" id="post-category" type="text" placeholder="Category">
+            <input class="meta-input" id="post-keyword" type="text" placeholder="Focus keyword" oninput="runSEO()">
+            <span class="word-count" id="word-count">0 words</span>
+          </div>
+        </div>
+        <select class="meta-input" id="post-status" style="align-self:flex-start">
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
+
+      <div class="editor-toolbar">
+        <button class="tb-btn" onclick="fmt('bold')"><b>B</b></button>
+        <button class="tb-btn" onclick="fmt('italic')"><i>I</i></button>
+        <button class="tb-btn" onclick="fmt('h2')">H2</button>
+        <button class="tb-btn" onclick="fmt('h3')">H3</button>
+        <button class="tb-btn" onclick="fmt('ul')">&#8226; List</button>
+        <button class="tb-btn" onclick="fmt('ol')">1. List</button>
+        <button class="tb-btn" onclick="fmt('quote')">"Quote</button>
+        <button class="tb-btn" onclick="fmt('hr')">&#8212; Rule</button>
+        <button class="tb-btn" onclick="fmt('link')">&#128279; Link</button>
+        <button class="tb-btn" onclick="insertEmoji()">&#9786;</button>
+        <button class="tb-btn" onclick="clearEditor()">Clear</button>
+      </div>
+
+      <div id="editor-body-wrap">
+        <div id="editor-body" contenteditable="true" data-placeholder="Start writing your post... Use the toolbar above or just type." oninput="onEdit()"></div>
+      </div>
+    </div>
+
+    <div class="seo-bar">
+      <div class="seo-dot" id="seo-dot" style="background:var(--muted)"></div>
+      <span>SEO:</span>
+      <span class="seo-score" id="seo-mini">—</span>
+      <span id="seo-mini-msg" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Add a focus keyword to start SEO analysis</span>
+      <span id="read-time" style="flex-shrink:0"></span>
+    </div>
+  </div>
+
+  <!-- ── LIBRARY TAB ── -->
+  <div class="view" id="v-library">
+    <div class="view-scroll">
+      <div class="sec-header">
+        <div class="sec-title">Your Posts</div>
+        <button class="sec-btn" onclick="newPost()">+ New Post</button>
+      </div>
+      <div id="library-list"></div>
+    </div>
+  </div>
+
+  <!-- ── TEMPLATES TAB ── -->
+  <div class="view" id="v-templates">
+    <div class="view-scroll">
+      <div class="sec-header">
+        <div class="sec-title">Post Templates</div>
+      </div>
+      <div id="templates-list"></div>
+    </div>
+  </div>
+
+  <!-- ── SEO TAB ── -->
+  <div class="view" id="v-seo">
+    <div class="seo-panel">
+      <div class="sec-header">
+        <div class="sec-title">SEO Analysis</div>
+        <span id="seo-total-badge" style="font-family:'Lora',serif;font-size:24px;font-weight:600"></span>
+      </div>
+      <div id="seo-checks"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STORE='blog_studio_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE))||{posts:[],currentId:null}; }catch{ return {posts:[],currentId:null}; }}
+function persist(){ localStorage.setItem(STORE,JSON.stringify(D)); }
+function ge(id){ return document.getElementById(id); }
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let D=load();
+let currentPost=null;
+
+// ── TABS ──────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['write','library','templates','seo'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+  if(t==='library') renderLibrary();
+  if(t==='seo') renderSEOPanel();
+}
+
+// ── EDITOR ────────────────────────────────────────
+function onEdit(){
+  const text=ge('editor-body').innerText||'';
+  const words=text.trim()?text.trim().split(/\s+/).length:0;
+  const mins=Math.ceil(words/200);
+  ge('word-count').textContent=words.toLocaleString()+' words';
+  ge('read-time').textContent=words>0?mins+' min read':'';
+
+  // Auto slug from title
+  const title=ge('post-title').value;
+  if(!ge('post-slug').dataset.manual){
+    ge('post-slug').value=title.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,'-').slice(0,60);
+  }
+
+  runSEO();
+}
+
+ge('post-title').addEventListener('input',onEdit);
+ge('post-slug').addEventListener('input',()=>ge('post-slug').dataset.manual='1');
+
+// ── FORMATTING ────────────────────────────────────
+function fmt(cmd){
+  const editor=ge('editor-body');
+  editor.focus();
+  const sel=window.getSelection();
+
+  if(cmd==='bold'){ document.execCommand('bold'); return; }
+  if(cmd==='italic'){ document.execCommand('italic'); return; }
+
+  const range=sel.rangeCount?sel.getRangeAt(0):null;
+  const selectedText=range?range.toString():'';
+
+  const inserts={
+    h2: '\n## '+( selectedText||'Heading 2')+'\n',
+    h3: '\n### '+(selectedText||'Heading 3')+'\n',
+    ul: '\n• '+(selectedText||'List item')+'\n',
+    ol: '\n1. '+(selectedText||'List item')+'\n',
+    quote: '\n> '+(selectedText||'Blockquote text')+'\n',
+    hr: '\n\n---\n\n',
+    link: '\n['+( selectedText||'Link text')+'](https://)\n',
+  };
+
+  if(inserts[cmd]){
+    document.execCommand('insertText',false,inserts[cmd]);
+  }
+}
+
+function insertEmoji(){
+  const emojis=['✨','💡','🚀','🎯','📌','⚡','🔑','💬','📊','🎉','👉','✅','❌','🔥','💪'];
+  const e=emojis[Math.floor(Math.random()*emojis.length)];
+  document.execCommand('insertText',false,e);
+}
+
+function clearEditor(){
+  if(ge('editor-body').innerText.trim()&&!confirm('Clear the editor?')) return;
+  ge('editor-body').innerHTML='';
+  ge('post-title').value='';
+  ge('post-slug').value='';
+  ge('post-category').value='';
+  ge('post-keyword').value='';
+  currentPost=null;
+  onEdit();
+}
+
+// ── SAVE / PUBLISH ────────────────────────────────
+function getCurrentPostData(){
+  return {
+    title: ge('post-title').value.trim()||'Untitled',
+    slug:  ge('post-slug').value.trim(),
+    category: ge('post-category').value.trim(),
+    keyword: ge('post-keyword').value.trim(),
+    content: ge('editor-body').innerHTML,
+    text: ge('editor-body').innerText||'',
+    status: ge('post-status').value,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function saveDraft(){
+  const data=getCurrentPostData();
+  if(currentPost){
+    Object.assign(currentPost,data);
+  } else {
+    currentPost={id:Date.now(),...data,createdAt:new Date().toISOString()};
+    D.posts.unshift(currentPost);
+  }
+  persist();
+  flashSave();
+}
+
+function publishPost(){
+  ge('post-status').value='published';
+  saveDraft();
+}
+
+function flashSave(){
+  const btn=document.querySelectorAll('.toolbar-btn')[0];
+  btn.textContent='Saved ✓';
+  setTimeout(()=>btn.textContent='Save',2000);
+}
+
+function newPost(){
+  clearEditor();
+  showTab('write');
+}
+
+function loadPost(id){
+  const post=D.posts.find(p=>p.id===id);
+  if(!post) return;
+  currentPost=post;
+  ge('post-title').value=post.title||'';
+  ge('post-slug').value=post.slug||'';
+  ge('post-category').value=post.category||'';
+  ge('post-keyword').value=post.keyword||'';
+  ge('editor-body').innerHTML=post.content||'';
+  ge('post-status').value=post.status||'draft';
+  onEdit();
+  showTab('write');
+}
+
+function deletePost(id){
+  if(!confirm('Delete this post?')){ return; }
+  D.posts=D.posts.filter(p=>p.id!==id);
+  if(currentPost&&currentPost.id===id) currentPost=null;
+  persist(); renderLibrary();
+}
+
+// ── LIBRARY ───────────────────────────────────────
+function renderLibrary(){
+  ge('library-list').innerHTML=D.posts.length
+    ?D.posts.map(p=>'<div class="post-card">'
+      +'<div class="post-card-info" onclick="loadPost('+p.id+')">'
+        +'<div class="pc-title">'+escH(p.title)+'</div>'
+        +'<div class="pc-meta">'+(p.category?p.category+' · ':'')+(p.text?Math.round(p.text.split(/\s+/).filter(Boolean).length)+' words · ':'')
+          +new Date(p.updatedAt||p.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+          +' <span class="status-pill sp-'+p.status+'">'+p.status+'</span>'
+        +'</div>'
+        +(p.text?'<div class="pc-excerpt">'+escH(p.text.slice(0,120))+'...</div>':'')
+      +'</div>'
+      +'<button class="pc-del" onclick="deletePost('+p.id+')">&#215;</button>'
+      +'</div>').join('')
+    :'<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;font-style:italic;font-family:\'Lora\',serif">No posts yet. Start writing!</div>';
+}
+
+// ── TEMPLATES ─────────────────────────────────────
+const TEMPLATES=[
+  {type:'How-To Guide',title:'How to [Achieve Result] in [Timeframe]',outline:`1. Introduction — Hook with the problem your reader faces
+2. What you'll need — Prerequisites, tools, requirements
+3. Step 1: [First major step] — Detailed instructions
+4. Step 2: [Second major step] — Detailed instructions  
+5. Step 3: [Third major step] — Detailed instructions
+6. Common mistakes to avoid
+7. Pro tips for better results
+8. Conclusion + Call to action`,content:''},
+  {type:'Listicle',title:'[Number] [Things] That [Result/Benefit]',outline:`1. Introduction — Why this list matters
+2. Item 1: [Name] — [2-3 sentence explanation]
+3. Item 2: [Name] — [2-3 sentence explanation]
+4. Item 3: [Name] — [2-3 sentence explanation]
+5. Item 4: [Name] — [2-3 sentence explanation]
+6. Item 5: [Name] — [2-3 sentence explanation]
+7. Conclusion — Summary + next steps`,content:''},
+  {type:'Opinion/Thought Leadership',title:'Why [Controversial or Surprising Take]',outline:`1. Opening statement — Your bold claim, clearly stated
+2. The conventional wisdom — What most people believe
+3. Why you disagree — Your core argument
+4. Supporting evidence — Data, examples, personal experience
+5. Addressing counterarguments — Steelman the opposing view
+6. Your conclusion — What this means for the reader`,content:''},
+  {type:'Case Study',title:'How [Person/Company] [Achieved Result] Using [Method]',outline:`1. Introduction — Why this case study matters
+2. Background — Who/what the subject is, the challenge they faced
+3. The approach — Strategy and tactics used
+4. The results — Quantifiable outcomes with data
+5. Key lessons — 3-5 takeaways readers can apply
+6. How to apply this — Actionable steps for the reader`,content:''},
+  {type:'Comparison/Review',title:'[Option A] vs [Option B]: Which is Better For [Use Case]?',outline:`1. Introduction — Why this comparison matters, who it's for
+2. Quick verdict — Your recommendation upfront
+3. [Option A] — Features, pros, cons, best for
+4. [Option B] — Features, pros, cons, best for
+5. Head-to-head comparison — Specific criteria table
+6. Our recommendation — When to choose each
+7. FAQ — Common questions`,content:''},
+  {type:'Beginner\'s Guide',title:'The Complete Beginner\'s Guide to [Topic]',outline:`1. What is [Topic]? — Simple definition anyone can understand
+2. Why it matters — Real benefits and use cases
+3. Key concepts — 3-5 fundamentals to understand first
+4. Getting started — First practical steps
+5. Common beginner mistakes — What to avoid
+6. Resources to go deeper — Books, courses, communities
+7. Conclusion — Encouragement + next step`,content:''},
+];
+
+function renderTemplates(){
+  ge('templates-list').innerHTML=TEMPLATES.map((t,i)=>'<div class="template-card">'
+    +'<div class="tc-type">'+t.type+'</div>'
+    +'<div class="tc-title">'+t.title+'</div>'
+    +'<div class="tc-outline">'+t.outline.replace(/\n/g,'<br>')+'</div>'
+    +'<button class="tc-use" onclick="useTemplate('+i+')">Use This Template &#8594;</button>'
+    +'</div>').join('');
+}
+
+function useTemplate(idx){
+  const t=TEMPLATES[idx];
+  ge('post-title').value=t.title;
+  ge('editor-body').innerText=t.outline;
+  currentPost=null;
+  onEdit();
+  showTab('write');
+}
+
+// ── SEO ANALYSIS ──────────────────────────────────
+function runSEO(){
+  const keyword=(ge('post-keyword').value||'').toLowerCase().trim();
+  const title=(ge('post-title').value||'').toLowerCase();
+  const text=(ge('editor-body').innerText||'').toLowerCase();
+  const words=text.trim()?text.trim().split(/\s+/).length:0;
+
+  const checks=[];
+
+  if(!keyword){
+    ge('seo-dot').style.background='var(--muted)';
+    ge('seo-mini').textContent='—';
+    ge('seo-mini').className='seo-score';
+    ge('seo-mini-msg').textContent='Add a focus keyword to start SEO analysis';
+    return;
+  }
+
+  checks.push({label:'Keyword in title',pass:title.includes(keyword),msg:title.includes(keyword)?'Focus keyword found in title.':'Add "'+keyword+'" to your post title.'});
+  checks.push({label:'Title length',pass:title.length>=40&&title.length<=70,warn:title.length>0&&title.length<40,msg:title.length>=40&&title.length<=70?'Title length is optimal ('+title.length+' chars).':title.length<40?'Title is short ('+title.length+' chars). Aim for 40-70 characters.':'Title is long ('+title.length+' chars). Consider shortening.'});
+  checks.push({label:'Word count',pass:words>=300,warn:words>=150&&words<300,msg:words>=600?'Excellent length ('+words+' words).':words>=300?'Good length ('+words+' words). 600+ is ideal.':words>0?'Too short ('+words+' words). Aim for 300+ minimum.':'No content yet.'});
+  checks.push({label:'Keyword density',pass:keyword&&text.split(keyword).length-1>=2,msg:keyword&&text.split(keyword).length-1>=2?'Keyword appears '+(text.split(keyword).length-1)+' times — good density.':'Use "'+keyword+'" at least 2 times in your post body.'});
+  checks.push({label:'First paragraph',pass:keyword&&text.slice(0,200).includes(keyword),msg:keyword&&text.slice(0,200).includes(keyword)?'Keyword appears in opening paragraph.':'Add "'+keyword+'" in your first paragraph for best SEO.'});
+  const hasHeadings=/##|###|\n[A-Z][^\n]{5,}\n/.test(ge('editor-body').innerText||'');
+  checks.push({label:'Headings used',pass:hasHeadings,msg:hasHeadings?'Headings found — good structure.':'Add H2/H3 headings to improve readability and SEO.'});
+  checks.push({label:'Slug set',pass:!!ge('post-slug').value,msg:ge('post-slug').value?'URL slug is set.':'Set a clean URL slug for this post.'});
+  checks.push({label:'Category set',pass:!!ge('post-category').value,msg:ge('post-category').value?'Category assigned.':'Assign a category to help with site structure.'});
+
+  const passing=checks.filter(c=>c.pass).length;
+  const score=Math.round(passing/checks.length*100);
+  const col=score>=80?'var(--green)':score>=50?'var(--amber)':'var(--red)';
+
+  ge('seo-dot').style.background=col;
+  ge('seo-mini').textContent=score+'%';
+  ge('seo-mini').className='seo-score '+(score>=80?'green':score>=50?'amber':'red');
+  const failing=checks.filter(c=>!c.pass)[0];
+  ge('seo-mini-msg').textContent=failing?failing.msg:'All SEO checks passing!';
+
+  window._seoChecks=checks;
+  window._seoScore=score;
+}
+
+function renderSEOPanel(){
+  runSEO();
+  const checks=window._seoChecks||[];
+  const score=window._seoScore||0;
+  const col=score>=80?'var(--green)':score>=50?'var(--amber)':'var(--red)';
+  ge('seo-total-badge').textContent=score+'%';
+  ge('seo-total-badge').style.color=col;
+
+  ge('seo-checks').innerHTML=!ge('post-keyword').value
+    ?'<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;font-style:italic;font-family:\'Lora\',serif">Add a focus keyword in the editor to see SEO analysis here.</div>'
+    :'<div class="seo-section"><div class="seo-title">Checks ('+(checks.filter(c=>c.pass).length)+'/'+checks.length+' passing)</div>'
+    +checks.map(c=>'<div class="seo-item"><div class="si-dot '+(c.pass?'pass':c.warn?'warn':'fail')+'"></div><div class="si-text"><strong>'+c.label+'</strong><br>'+escH(c.msg)+'</div></div>').join('')
+    +'</div>'
+    +'<div class="seo-section"><div class="seo-title">Readability Tips</div>'
+    +[
+      {p:true,msg:'Use short paragraphs (2-4 sentences) for mobile readers.'},
+      {p:true,msg:'Add a meta description summarizing the post in 150-160 characters.'},
+      {p:true,msg:'Include your keyword in at least one H2 or H3 heading.'},
+      {p:true,msg:'Add internal links to 2-3 other posts on your site.'},
+      {p:true,msg:'Include an image with descriptive alt text containing your keyword.'},
+    ].map(t=>'<div class="seo-item"><div class="si-dot pass"></div><div class="si-text">'+escH(t.msg)+'</div></div>').join('')
+    +'</div>';
+}
+
+// ── INIT ──────────────────────────────────────────
+renderLibrary();
+renderTemplates();
+</script>
+</body>
+</html>

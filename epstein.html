@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Epstein Files Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+:root{
+  --bg:#0c0b08;--s1:#111009;--s2:#181610;--s3:#211e14;--b:#2e2a1e;
+  --amber:#e8a020;--amber2:#f5c060;--red:#cc2200;--green:#3a8a3a;--blue:#2266cc;
+  --text:#e8e0cc;--muted:#7a7060;--paper:#1a1810;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;display:flex;flex-direction:column;overflow:hidden}
+
+/* paper texture */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(255,255,255,.012) 23px,rgba(255,255,255,.012) 24px);pointer-events:none;z-index:0}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:2px solid var(--amber);flex-shrink:0;position:relative;z-index:2;background:var(--bg)}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace}
+#title-wrap{flex:1}
+#title{font-family:'Special Elite',cursive;font-size:17px;letter-spacing:.04em;color:var(--amber)}
+#title-sub{font-size:8px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:1px}
+#classify-badge{font-size:8px;letter-spacing:.12em;padding:3px 8px;border:1px solid var(--red);color:var(--red);border-radius:2px;text-transform:uppercase}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none;position:relative;z-index:2;background:var(--bg)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:60px;padding:9px 4px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;position:relative;z-index:1}
+.view{display:none;padding:12px 12px 80px}
+.view.active{display:block}
+
+/* ── SEARCH BAR ── */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-input{width:100%;background:var(--s1);border:1px solid var(--b);border-radius:4px;padding:9px 12px 9px 32px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text);outline:none}
+.search-input:focus{border-color:var(--amber)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.stat-box{background:var(--s1);border:1px solid var(--b);border-radius:4px;padding:8px;text-align:center}
+.stat-num{font-family:'Special Elite',cursive;font-size:22px;color:var(--amber)}
+.stat-lbl{font-size:7px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:2px}
+
+/* ── TIMELINE ── */
+.timeline-item{display:flex;gap:0;margin-bottom:0;position:relative}
+.tl-line{display:flex;flex-direction:column;align-items:center;width:32px;flex-shrink:0}
+.tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--amber);background:var(--bg);z-index:1;flex-shrink:0;margin-top:14px}
+.tl-dot.red{border-color:var(--red);box-shadow:0 0 6px rgba(204,34,0,.4)}
+.tl-dot.green{border-color:var(--green)}
+.tl-dot.blue{border-color:var(--blue)}
+.tl-stem{flex:1;width:1px;background:var(--b);margin-top:2px}
+.tl-card{flex:1;background:var(--s1);border:1px solid var(--b);border-radius:4px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.tl-card:hover{border-color:var(--amber)}
+.tl-card.expanded{border-color:var(--amber)}
+.tl-year{font-size:9px;color:var(--amber);letter-spacing:.1em;margin-bottom:3px}
+.tl-date{font-size:9px;color:var(--muted);margin-bottom:4px}
+.tl-title{font-size:13px;font-weight:500;line-height:1.3;margin-bottom:4px}
+.tl-summary{font-size:10px;color:var(--muted);line-height:1.6;display:none}
+.tl-card.expanded .tl-summary{display:block}
+.tl-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tl-tag{font-size:8px;padding:2px 7px;border-radius:2px;border:1px solid var(--b);color:var(--muted)}
+.tl-tag.key{border-color:rgba(232,160,32,.3);color:var(--amber)}
+.tl-tag.red{border-color:rgba(204,34,0,.3);color:var(--red)}
+.tl-source{font-size:9px;color:var(--blue);margin-top:6px;cursor:pointer;text-decoration:underline}
+.tl-note-btn{font-size:9px;color:var(--muted);background:transparent;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;padding:0;margin-top:4px;display:block}
+.tl-user-note{font-size:10px;background:var(--s3);border-left:2px solid var(--amber);padding:6px 8px;margin-top:6px;color:var(--amber2);line-height:1.5;border-radius:0 4px 4px 0}
+
+/* ── PEOPLE ── */
+.person-card{background:var(--s1);border:1px solid var(--b);border-radius:4px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.person-card:hover{border-color:var(--amber)}
+.person-card.expanded{border-color:var(--amber)}
+.person-header{display:flex;align-items:flex-start;gap:10px}
+.person-initials{width:38px;height:38px;border-radius:4px;background:var(--s3);border:1px solid var(--b);display:flex;align-items:center;justify-content:center;font-family:'Special Elite',cursive;font-size:14px;color:var(--amber);flex-shrink:0}
+.person-info{flex:1;min-width:0}
+.person-name{font-size:14px;font-weight:500}
+.person-role{font-size:10px;color:var(--muted);margin-top:2px}
+.person-status{font-size:8px;padding:2px 7px;border-radius:2px;border:1px solid;margin-top:4px;display:inline-block}
+.status-deceased{border-color:rgba(204,34,0,.4);color:var(--red)}
+.status-convicted{border-color:rgba(204,34,0,.4);color:var(--red)}
+.status-pled{border-color:rgba(232,160,32,.4);color:var(--amber)}
+.status-named{border-color:rgba(34,102,204,.4);color:#6699ff}
+.status-associate{border-color:var(--b);color:var(--muted)}
+.status-cleared{border-color:rgba(58,138,58,.4);color:var(--green)}
+.person-detail{display:none;margin-top:10px;border-top:1px solid var(--b);padding-top:10px}
+.person-card.expanded .person-detail{display:block}
+.person-detail-text{font-size:10px;color:var(--muted);line-height:1.8}
+.person-connections{margin-top:8px}
+.connection-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.connection-pill{font-size:9px;padding:2px 8px;border:1px solid var(--b);border-radius:2px;display:inline-block;margin:2px 2px 2px 0;color:var(--amber)}
+
+/* ── DOCUMENTS ── */
+.doc-item{background:var(--s1);border:1px solid var(--b);border-radius:4px;padding:11px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.doc-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.doc-info{flex:1;min-width:0}
+.doc-title{font-size:12px;font-weight:500;line-height:1.3;margin-bottom:3px}
+.doc-meta{font-size:9px;color:var(--muted);line-height:1.6}
+.doc-status{font-size:8px;padding:2px 7px;border-radius:2px;border:1px solid;margin-top:4px;display:inline-block}
+.doc-released{border-color:rgba(58,138,58,.4);color:var(--green)}
+.doc-partial{border-color:rgba(232,160,32,.4);color:var(--amber)}
+.doc-sealed{border-color:rgba(204,34,0,.4);color:var(--red)}
+.doc-link{font-size:9px;color:var(--blue);margin-top:4px;display:block;text-decoration:underline;cursor:pointer}
+
+/* ── ADD NOTE MODAL ── */
+#note-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;justify-content:center}
+#note-overlay.open{display:flex}
+#note-modal{background:var(--s1);border:1px solid var(--amber);border-radius:0;width:100%;max-width:500px;padding:16px;padding-bottom:32px}
+#note-modal-title{font-family:'Special Elite',cursive;font-size:16px;color:var(--amber);margin-bottom:10px}
+#note-textarea{width:100%;min-height:80px;background:var(--s2);border:1px solid var(--b);padding:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text);outline:none;resize:none;border-radius:2px}
+#note-textarea:focus{border-color:var(--amber)}
+.note-btns{display:flex;gap:8px;margin-top:8px}
+.note-save{flex:1;padding:9px;background:var(--amber);color:var(--bg);border:none;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;border-radius:2px}
+.note-cancel{flex:1;padding:9px;background:transparent;color:var(--muted);border:1px solid var(--b);font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;border-radius:2px}
+
+/* ── ADD ENTRY MODAL ── */
+#add-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;justify-content:center}
+#add-overlay.open{display:flex}
+#add-modal{background:var(--s1);border:1px solid var(--amber);width:100%;max-width:500px;padding:16px;padding-bottom:32px;max-height:80vh;overflow-y:auto}
+.add-field{margin-bottom:10px}
+.add-label{font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px}
+.add-input{width:100%;background:var(--s2);border:1px solid var(--b);padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text);outline:none;border-radius:2px}
+.add-input:focus{border-color:var(--amber)}
+.add-save{width:100%;padding:11px;background:var(--amber);color:var(--bg);border:none;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;border-radius:2px;margin-top:6px}
+.add-cancel{width:100%;padding:9px;background:transparent;color:var(--muted);border:none;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer}
+
+/* ── SECTION HEADER ── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-family:'Special Elite',cursive;font-size:16px;color:var(--amber);letter-spacing:.03em}
+.add-btn{font-size:9px;padding:4px 10px;border:1px solid var(--amber);color:var(--amber);background:transparent;cursor:pointer;font-family:'IBM Plex Mono',monospace;border-radius:2px}
+
+.filter-row{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.fchip{padding:4px 10px;font-size:9px;border:1px solid var(--b);color:var(--muted);background:transparent;cursor:pointer;border-radius:2px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.fchip.on{border-color:var(--amber);color:var(--amber);background:rgba(232,160,32,.06)}
+
+.disclaimer{background:var(--s2);border:1px solid var(--b);border-left:3px solid var(--amber);padding:10px 12px;margin-bottom:14px;font-size:9px;color:var(--muted);line-height:1.7;border-radius:0 4px 4px 0}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title-wrap">
+    <div id="title">EPSTEIN FILES TRACKER</div>
+    <div id="title-sub">Public Record Research Database</div>
+  </div>
+  <div id="classify-badge">Public Record</div>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('timeline')">Timeline</div>
+  <div class="tab" onclick="showTab('people')">People</div>
+  <div class="tab" onclick="showTab('docs')">Documents</div>
+  <div class="tab" onclick="showTab('notes')">My Notes</div>
+</div>
+
+<div id="content">
+
+  <!-- ── TIMELINE ── -->
+  <div class="view active" id="v-timeline">
+
+    <div class="disclaimer">
+      All information sourced from public court records, journalism, and government documents. This tool organizes publicly available information for research purposes. Add your own annotations and notes.
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num" id="st-events">0</div><div class="stat-lbl">Events</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-people">0</div><div class="stat-lbl">People</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-docs">0</div><div class="stat-lbl">Documents</div></div>
+      <div class="stat-box"><div class="stat-num" id="st-notes">0</div><div class="stat-lbl">My Notes</div></div>
+    </div>
+
+    <div class="sec-header">
+      <div class="sec-title">Chronology</div>
+      <button class="add-btn" onclick="openAddEvent()">+ Add Event</button>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input class="search-input" id="tl-search" placeholder="Search events..." oninput="renderTimeline()">
+    </div>
+
+    <div class="filter-row" id="tl-filters">
+      <div class="fchip on" onclick="tlFilter(this,'all')">All</div>
+      <div class="fchip" onclick="tlFilter(this,'legal')">Legal</div>
+      <div class="fchip" onclick="tlFilter(this,'arrest')">Arrest</div>
+      <div class="fchip" onclick="tlFilter(this,'documents')">Documents</div>
+      <div class="fchip" onclick="tlFilter(this,'death')">Death</div>
+      <div class="fchip" onclick="tlFilter(this,'victim')">Victims</div>
+    </div>
+
+    <div id="timeline-list"></div>
+  </div>
+
+  <!-- ── PEOPLE ── -->
+  <div class="view" id="v-people">
+    <div class="sec-header">
+      <div class="sec-title">Named Individuals</div>
+      <button class="add-btn" onclick="openAddPerson()">+ Add Person</button>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input class="search-input" id="p-search" placeholder="Search people..." oninput="renderPeople()">
+    </div>
+
+    <div class="filter-row" id="p-filters">
+      <div class="fchip on" onclick="pFilter(this,'all')">All</div>
+      <div class="fchip" onclick="pFilter(this,'convicted')">Convicted</div>
+      <div class="fchip" onclick="pFilter(this,'named')">Named/Accused</div>
+      <div class="fchip" onclick="pFilter(this,'associate')">Associates</div>
+      <div class="fchip" onclick="pFilter(this,'victim')">Victims/Survivors</div>
+    </div>
+
+    <div id="people-list"></div>
+  </div>
+
+  <!-- ── DOCUMENTS ── -->
+  <div class="view" id="v-docs">
+    <div class="sec-header">
+      <div class="sec-title">Key Documents</div>
+      <button class="add-btn" onclick="openAddDoc()">+ Add Document</button>
+    </div>
+
+    <div class="filter-row" id="doc-filters">
+      <div class="fchip on" onclick="docFilter(this,'all')">All</div>
+      <div class="fchip" onclick="docFilter(this,'released')">Released</div>
+      <div class="fchip" onclick="docFilter(this,'partial')">Partial</div>
+      <div class="fchip" onclick="docFilter(this,'sealed')">Sealed</div>
+    </div>
+
+    <div id="docs-list"></div>
+  </div>
+
+  <!-- ── MY NOTES ── -->
+  <div class="view" id="v-notes">
+    <div class="sec-header">
+      <div class="sec-title">Research Notes</div>
+      <button class="add-btn" onclick="openAddNote()">+ New Note</button>
+    </div>
+
+    <div id="global-notes-list"></div>
+  </div>
+
+</div>
+
+<!-- NOTE MODAL -->
+<div id="note-overlay" onclick="noteOverlayClick(event)">
+  <div id="note-modal">
+    <div id="note-modal-title">Add Annotation</div>
+    <textarea id="note-textarea" placeholder="Your research note, question, or observation..."></textarea>
+    <div class="note-btns">
+      <button class="note-save" onclick="saveNote()">Save Note</button>
+      <button class="note-cancel" onclick="closeNoteModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL (multi-use) -->
+<div id="add-overlay" onclick="addOverlayClick(event)">
+  <div id="add-modal">
+    <div id="add-modal-title" style="font-family:'Special Elite',cursive;font-size:16px;color:var(--amber);margin-bottom:12px">Add Entry</div>
+    <div id="add-modal-fields"></div>
+    <button class="add-save" id="add-save-btn">Save</button>
+    <button class="add-cancel" onclick="closeAddModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ────────────────────────────────────────
+const KEY = 'epstein_tracker_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||{}; }catch{ return {}; }}
+function saveAll(){ localStorage.setItem(KEY,JSON.stringify(D)); }
+function ge(id){ return document.getElementById(id); }
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── DATA ───────────────────────────────────────────
+const TIMELINE_DEFAULT = [
+  {id:1,year:'1990s',date:'1992–1996',title:'Epstein befriends Prince Andrew and begins cultivating powerful social network',summary:'Epstein met Prince Andrew through Ghislaine Maxwell around 1999 according to court documents. During the 1990s he cultivated an extensive network including politicians, academics, business leaders and royalty. He hosted parties at his Palm Beach mansion, New York townhouse, and his private island Little St. James in the U.S. Virgin Islands.',category:'associate',tags:['network','Palm Beach','Little St. James'],source:'Court documents, Miami Herald investigation',notes:[]},
+  {id:2,year:'1999',date:'1999',title:'Epstein acquires Little St. James island, U.S. Virgin Islands',summary:'Epstein purchased the 70-acre island for approximately $7.95 million. The island would later become central to criminal allegations. Multiple survivors described being trafficked there. The island had an unusual blue-striped building that attracted significant attention.',category:'property',tags:['Little St. James','USVI','property'],source:'Property records, court filings',notes:[]},
+  {id:3,year:'2005',date:'Mar 2005',title:'First police report filed in Palm Beach — underaged girl reports abuse',summary:'A 14-year-old\'s stepmother filed a complaint with Palm Beach Police Department. Det. Joseph Recarey investigated and identified over 30 potential underage victims in Palm Beach County alone. The investigation led to a recommendation for federal charges.',category:'legal',tags:['Palm Beach PD','investigation','victims'],source:'Palm Beach Police Department records',notes:[]},
+  {id:4,year:'2006',date:'2006',title:'FBI opens federal investigation; identifies over 40 potential victims nationwide',summary:'The FBI\'s investigation expanded beyond Palm Beach and identified victims across multiple states. Federal prosecutors in the Southern District of Florida prepared a 53-page indictment recommending serious federal charges that could have resulted in a life sentence.',category:'legal',tags:['FBI','federal investigation','indictment'],source:'DOJ documents, court filings',notes:[]},
+  {id:5,year:'2007',date:'Sep 2007',title:'Non-Prosecution Agreement (NPA) secretly negotiated by Alex Acosta',summary:'Alexander Acosta, then U.S. Attorney for the Southern District of Florida, secretly negotiated a non-prosecution agreement with Epstein\'s lawyers. The deal gave Epstein and unnamed co-conspirators immunity from federal prosecution. Crucially, it was kept secret from victims, which was later ruled a violation of the Crime Victims\' Rights Act.',category:'legal',tags:['NPA','Acosta','immunity','key event'],source:'Federal court ruling, Miami Herald',notes:[]},
+  {id:6,year:'2008',date:'Jun 2008',title:'Epstein pleads guilty to Florida state charges; receives 18-month sentence',summary:'Epstein pleaded guilty to two state charges: solicitation of prostitution and procurement of minors for prostitution. He received an 18-month sentence in Palm Beach County Jail but was granted "work release" allowing him to leave jail up to 12 hours a day, 6 days a week. He served 13 months and was released in July 2009.',category:'legal',tags:['guilty plea','sentence','work release'],source:'Palm Beach County court records',notes:[]},
+  {id:7,year:'2010',date:'2010–2018',title:'Maxwell civil suit; Virginia Giuffre (Roberts) files allegations against multiple individuals',summary:'Virginia Giuffre (then Roberts) filed civil suits describing her trafficking and abuse beginning at age 17. She alleged she was directed to have sex with numerous powerful men including Prince Andrew, Alan Dershowitz, and others. These claims were the subject of significant litigation.',category:'legal',tags:['Giuffre','Maxwell civil suit','Prince Andrew'],source:'Court filings, SDNY',notes:[]},
+  {id:8,year:'2018',date:'Nov 2018',title:'Miami Herald publishes "Perversion of Justice" investigation by Julie K. Brown',summary:'The Miami Herald\'s Julie K. Brown published a landmark investigative series documenting Epstein\'s crimes, the secret NPA deal, and the failure of the justice system. The series sparked national outrage and congressional scrutiny, directly leading to Epstein\'s re-arrest.',category:'documents',tags:['Miami Herald','Julie Brown','investigation','media'],source:'Miami Herald',notes:[]},
+  {id:9,year:'2019',date:'Jul 6, 2019',title:'Epstein arrested at Teterboro Airport; charged with federal sex trafficking',summary:'Jeffrey Epstein was arrested upon returning from Paris at Teterboro Airport, New Jersey. He was charged by SDNY prosecutors with one count of sex trafficking of minors and one count of sex trafficking conspiracy. Prosecutors alleged he abused dozens of girls as young as 14 from 2002–2005.',category:'arrest',tags:['arrest','SDNY','Teterboro','federal charges'],source:'SDNY indictment',notes:[]},
+  {id:10,year:'2019',date:'Jul 8, 2019',title:'Search of Manhattan mansion yields "vast trove" of child pornography',summary:'Federal agents executing a search warrant at Epstein\'s Manhattan townhouse on East 71st Street found "a vast trove of hundreds — and perhaps thousands — of sexually suggestive photographs of fully or partially nude females." Some images appeared to be of underage girls.',category:'legal',tags:['search warrant','Manhattan','evidence'],source:'SDNY court filing',notes:[]},
+  {id:11,year:'2019',date:'Jul 23, 2019',title:'Epstein found semi-conscious in cell; ruled attempted suicide',summary:'Epstein was found unresponsive in his cell at Metropolitan Correctional Center (MCC) New York. Marks on his neck were consistent with strangulation or attempted hanging. Cellmate Nicholas Tartaglione (a former police officer charged with murder) was interviewed by investigators.',category:'death',tags:['MCC','cell incident','Jul 23'],source:'FBI investigation records',notes:[]},
+  {id:12,year:'2019',date:'Aug 10, 2019',title:'Epstein found dead in cell; ruled suicide by hanging by NYC Medical Examiner',summary:'Epstein was found dead in his cell at MCC at 6:30am. He had been taken off suicide watch and his cell mate had been removed. Guards were allegedly asleep and had falsified log records. NYC Medical Examiner Dr. Barbara Sampson ruled the death suicide by hanging. Independent forensic pathologist Dr. Michael Baden, hired by Epstein\'s brother, concluded evidence was more consistent with homicide by strangulation.',category:'death',tags:['death','MCC','controversial','forensics'],source:'NYC Medical Examiner, DOJ OIG report',notes:[]},
+  {id:13,year:'2019',date:'Oct 2019',title:'Judge unseals Maxwell-Giuffre civil case documents — 2,000+ pages released',summary:'Judge Loretta Preska ordered the unsealing of deposition materials and other documents from Giuffre v. Maxwell. The documents named numerous associates and described the scope of Epstein\'s trafficking network in detail. Further tranches were released in subsequent years.',category:'documents',tags:['Maxwell documents','unsealed','Giuffre','2,000 pages'],source:'SDNY docket, 15-cv-7433',notes:[]},
+  {id:14,year:'2020',date:'Jul 2, 2020',title:'Ghislaine Maxwell arrested in New Hampshire',summary:'Ghislaine Maxwell was arrested at her $1M+ property in Bradford, New Hampshire. She was charged with six federal counts including sex trafficking of minors, perjury, and enticement of minors. She had been in hiding since Epstein\'s arrest.',category:'arrest',tags:['Maxwell','arrested','New Hampshire'],source:'FBI, SDNY indictment',notes:[]},
+  {id:15,year:'2021',date:'Nov 29–Dec 29, 2021',title:'Ghislaine Maxwell federal trial; convicted on 5 of 6 counts',summary:'Maxwell\'s trial lasted approximately one month in SDNY. She was convicted on 5 counts including sex trafficking of a minor. Four survivors testified: "Jane," "Carolyn," "Kate," and Annie Farmer. The jury deliberated approximately 5 days. Defense argued Maxwell was being scapegoated for Epstein.',category:'legal',tags:['Maxwell trial','conviction','survivors testified'],source:'SDNY trial transcript',notes:[]},
+  {id:16,year:'2022',date:'Jun 28, 2022',title:'Maxwell sentenced to 20 years in federal prison',summary:'Judge Alison Nathan sentenced Ghislaine Maxwell to 20 years in federal prison plus 3 years supervised release. Maxwell expressed remorse. Survivors gave powerful victim impact statements. She was ordered to surrender $750,000 and is serving her sentence at FCI Tallahassee.',category:'legal',tags:['Maxwell','sentenced','20 years'],source:'SDNY sentencing hearing',notes:[]},
+  {id:17,year:'2023',date:'Jan 3–Sep 2023',title:'SDNY releases Epstein client list documents in tranches (Giuffre v. Maxwell)',summary:'Following court orders, the Southern District of New York began releasing documents from the Giuffre v. Maxwell civil case identifying individuals named in the litigation. Documents named dozens of individuals. Many had previously requested to remain anonymous. The releases continued across several months.',category:'documents',tags:['client list','SDNY','names released','documents'],source:'SDNY, Giuffre v. Maxwell docket',notes:[]},
+  {id:18,year:'2024',date:'Jan 2024',title:'Final major tranche of Epstein-Maxwell documents released',summary:'Judge Loretta Preska ordered and oversaw the release of the final tranche of documents from the Giuffre v. Maxwell case. The documents included depositions, travel records, correspondence, and lists of individuals named in the litigation. Over 900 documents released.',category:'documents',tags:['final release','2024','documents','900+ docs'],source:'SDNY, Judge Preska orders',notes:[]},
+  {id:19,year:'2024',date:'Feb–Mar 2024',title:'USVI sues JPMorgan Chase; bank reaches $75M settlement over Epstein ties',summary:'The U.S. Virgin Islands reached a $75 million settlement with JPMorgan Chase over the bank\'s facilitation of Epstein\'s sex trafficking operation despite knowing of his crimes. JPMorgan had been Epstein\'s primary bank for years after his 2008 conviction.',category:'legal',tags:['JPMorgan','USVI','settlement','$75M'],source:'USVI AG, court filings',notes:[]},
+  {id:20,year:'2024',date:'2024',title:'DOJ Task Force investigation ongoing; Epstein network prosecutors active',summary:'The Department of Justice maintained an active investigation into individuals who enabled or participated in Epstein\'s trafficking network. Congress held hearings on the FBI\'s original handling of the case. Multiple civil suits by survivors against financial institutions and associates continued.',category:'legal',tags:['DOJ','ongoing','network','Congress'],source:'DOJ statements, Congressional hearings',notes:[]},
+];
+
+const PEOPLE_DEFAULT = [
+  {id:101,name:'Jeffrey Epstein',role:'Financier, convicted sex offender',status:'deceased',initials:'JE',detail:'Born January 20, 1953. Convicted of soliciting prostitution from a minor in 2008 (Florida). Arrested on federal sex trafficking charges July 2019. Found dead in MCC New York August 10, 2019. NYC Medical Examiner ruled suicide by hanging. Independent pathologist hired by his brother concluded evidence consistent with homicide.',connections:['Ghislaine Maxwell','Prince Andrew','Alan Dershowitz','Les Wexner','Bill Gates (emails)'],notes:[]},
+  {id:102,name:'Ghislaine Maxwell',role:'Associate, convicted sex trafficker',status:'convicted',initials:'GM',detail:'Born December 25, 1961. Daughter of media mogul Robert Maxwell. Met Epstein in early 1990s after her father\'s death. Described as Epstein\'s girlfriend, then social fixer and recruiter. Convicted December 2021 on 5 federal counts including sex trafficking of a minor. Sentenced to 20 years June 2022. Serving sentence at FCI Tallahassee.',connections:['Jeffrey Epstein','Prince Andrew','Virginia Giuffre (victim)','Jean-Luc Brunel'],notes:[]},
+  {id:103,name:'Alexander Acosta',role:'Former U.S. Attorney / Trump Labor Secretary',status:'associate',initials:'AA',detail:'As U.S. Attorney for SDNY Florida, Acosta secretly negotiated the 2008 Non-Prosecution Agreement that shielded Epstein and unnamed co-conspirators from federal prosecution. A federal judge later ruled this violated the Crime Victims\' Rights Act. Acosta served as Trump\'s Secretary of Labor 2017–2019, resigning after the Miami Herald investigation renewed scrutiny. Reportedly stated Epstein "belonged to intelligence."',connections:['Jeffrey Epstein','NPA 2007'],notes:[]},
+  {id:104,name:'Prince Andrew',role:'Duke of York, named in documents',status:'named',initials:'PA',detail:'Virginia Giuffre alleged she was directed to have sex with Prince Andrew three times: at Maxwell\'s London home, at Epstein\'s New York mansion, and at Little St. James. Giuffre\'s account is supported by a photograph showing Andrew with his arm around her waist. Andrew has denied the allegations. He settled a civil lawsuit with Giuffre in February 2022 for a reported sum that included a donation to Giuffre\'s victims charity. He has not been criminally charged.',connections:['Jeffrey Epstein','Ghislaine Maxwell','Virginia Giuffre'],notes:[]},
+  {id:105,name:'Virginia Giuffre',role:'Survivor / Plaintiff',status:'victim',initials:'VG',detail:'Born Virginia Roberts. Recruited at age 17 at Mar-a-Lago. Was a spa attendant at the time. Describes being trafficked by Epstein and Maxwell to numerous powerful men. Filed civil suits against Maxwell (settled 2017) and Prince Andrew (settled 2022). Her deposition transcripts, released by court order, named numerous individuals. Her testimony was central to both civil and criminal proceedings.',connections:['Jeffrey Epstein','Ghislaine Maxwell','Prince Andrew'],notes:[]},
+  {id:106,name:'Les Wexner',role:'Billionaire, Victoria\'s Secret founder',status:'associate',initials:'LW',detail:'Wexner was Epstein\'s primary client and source of wealth for many years. He gave Epstein broad power of attorney and transferred his $77M Manhattan mansion to him. Wexner has stated he was deceived by Epstein and severed ties around 2007. Wexner\'s connections to Epstein were extensive — Epstein managed his vast fortune and had authority over his properties and finances.',connections:['Jeffrey Epstein'],notes:[]},
+  {id:107,name:'Jean-Luc Brunel',role:'French modeling agent, named co-conspirator',status:'deceased',initials:'JB',detail:'French modeling scout who allegedly procured victims for Epstein from Europe and South America, sometimes using his modeling agency as cover. Named in multiple survivor accounts and court documents. Arrested in France in December 2020 on suspicion of rape of minors. Found dead in his cell at La Santé prison, Paris on February 19, 2022 — ruled suicide by hanging.',connections:['Jeffrey Epstein','Ghislaine Maxwell'],notes:[]},
+  {id:108,name:'Alan Dershowitz',role:'Lawyer, Harvard professor',status:'named',initials:'AD',detail:'Prominent defense attorney who was part of Epstein\'s original 2008 legal team. Virginia Giuffre alleged in court documents that she was directed to have sex with Dershowitz. Dershowitz has vigorously denied all allegations and counter-sued Giuffre. A 2022 lawsuit against Dershowitz was dismissed without prejudice. His involvement in negotiating the NPA has been examined.',connections:['Jeffrey Epstein','Virginia Giuffre (accuser)','NPA 2007'],notes:[]},
+  {id:109,name:'Darren Indyke & Richard Kahn',role:'Estate Executors',status:'associate',initials:'DI',detail:'Indyke was Epstein\'s longtime attorney and Kahn was his accountant. They were appointed co-executors of his estate, which was valued at over $577 million. Survivors and the USVI sued the estate. A settlement fund was established to compensate victims, distributing funds to over 100 claimants.',connections:['Jeffrey Epstein','Estate settlement'],notes:[]},
+];
+
+const DOCS_DEFAULT = [
+  {id:201,type:'court',title:'53-Page Federal Indictment Draft (2006, never filed)',meta:'DOJ Southern District of Florida. Recommended life sentence for 36 counts.',status:'partial',url:'',desc:'The original recommended federal indictment prepared by FBI and prosecutors was never filed after the NPA was negotiated. Partial contents have been reported by journalists.'},
+  {id:202,type:'court',title:'Non-Prosecution Agreement (NPA) — 2007',meta:'Signed Sep 2007. Filed SDFL. Originally kept secret from victims.',status:'released',url:'https://www.documentcloud.org/documents/5677718-Epstein-Non-Prosecution-Agreement.html',desc:'The 2008 agreement between Acosta\'s office and Epstein\'s lawyers. Granted immunity to unnamed co-conspirators. Later ruled to have violated the Crime Victims\' Rights Act.'},
+  {id:203,type:'court',title:'Giuffre v. Maxwell Civil Case Documents — 2,000+ pages',meta:'SDNY Case 15-cv-7433. Released in tranches 2019–2024.',status:'released',url:'https://www.courtlistener.com/docket/4355835/virginia-giuffre-v-ghislaine-maxwell/',desc:'Depositions, correspondence, and filings from the civil case between Giuffre and Maxwell. Names dozens of individuals. Central to public understanding of the network.'},
+  {id:204,type:'investigation',title:'Miami Herald "Perversion of Justice" Series',meta:'Published November 2018. Journalist: Julie K. Brown.',status:'released',url:'https://www.miamiherald.com/news/local/article220097825.html',desc:'The landmark investigative series that broke open the case and led to Epstein\'s re-arrest. Available in full on Miami Herald website.'},
+  {id:205,type:'court',title:'SDNY Indictment — July 2019',meta:'United States v. Epstein, 19-cr-490 (SDNY).',status:'released',url:'https://www.justice.gov/usao-sdny/press-release/file/1182471/download',desc:'Two-count federal indictment: sex trafficking and sex trafficking conspiracy. Included allegations of abuse of dozens of minors from 2002–2005.'},
+  {id:206,type:'government',title:'DOJ OIG Report on BOP Failures at MCC',meta:'Released June 2021. Bureau of Prisons Inspector General.',status:'released',url:'https://oig.justice.gov/sites/default/files/reports/21-075.pdf',desc:'Found that two guards falsified log entries, that Epstein was left alone despite protocols, and that there were systemic failures at MCC. Two guards received deferred prosecution agreements.'},
+  {id:207,type:'financial',title:'JPMorgan Chase Settlement — USVI',meta:'$75 million settlement, 2024.',status:'released',url:'',desc:'Settlement in USVI suit alleging JPMorgan knowingly facilitated Epstein\'s trafficking by processing suspicious transactions for years after his 2008 conviction.'},
+  {id:208,type:'court',title:'Epstein Island Search Warrant Returns',meta:'USVI search warrants, executed 2019.',status:'partial',url:'',desc:'Search warrant returns for Little St. James island. Some materials remain under seal or have been produced only in redacted form.'},
+  {id:209,type:'court',title:'Maxwell Trial Transcripts — SDNY',meta:'United States v. Maxwell, 20-cr-330. Nov–Dec 2021.',status:'released',url:'https://www.courtlistener.com/docket/17082471/united-states-v-maxwell/',desc:'Full trial transcripts including testimony from four survivors and numerous witnesses. Available via PACER and CourtListener.'},
+  {id:210,type:'government',title:'Congressional Testimony — FBI Handling of Epstein Case',meta:'Senate Judiciary Committee, 2023.',status:'released',url:'',desc:'Senate hearings examining why the FBI\'s original investigation did not lead to federal charges and scrutiny of the decision-making that led to the NPA.'},
+];
+
+const NOTES_DEFAULT = [];
+
+let D = load();
+if(!D.timeline) D.timeline = JSON.parse(JSON.stringify(TIMELINE_DEFAULT));
+if(!D.people) D.people = JSON.parse(JSON.stringify(PEOPLE_DEFAULT));
+if(!D.docs) D.docs = JSON.parse(JSON.stringify(DOCS_DEFAULT));
+if(!D.globalNotes) D.globalNotes = [];
+saveAll();
+
+// ── FILTERS ────────────────────────────────────────
+let tlActiveFilter = 'all';
+let pActiveFilter  = 'all';
+let docActiveFilter= 'all';
+
+function tlFilter(el,f){ document.querySelectorAll('#tl-filters .fchip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); tlActiveFilter=f; renderTimeline(); }
+function pFilter(el,f){  document.querySelectorAll('#p-filters .fchip').forEach(c=>c.classList.remove('on'));  el.classList.add('on'); pActiveFilter=f;  renderPeople(); }
+function docFilter(el,f){ document.querySelectorAll('#doc-filters .fchip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); docActiveFilter=f; renderDocs(); }
+
+// ── TABS ───────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['timeline','people','docs','notes'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+}
+
+// ── NOTE MODAL ─────────────────────────────────────
+let currentNoteTarget = null;
+
+function openNoteForEvent(id){
+  currentNoteTarget = {type:'event',id};
+  ge('note-textarea').value='';
+  ge('note-modal-title').textContent='Annotate Event';
+  ge('note-overlay').classList.add('open');
+}
+function openNoteForPerson(id){
+  currentNoteTarget = {type:'person',id};
+  ge('note-textarea').value='';
+  ge('note-modal-title').textContent='Annotate Person';
+  ge('note-overlay').classList.add('open');
+}
+function openAddNote(){
+  currentNoteTarget = {type:'global'};
+  ge('note-textarea').value='';
+  ge('note-modal-title').textContent='New Research Note';
+  ge('note-overlay').classList.add('open');
+}
+function closeNoteModal(){ ge('note-overlay').classList.remove('open'); currentNoteTarget=null; }
+function noteOverlayClick(e){ if(e.target===ge('note-overlay')) closeNoteModal(); }
+
+function saveNote(){
+  const text = ge('note-textarea').value.trim();
+  if(!text) return;
+  if(!currentNoteTarget) return;
+  const note = {text, date:new Date().toISOString()};
+  if(currentNoteTarget.type==='event'){
+    const ev = D.timeline.find(e=>e.id===currentNoteTarget.id);
+    if(ev){ ev.notes.push(note); }
+  } else if(currentNoteTarget.type==='person'){
+    const p = D.people.find(p=>p.id===currentNoteTarget.id);
+    if(p){ p.notes.push(note); }
+  } else {
+    D.globalNotes.push({id:Date.now(),...note});
+  }
+  saveAll(); closeNoteModal();
+  renderTimeline(); renderPeople(); renderGlobalNotes(); updateStats();
+}
+
+// ── ADD MODAL ──────────────────────────────────────
+let addMode = '';
+
+function openAddEvent(){
+  addMode='event';
+  ge('add-modal-title').textContent='Add Timeline Event';
+  ge('add-modal-fields').innerHTML=fields([
+    {id:'ae-date',label:'Date',ph:'e.g. Jul 2019'},
+    {id:'ae-year',label:'Year',ph:'e.g. 2019'},
+    {id:'ae-title',label:'Title *',ph:'Event title'},
+    {id:'ae-summary',label:'Summary',ph:'Details...',type:'textarea'},
+    {id:'ae-category',label:'Category',ph:'legal / arrest / documents / death / victim'},
+    {id:'ae-source',label:'Source',ph:'Source URL or description'},
+  ]);
+  ge('add-overlay').classList.add('open');
+  ge('add-save-btn').onclick = doAddEvent;
+}
+
+function doAddEvent(){
+  const title = ge('ae-title').value.trim();
+  if(!title){ alert('Title required'); return; }
+  D.timeline.unshift({
+    id: Date.now(),
+    year: ge('ae-year').value||'?',
+    date: ge('ae-date').value||'',
+    title,
+    summary: ge('ae-summary').value||'',
+    category: ge('ae-category').value||'legal',
+    tags: [],
+    source: ge('ae-source').value||'',
+    notes: [],
+    userAdded: true,
+  });
+  saveAll(); closeAddModal(); renderTimeline(); updateStats();
+}
+
+function openAddPerson(){
+  addMode='person';
+  ge('add-modal-title').textContent='Add Person';
+  ge('add-modal-fields').innerHTML=fields([
+    {id:'ap-name',label:'Full Name *',ph:'Name'},
+    {id:'ap-role',label:'Role / Description',ph:'e.g. Financier, associate'},
+    {id:'ap-initials',label:'Initials (2-3 chars)',ph:'JE'},
+    {id:'ap-status',label:'Status',ph:'associate / named / convicted / victim / deceased'},
+    {id:'ap-detail',label:'Details',ph:'Background...',type:'textarea'},
+    {id:'ap-connections',label:'Connections (comma-separated)',ph:'e.g. Jeffrey Epstein, Ghislaine Maxwell'},
+  ]);
+  ge('add-overlay').classList.add('open');
+  ge('add-save-btn').onclick = doAddPerson;
+}
+
+function doAddPerson(){
+  const name = ge('ap-name').value.trim();
+  if(!name){ alert('Name required'); return; }
+  D.people.push({
+    id: Date.now(),
+    name,
+    role: ge('ap-role').value||'',
+    initials: ge('ap-initials').value||name.slice(0,2).toUpperCase(),
+    status: ge('ap-status').value||'associate',
+    detail: ge('ap-detail').value||'',
+    connections: ge('ap-connections').value.split(',').map(s=>s.trim()).filter(Boolean),
+    notes: [],
+    userAdded: true,
+  });
+  saveAll(); closeAddModal(); renderPeople(); updateStats();
+}
+
+function openAddDoc(){
+  addMode='doc';
+  ge('add-modal-title').textContent='Add Document';
+  ge('add-modal-fields').innerHTML=fields([
+    {id:'ad-title',label:'Title *',ph:'Document title'},
+    {id:'ad-meta',label:'Meta / Source info',ph:'e.g. SDNY, case number'},
+    {id:'ad-url',label:'URL (if available)',ph:'https://...'},
+    {id:'ad-status',label:'Status',ph:'released / partial / sealed'},
+    {id:'ad-desc',label:'Description',ph:'What does this document contain?',type:'textarea'},
+  ]);
+  ge('add-overlay').classList.add('open');
+  ge('add-save-btn').onclick = doAddDoc;
+}
+
+function doAddDoc(){
+  const title = ge('ad-title').value.trim();
+  if(!title){ alert('Title required'); return; }
+  D.docs.push({
+    id: Date.now(),
+    type: 'other',
+    title,
+    meta: ge('ad-meta').value||'',
+    url: ge('ad-url').value||'',
+    status: ge('ad-status').value||'partial',
+    desc: ge('ad-desc').value||'',
+    userAdded: true,
+  });
+  saveAll(); closeAddModal(); renderDocs(); updateStats();
+}
+
+function closeAddModal(){ ge('add-overlay').classList.remove('open'); }
+function addOverlayClick(e){ if(e.target===ge('add-overlay')) closeAddModal(); }
+
+function fields(defs){
+  return defs.map(f=>'<div class="add-field"><div class="add-label">'+f.label+'</div>'
+    +(f.type==='textarea'
+      ?'<textarea class="add-input" id="'+f.id+'" placeholder="'+f.ph+'" rows="3" style="resize:none"></textarea>'
+      :'<input class="add-input" id="'+f.id+'" type="text" placeholder="'+f.ph+'">')
+    +'</div>').join('');
+}
+
+// ── RENDER TIMELINE ────────────────────────────────
+function renderTimeline(){
+  const q = ge('tl-search').value.toLowerCase();
+  const items = D.timeline.filter(e=>{
+    const matchFilter = tlActiveFilter==='all'||e.category===tlActiveFilter;
+    const matchSearch = !q||(e.title+e.summary+e.date).toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  const dotClass = {legal:'',arrest:'red',documents:'blue',death:'red',victim:'',property:'',associate:''};
+
+  ge('timeline-list').innerHTML = items.map(ev=>{
+    const hasNotes = ev.notes&&ev.notes.length>0;
+    return '<div class="timeline-item">'
+      +'<div class="tl-line"><div class="tl-dot '+(dotClass[ev.category]||'')+'"></div><div class="tl-stem"></div></div>'
+      +'<div class="tl-card" id="tlc-'+ev.id+'" onclick="toggleTl('+ev.id+')">'
+        +'<div class="tl-year">'+escH(ev.year)+'</div>'
+        +'<div class="tl-date">'+escH(ev.date)+'</div>'
+        +'<div class="tl-title">'+escH(ev.title)+'</div>'
+        +'<div class="tl-summary">'+escH(ev.summary)
+          +(ev.source?'</div><div class="tl-source" onclick="event.stopPropagation()">&#128279; '+escH(ev.source)+'</div>':'</div>')
+          +'<div class="tl-tags">'+ev.tags.map(t=>'<span class="tl-tag key">'+escH(t)+'</span>').join('')+'</div>'
+          +(ev.notes&&ev.notes.length?ev.notes.map(n=>'<div class="tl-user-note">&#9998; '+escH(n.text)+'</div>').join(''):'')
+          +'<button class="tl-note-btn" onclick="event.stopPropagation();openNoteForEvent('+ev.id+')">+ Add annotation</button>'
+        +(ev.userAdded?'<button style="font-size:9px;color:var(--muted);background:transparent;border:none;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;margin-top:4px" onclick="event.stopPropagation();deleteEvent('+ev.id+')">&#215; Delete</button>':'')
+        +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function toggleTl(id){
+  const card = ge('tlc-'+id);
+  card.classList.toggle('expanded');
+}
+
+function deleteEvent(id){ D.timeline=D.timeline.filter(e=>e.id!==id); saveAll(); renderTimeline(); updateStats(); }
+
+// ── RENDER PEOPLE ──────────────────────────────────
+function renderPeople(){
+  const q = ge('p-search').value.toLowerCase();
+  const statusMap = {convicted:'convicted',named:'named',associate:'associate',deceased:'associate',victim:'victim',pled:'named',cleared:'associate'};
+  const people = D.people.filter(p=>{
+    const matchFilter = pActiveFilter==='all'||statusMap[p.status]===pActiveFilter||p.status===pActiveFilter;
+    const matchSearch = !q||(p.name+p.role+p.detail).toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  ge('people-list').innerHTML = people.map(p=>'<div class="person-card" id="pc-'+p.id+'" onclick="togglePerson('+p.id+')">'
+    +'<div class="person-header">'
+      +'<div class="person-initials">'+escH(p.initials)+'</div>'
+      +'<div class="person-info">'
+        +'<div class="person-name">'+escH(p.name)+'</div>'
+        +'<div class="person-role">'+escH(p.role)+'</div>'
+        +'<div class="person-status status-'+p.status+'">'+p.status.toUpperCase()+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="person-detail">'
+      +'<div class="person-detail-text">'+escH(p.detail)+'</div>'
+      +(p.connections&&p.connections.length?'<div class="person-connections"><div class="connection-label">Connections</div>'+p.connections.map(c=>'<span class="connection-pill">'+escH(c)+'</span>').join('')+'</div>':'')
+      +(p.notes&&p.notes.length?p.notes.map(n=>'<div class="tl-user-note">&#9998; '+escH(n.text)+'</div>').join(''):'')
+      +'<button class="tl-note-btn" onclick="event.stopPropagation();openNoteForPerson('+p.id+')">+ Add annotation</button>'
+      +(p.userAdded?'<button style="font-size:9px;color:var(--muted);background:transparent;border:none;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;margin-top:4px" onclick="event.stopPropagation();deletePerson('+p.id+')">&#215; Delete</button>':'')
+    +'</div>'
+    +'</div>').join('');
+}
+
+function togglePerson(id){ ge('pc-'+id).classList.toggle('expanded'); }
+function deletePerson(id){ D.people=D.people.filter(p=>p.id!==id); saveAll(); renderPeople(); updateStats(); }
+
+// ── RENDER DOCS ────────────────────────────────────
+function renderDocs(){
+  const docs = D.docs.filter(d=>docActiveFilter==='all'||d.status===docActiveFilter);
+  const icons = {court:'&#9878;',investigation:'&#128269;',government:'&#127981;',financial:'&#128200;',other:'&#128196;'};
+  ge('docs-list').innerHTML = docs.map(d=>'<div class="doc-item">'
+    +'<div class="doc-icon">'+(icons[d.type]||icons.other)+'</div>'
+    +'<div class="doc-info">'
+      +'<div class="doc-title">'+escH(d.title)+'</div>'
+      +'<div class="doc-meta">'+escH(d.meta)+'</div>'
+      +'<div class="doc-meta" style="margin-top:4px">'+escH(d.desc)+'</div>'
+      +'<div class="doc-status doc-'+d.status+'">'+d.status.toUpperCase()+'</div>'
+      +(d.url?'<a class="doc-link" href="'+escH(d.url)+'" target="_blank">&#128279; View Document</a>':'')
+    +'</div>'
+    +(d.userAdded?'<button style="font-size:12px;color:var(--muted);background:transparent;border:none;cursor:pointer;flex-shrink:0" onclick="deleteDoc('+d.id+')">&#215;</button>':'')
+    +'</div>').join('');
+}
+
+function deleteDoc(id){ D.docs=D.docs.filter(d=>d.id!==id); saveAll(); renderDocs(); updateStats(); }
+
+// ── RENDER GLOBAL NOTES ────────────────────────────
+function renderGlobalNotes(){
+  ge('global-notes-list').innerHTML = D.globalNotes.length
+    ? D.globalNotes.slice().reverse().map(n=>'<div style="background:var(--s1);border:1px solid var(--b);border-left:2px solid var(--amber);border-radius:0 4px 4px 0;padding:12px;margin-bottom:8px">'
+        +'<div style="font-size:9px;color:var(--muted);margin-bottom:5px">'+new Date(n.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>'
+        +'<div style="font-size:12px;line-height:1.7;color:var(--amber2)">'+escH(n.text)+'</div>'
+        +'<button style="font-size:9px;color:var(--muted);background:transparent;border:none;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;margin-top:6px" onclick="deleteGlobalNote('+n.id+')">&#215; Delete</button>'
+        +'</div>').join('')
+    : '<div style="text-align:center;color:var(--muted);padding:30px;font-size:11px;line-height:1.8">No notes yet.<br>Use "+ New Note" to add research notes,<br>or annotate events and people directly.</div>';
+}
+
+function deleteGlobalNote(id){ D.globalNotes=D.globalNotes.filter(n=>n.id!==id); saveAll(); renderGlobalNotes(); updateStats(); }
+
+// ── STATS ──────────────────────────────────────────
+function updateStats(){
+  const noteCount = D.timeline.reduce((s,e)=>s+(e.notes||[]).length,0)
+    + D.people.reduce((s,p)=>s+(p.notes||[]).length,0)
+    + D.globalNotes.length;
+  ge('st-events').textContent = D.timeline.length;
+  ge('st-people').textContent = D.people.length;
+  ge('st-docs').textContent   = D.docs.length;
+  ge('st-notes').textContent  = noteCount;
+}
+
+// ── INIT ───────────────────────────────────────────
+renderTimeline();
+renderPeople();
+renderDocs();
+renderGlobalNotes();
+updateStats();
+</script>
+</body>
+</html>

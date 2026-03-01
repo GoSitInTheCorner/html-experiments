@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;--accent:#60aaff;--accent2:#a0cfff;--accent3:#60d4ff;--accent4:#f0a060;--text:#e8e8f0;--muted:#888898;--danger:#f06060;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:clamp(12px,1.5vw,15px)}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.back-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
+.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;padding:5px 11px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-title{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:200;color:var(--accent)}
+#crm-main{display:flex;flex-direction:column;flex:1;overflow:hidden}
+#crm-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
+.crm-tab{flex:1;padding:10px 4px;text-align:center;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+.crm-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.crm-view{display:none;flex-direction:column;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.crm-view.active{display:flex}
+#crm-search-wrap{padding:10px 14px 6px;flex-shrink:0}
+#crm-search{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;outline:none}
+#crm-search:focus{border-color:var(--accent)}
+#crm-search::placeholder{color:var(--muted)}
+#crm-filters{display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+#crm-filters::-webkit-scrollbar{display:none}
+.crm-chip{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:.7rem;cursor:pointer;white-space:nowrap}
+.crm-chip.active{background:#0e2040;color:var(--accent);border-color:var(--accent)}
+#crm-list{padding:0 14px 80px;display:flex;flex-direction:column;gap:8px}
+.crm-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.crm-card:active{background:var(--surface2)}
+.crm-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:16px;font-weight:500;flex-shrink:0;color:#fff}
+.crm-card-info{flex:1;min-width:0}
+.crm-card-name{font-family:'Fraunces',serif;font-size:15px;font-weight:200;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crm-card-sub{font-size:.65rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crm-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.crm-badge{font-size:.6rem;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
+.crm-badge-friend{background:#0e2040;color:var(--accent)}
+.crm-badge-pro{background:#1a2010;color:#90d060}
+.crm-badge-client{background:#2a1810;color:var(--accent4)}
+.crm-follow-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);margin-top:2px}
+.crm-follow-dot.soon{background:var(--accent4)}
+.crm-follow-dot.ok{background:#538d4e}
+#crm-add-btn{position:fixed;bottom:20px;right:18px;width:50px;height:50px;border-radius:50%;background:var(--accent);border:none;color:#0e0e10;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(96,170,255,.35);z-index:10}
+#crm-queue-list{padding:10px 14px 80px;display:flex;flex-direction:column;gap:8px}
+.crm-queue-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;flex-shrink:0}
+.crm-queue-card:active{background:var(--surface2)}
+.crm-queue-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.crm-queue-name{font-family:'Fraunces',serif;font-size:15px;font-weight:200;flex:1}
+.crm-due-tag{font-size:.6rem;padding:3px 8px;border-radius:10px;font-weight:500;letter-spacing:.04em}
+.crm-due-over{background:#2e1010;color:var(--danger)}
+.crm-due-today{background:#2e1e10;color:var(--accent4)}
+.crm-due-soon{background:#1e2e10;color:#90d060}
+.crm-queue-action{font-size:.73rem;color:var(--muted);padding:6px 10px;background:var(--surface2);border-radius:8px}
+.crm-queue-done{background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-family:'DM Mono',monospace;font-size:.73rem;cursor:pointer;margin-top:8px;width:100%;text-align:center}
+.crm-queue-done:active{border-color:var(--accent);color:var(--accent)}
+#crm-timeline-list{padding:10px 14px 80px}
+.crm-tl-day{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 6px;display:flex;align-items:center;gap:8px}
+.crm-tl-day::after{content:'';flex:1;height:1px;background:var(--border)}
+.crm-tl-item{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start}
+.crm-tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.crm-tl-body{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer}
+.crm-tl-who{font-size:.73rem;font-weight:500;color:var(--text);margin-bottom:2px}
+.crm-tl-note{font-size:.73rem;color:var(--muted);line-height:1.5}
+#crm-detail{display:none;flex-direction:column;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#crm-detail.active{display:flex}
+#crm-detail-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+#crm-back{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;padding:5px 10px;cursor:pointer;flex-shrink:0}
+#crm-detail-name{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:200;flex:1}
+#crm-detail-del{background:transparent;border:none;color:var(--danger);font-size:1.1rem;cursor:pointer;padding:4px}
+#crm-detail-body{padding:14px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px}
+.crm-detail-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:26px;font-weight:500;color:#fff;margin:0 auto 2px}
+.crm-detail-fullname{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:200;text-align:center}
+.crm-detail-type{text-align:center;margin-top:4px}
+.crm-field-group{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.crm-field{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);gap:10px}
+.crm-field:last-child{border-bottom:none}
+.crm-field-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);width:64px;flex-shrink:0}
+.crm-field-val{flex:1;font-size:.8rem;color:var(--text);background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;min-width:0}
+.crm-field-val::placeholder{color:var(--muted)}
+.crm-sec-title{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.crm-sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.crm-log-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px;position:relative}
+.crm-log-date{font-size:.6rem;color:var(--muted);margin-bottom:3px}
+.crm-log-text{font-size:.8rem;color:var(--text);line-height:1.5}
+.crm-log-del{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--border);font-size:.9rem;cursor:pointer;padding:2px 5px}
+.crm-log-del:active{color:var(--danger)}
+.crm-tags-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.crm-tag{padding:3px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:.65rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+.crm-tag-x{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0 2px;line-height:1}
+.crm-tag-x:active{color:var(--danger)}
+.crm-tag-input{background:transparent;border:1px dashed var(--border);border-radius:20px;padding:3px 9px;font-size:.65rem;color:var(--text);font-family:'DM Mono',monospace;outline:none;width:80px}
+.crm-tag-input::placeholder{color:var(--muted)}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end}
+.modal-ov.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:20px 16px 40px;width:100%;animation:slideUp .22s ease;max-height:80dvh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{font-family:'Fraunces',serif;font-weight:200;font-size:1.25rem;margin-bottom:14px;color:var(--accent)}
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;outline:none;margin-bottom:10px}
+.mi:focus{border-color:var(--accent)}
+.mi::placeholder{color:var(--muted)}
+.mact{display:flex;gap:8px;margin-top:6px}
+.mprim{flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;cursor:pointer}
+.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a class="back-btn" href="index.html">← Back</a>
+  <span class="page-title">👥 CRM</span>
+</div>
+
+<div id="crm-main">
+  <div id="crm-tabs">
+    <div class="crm-tab active" onclick="crmTab('contacts')">👤 Contacts</div>
+    <div class="crm-tab" onclick="crmTab('queue')">🔔 Follow-up</div>
+    <div class="crm-tab" onclick="crmTab('timeline')">📋 Timeline</div>
+  </div>
+  <div class="crm-view active" id="crm-contacts-view">
+    <div id="crm-search-wrap"><input id="crm-search" placeholder="Search contacts…" oninput="crmRenderList()" /></div>
+    <div id="crm-filters">
+      <div class="crm-chip active" data-filter="all" onclick="crmSetFilter(this,'all')">All</div>
+      <div class="crm-chip" data-filter="friend" onclick="crmSetFilter(this,'friend')">Friends &amp; Family</div>
+      <div class="crm-chip" data-filter="pro" onclick="crmSetFilter(this,'pro')">Professional</div>
+      <div class="crm-chip" data-filter="client" onclick="crmSetFilter(this,'client')">Clients</div>
+    </div>
+    <div id="crm-list"></div>
+  </div>
+  <div class="crm-view" id="crm-queue-view">
+    <div id="crm-queue-list"></div>
+  </div>
+  <div class="crm-view" id="crm-timeline-view">
+    <div id="crm-timeline-list"></div>
+  </div>
+  <button id="crm-add-btn" onclick="crmOpenAddModal()">+</button>
+</div>
+
+<div id="crm-detail">
+  <div id="crm-detail-header">
+    <button id="crm-back" onclick="crmCloseDetail()">← back</button>
+    <div id="crm-detail-name"></div>
+    <button id="crm-detail-del" onclick="crmDeleteContact()">🗑</button>
+  </div>
+  <div id="crm-detail-body"></div>
+</div>
+
+<div class="modal-ov" id="crm-contact-modal">
+  <div class="modal">
+    <h2 id="crm-modal-title">New Contact</h2>
+    <input class="mi" id="crm-m-name" placeholder="Full name *" />
+    <select class="mi" id="crm-m-type" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-family:'DM Mono',monospace;font-size:.8rem">
+      <option value="friend">Friend / Family</option>
+      <option value="pro">Professional</option>
+      <option value="client">Client</option>
+    </select>
+    <input class="mi" id="crm-m-company" placeholder="Company / Role" />
+    <input class="mi" id="crm-m-phone" placeholder="Phone" type="tel" />
+    <input class="mi" id="crm-m-email" placeholder="Email" type="email" />
+    <input class="mi" id="crm-m-social" placeholder="LinkedIn / Twitter / Website" />
+    <div class="mact">
+      <button class="msec" onclick="crmCloseContactModal()">Cancel</button>
+      <button class="mprim" onclick="crmSaveContactModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="crm-log-modal">
+  <div class="modal">
+    <h2>Log Interaction</h2>
+    <select class="mi" id="crm-l-type" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-family:'DM Mono',monospace;font-size:.8rem">
+      <option value="call">📞 Phone call</option>
+      <option value="text">💬 Text / DM</option>
+      <option value="email">✉️ Email</option>
+      <option value="meet">🤝 Met in person</option>
+      <option value="other">📝 Other</option>
+    </select>
+    <textarea class="mi" id="crm-l-note" placeholder="What happened? Notes…"></textarea>
+    <div class="mact">
+      <button class="msec" onclick="crmCloseLogModal()">Cancel</button>
+      <button class="mprim" onclick="crmSaveLog()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="crm-followup-modal">
+  <div class="modal">
+    <h2>Set Follow-up</h2>
+    <input class="mi" id="crm-f-date" type="date" />
+    <input class="mi" id="crm-f-action" placeholder="What to do (e.g. Call to check in)" />
+    <div class="mact">
+      <button class="msec" onclick="document.getElementById('crm-followup-modal').classList.remove('active')">Cancel</button>
+      <button class="mprim" onclick="crmSaveFollowup()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+// CRM
+// ═══════════════════════════════════════════════════
+const CRM_SK = 'crm_v1';
+function crmLoad(){try{return JSON.parse(localStorage.getItem(CRM_SK))||{contacts:[],logs:[]}}catch{return{contacts:[],logs:[]}}}
+function crmSave(){localStorage.setItem(CRM_SK,JSON.stringify(crmData))}
+let crmData = crmLoad();
+let crmFilter = 'all';
+let crmActiveDetail = null;
+
+const CRM_COLORS = ['#4a6fa5','#5a8a5a','#8a5a5a','#7a5a8a','#8a7a5a','#5a8a8a','#8a5a6a','#6a7a5a'];
+function crmColor(name){ let h=0;for(let c of name)h=(h*31+c.charCodeAt(0))&0xffff;return CRM_COLORS[h%CRM_COLORS.length] }
+function crmInitials(name){ return name.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase() }
+
+function crmRender(){
+  crmRenderList();
+  crmRenderQueue();
+  crmRenderTimeline();
+}
+
+function crmTab(tab){
+  document.querySelectorAll('.crm-tab').forEach((t,i)=>t.classList.toggle('active',['contacts','queue','timeline'][i]===tab));
+  document.querySelectorAll('.crm-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('crm-'+tab+'-view').classList.add('active');
+}
+
+function crmSetFilter(el, f){
+  crmFilter = f;
+  document.querySelectorAll('.crm-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  crmRenderList();
+}
+
+function crmRenderList(){
+  const q = (document.getElementById('crm-search')||{value:''}).value.toLowerCase();
+  const list = document.getElementById('crm-list');
+  if(!list) return;
+  let contacts = [...crmData.contacts];
+  if(crmFilter !== 'all') contacts = contacts.filter(c=>c.type===crmFilter);
+  if(q) contacts = contacts.filter(c=>(c.name+c.company+c.email+c.phone+(c.tags||[]).join(' ')).toLowerCase().includes(q));
+  contacts.sort((a,b)=>a.name.localeCompare(b.name));
+
+  if(!contacts.length){
+    list.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--muted);font-size:12px">'+(crmData.contacts.length?'No matches':'No contacts yet.<br>Tap + to add one.')+'</div>';
+    return;
+  }
+
+  list.innerHTML = contacts.map(c=>{
+    const lastLog = crmData.logs.filter(l=>l.contactId===c.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const lastStr = lastLog ? 'Last: '+fmtDate(lastLog.date) : 'No interactions yet';
+    const badge = {friend:'crm-badge-friend',pro:'crm-badge-pro',client:'crm-badge-client'}[c.type]||'';
+    const badgeLabel = {friend:'Friend',pro:'Pro',client:'Client'}[c.type]||c.type;
+    const due = c.followup ? followupStatus(c.followup.date) : null;
+    const dotCls = due ? (due==='overdue'?'crm-follow-dot':due==='today'?'crm-follow-dot soon':'crm-follow-dot ok') : '';
+    return `<div class="crm-card" onclick="crmOpenDetail('${c.id}')">
+      <div class="crm-avatar" style="background:\${crmColor(c.name)}">\${crmInitials(c.name)}</div>
+      <div class="crm-card-info">
+        <div class="crm-card-name">\${escH(c.name)}</div>
+        <div class="crm-card-sub">\${escH(c.company||lastStr)}</div>
+        \${c.company?'<div class="crm-card-sub" style="margin-top:1px">'+escH(lastStr)+'</div>':''}
+      </div>
+      <div class="crm-card-right">
+        <span class="crm-badge \${badge}">\${badgeLabel}</span>
+        \${dotCls?'<div class="'+dotCls+'"></div>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function fmtDate(iso){
+  const d=new Date(iso+'T12:00:00');
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function followupStatus(dateStr){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const d=new Date(dateStr+'T12:00:00'); d.setHours(0,0,0,0);
+  if(d<today) return 'overdue';
+  if(d.getTime()===today.getTime()) return 'today';
+  return 'upcoming';
+}
+
+function crmRenderQueue(){
+  const ql = document.getElementById('crm-queue-list');
+  if(!ql) return;
+  const contacts = crmData.contacts.filter(c=>c.followup && c.followup.date);
+  contacts.sort((a,b)=>a.followup.date.localeCompare(b.followup.date));
+
+  if(!contacts.length){
+    ql.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--muted);font-size:12px">No follow-ups scheduled.<br>Open a contact to set one.</div>';
+    return;
+  }
+
+  ql.innerHTML = contacts.map(c=>{
+    const st = followupStatus(c.followup.date);
+    const tagCls = st==='overdue'?'crm-due-over':st==='today'?'crm-due-today':'crm-due-soon';
+    const tagLabel = st==='overdue'?'Overdue':st==='today'?'Today':fmtDate(c.followup.date);
+    return `<div class="crm-queue-card">
+      <div class="crm-queue-top">
+        <div class="crm-avatar" style="background:\${crmColor(c.name)};width:32px;height:32px;font-size:12px">\${crmInitials(c.name)}</div>
+        <div class="crm-queue-name" onclick="crmOpenDetail('\${c.id}')">\${escH(c.name)}</div>
+        <span class="crm-due-tag \${tagCls}">\${tagLabel}</span>
+      </div>
+      \${c.followup.action?'<div class="crm-queue-action">'+escH(c.followup.action)+'</div>':''}
+      <button class="crm-queue-done" onclick="crmMarkDone('\${c.id}')">✓ Mark done — log interaction</button>
+    </div>`;
+  }).join('');
+}
+
+function crmMarkDone(id){
+  crmActiveDetail = id;
+  document.getElementById('crm-log-modal').classList.add('active');
+  document.getElementById('crm-l-note').value = '';
+  // Will clear followup on save
+  const modal = document.getElementById('crm-log-modal');
+  modal.dataset.clearFollowup = id;
+}
+
+function crmRenderTimeline(){
+  const tl = document.getElementById('crm-timeline-list');
+  if(!tl) return;
+  const logs = [...crmData.logs].sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+  if(!logs.length){
+    tl.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--muted);font-size:12px">No interactions logged yet.</div>';
+    return;
+  }
+  const typeLabel={'call':'📞 Call','text':'💬 Text','email':'✉️ Email','meet':'🤝 Met','other':'📝 Note'};
+  let html='', lastDay='';
+  logs.forEach(l=>{
+    const c = crmData.contacts.find(x=>x.id===l.contactId);
+    if(!c) return;
+    if(l.date!==lastDay){
+      lastDay=l.date;
+      html+=`<div class="crm-tl-day">\${fmtDate(l.date)}</div>`;
+    }
+    html+=`<div class="crm-tl-item">
+      <div class="crm-tl-dot"></div>
+      <div class="crm-tl-body" onclick="crmOpenDetail('\${c.id}')">
+        <div class="crm-tl-who">\${escH(c.name)} · \${typeLabel[l.type]||'📝'}</div>
+        \${l.note?'<div class="crm-tl-note">'+escH(l.note)+'</div>':''}
+      </div>
+    </div>`;
+  });
+  tl.innerHTML=html;
+}
+
+// ── Detail view ──────────────────────────────────────
+function crmOpenDetail(id){
+  crmActiveDetail = id;
+  const c = crmData.contacts.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('crm-main').style.display='none';
+  const det = document.getElementById('crm-detail');
+  det.classList.add('active');
+  document.getElementById('crm-detail-name').textContent = c.name;
+  renderDetailBody(c);
+}
+
+function crmCloseDetail(){
+  document.getElementById('crm-detail').classList.remove('active');
+  document.getElementById('crm-main').style.display='flex';
+  crmActiveDetail = null;
+  crmRender();
+}
+
+function renderDetailBody(c){
+  const logs = crmData.logs.filter(l=>l.contactId===c.id).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));
+  const typeLabel={'call':'📞 Call','text':'💬 Text','email':'✉️ Email','meet':'🤝 Met','other':'📝 Note'};
+  const badgeLabel={friend:'Friend / Family',pro:'Professional',client:'Client'};
+
+  const tags=(c.tags||[]).map(function(t){
+    return '<span class="crm-tag">'+escH(t)+'<button class="crm-tag-x" onclick="crmRemoveTag(\''+c.id+'\',\''+escH(t)+'\')">×</button></span>';
+  }).join('');
+
+  let logsHtml='';
+  if(logs.length){
+    logs.forEach(function(l){
+      logsHtml+='<div class="crm-log-item">'
+        +'<div class="crm-log-date">'+fmtDate(l.date)+' · '+(typeLabel[l.type]||'📝')+'</div>'
+        +'<div class="crm-log-text">'+escH(l.note||'(no note)')+'</div>'
+        +'<button class="crm-log-del" onclick="crmDelLog(\''+l.id+'\',\''+c.id+'\')">×</button>'
+        +'</div>';
+    });
+  } else {
+    logsHtml='<div style="color:var(--muted);font-size:11px;padding:8px 0">No interactions yet.</div>';
+  }
+
+  document.getElementById('crm-detail-body').innerHTML=
+    '<div style="text-align:center;padding:10px 0 4px">'
+    +'<div class="crm-detail-avatar" style="background:'+crmColor(c.name)+'">'+crmInitials(c.name)+'</div>'
+    +'<div class="crm-detail-fullname">'+escH(c.name)+'</div>'
+    +'<div class="crm-detail-type"><span class="crm-badge crm-badge-'+c.type+'">'+(badgeLabel[c.type]||c.type)+'</span></div>'
+    +'</div>'
+
+    +'<div>'
+    +'<div class="crm-sec-title">Contact Info</div>'
+    +'<div class="crm-field-group">'
+    +'<div class="crm-field"><span class="crm-field-label">Company</span><input class="crm-field-val" value="'+escH(c.company||'')+'" placeholder="—" onchange="crmPatch(\''+c.id+'\',\'company\',this.value)" /></div>'
+    +'<div class="crm-field"><span class="crm-field-label">Phone</span><input class="crm-field-val" value="'+escH(c.phone||'')+'" placeholder="—" type="tel" onchange="crmPatch(\''+c.id+'\',\'phone\',this.value)" /></div>'
+    +'<div class="crm-field"><span class="crm-field-label">Email</span><input class="crm-field-val" value="'+escH(c.email||'')+'" placeholder="—" type="email" onchange="crmPatch(\''+c.id+'\',\'email\',this.value)" /></div>'
+    +'<div class="crm-field"><span class="crm-field-label">Social</span><input class="crm-field-val" value="'+escH(c.social||'')+'" placeholder="—" onchange="crmPatch(\''+c.id+'\',\'social\',this.value)" /></div>'
+    +'</div></div>'
+
+    +'<div>'
+    +'<div class="crm-sec-title">Tags</div>'
+    +'<div class="crm-tags-wrap" id="crm-tags-wrap-'+c.id+'">'
+    +tags
+    +'<input class="crm-tag-input" placeholder="+ tag" onkeydown="if(event.key===\'Enter\'||event.key===\',\'){event.preventDefault();crmAddTag(\''+c.id+'\',this.value);this.value=\'\'}" />'
+    +'</div></div>'
+
+    +'<div>'
+    +'<div class="crm-sec-title">Follow-up</div>'
+    +'<div class="crm-field-group">'
+    +'<div class="crm-field"><span class="crm-field-label">Date</span><input class="crm-field-val" type="date" value="'+(c.followup&&c.followup.date?c.followup.date:'')+'" onchange="crmPatchFollowup(\''+c.id+'\',\'date\',this.value)" /></div>'
+    +'<div class="crm-field"><span class="crm-field-label">Action</span><input class="crm-field-val" value="'+escH((c.followup&&c.followup.action)||'')+'" placeholder="e.g. Call to check in" onchange="crmPatchFollowup(\''+c.id+'\',\'action\',this.value)" /></div>'
+    +'</div></div>'
+
+    +'<div>'
+    +'<div class="crm-sec-title" style="display:flex;justify-content:space-between;align-items:center">'
+    +'<span>History <span style="opacity:.5;font-size:9px;font-weight:normal">'+logs.length+' entries</span></span>'
+    +'<button onclick="crmOpenLogModal(\''+c.id+'\')" style="background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:4px 10px;font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;cursor:pointer">+ Log</button>'
+    +'</div>'
+    +'<div id="crm-log-list-'+c.id+'">'+logsHtml+'</div>'
+    +'</div>';
+}
+
+function crmPatch(id, key, val){
+  const c = crmData.contacts.find(x=>x.id===id);
+  if(c){ c[key]=val; crmSave(); }
+}
+function crmPatchFollowup(id, key, val){
+  const c = crmData.contacts.find(x=>x.id===id);
+  if(!c) return;
+  if(!c.followup) c.followup={};
+  c.followup[key]=val;
+  crmSave();
+}
+function crmAddTag(id, raw){
+  const tag=(raw||'').replace(/,/g,'').trim();
+  if(!tag) return;
+  const c=crmData.contacts.find(x=>x.id===id);
+  if(!c) return;
+  if(!c.tags) c.tags=[];
+  if(!c.tags.includes(tag)){c.tags.push(tag);crmSave();}
+  renderDetailBody(c);
+}
+function crmRemoveTag(id, tag){
+  const c=crmData.contacts.find(x=>x.id===id);
+  if(!c||!c.tags) return;
+  c.tags=c.tags.filter(t=>t!==tag);crmSave();renderDetailBody(c);
+}
+
+// ── Modals ───────────────────────────────────────────
+function crmOpenAddModal(){
+  ['crm-m-name','crm-m-company','crm-m-phone','crm-m-email','crm-m-social'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('crm-m-type').value='friend';
+  document.getElementById('crm-modal-title').textContent='New Contact';
+  document.getElementById('crm-contact-modal').classList.add('active');
+}
+function crmCloseContactModal(){document.getElementById('crm-contact-modal').classList.remove('active')}
+function crmSaveContactModal(){
+  const name=document.getElementById('crm-m-name').value.trim();
+  if(!name) return;
+  const c={
+    id:'c'+Date.now(),name,
+    type:document.getElementById('crm-m-type').value,
+    company:document.getElementById('crm-m-company').value.trim(),
+    phone:document.getElementById('crm-m-phone').value.trim(),
+    email:document.getElementById('crm-m-email').value.trim(),
+    social:document.getElementById('crm-m-social').value.trim(),
+    tags:[],followup:null,created:new Date().toISOString()
+  };
+  crmData.contacts.push(c);crmSave();crmCloseContactModal();crmRender();
+}
+
+function crmDeleteContact(){
+  if(!crmActiveDetail) return;
+  const c=crmData.contacts.find(x=>x.id===crmActiveDetail);
+  if(!c||!confirm('Delete '+c.name+'?')) return;
+  crmData.contacts=crmData.contacts.filter(x=>x.id!==crmActiveDetail);
+  crmData.logs=crmData.logs.filter(x=>x.contactId!==crmActiveDetail);
+  crmSave();crmCloseDetail();
+}
+
+function crmOpenLogModal(id){
+  crmActiveDetail=id;
+  document.getElementById('crm-l-note').value='';
+  document.getElementById('crm-l-type').value='call';
+  delete document.getElementById('crm-log-modal').dataset.clearFollowup;
+  document.getElementById('crm-log-modal').classList.add('active');
+}
+function crmCloseLogModal(){document.getElementById('crm-log-modal').classList.remove('active')}
+function crmSaveLog(){
+  if(!crmActiveDetail) return;
+  const today=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const log={
+    id:'l'+Date.now(),
+    contactId:crmActiveDetail,
+    type:document.getElementById('crm-l-type').value,
+    note:document.getElementById('crm-l-note').value.trim(),
+    date:today.getFullYear()+'-'+pad(today.getMonth()+1)+'-'+pad(today.getDate()),
+    time:pad(today.getHours())+':'+pad(today.getMinutes())
+  };
+  crmData.logs.push(log);
+  // If came from queue "mark done", clear the followup
+  const clearId=document.getElementById('crm-log-modal').dataset.clearFollowup;
+  if(clearId){const c=crmData.contacts.find(x=>x.id===clearId);if(c)c.followup=null;}
+  crmSave();crmCloseLogModal();
+  // Refresh wherever we are
+  if(document.getElementById('crm-detail').classList.contains('active')){
+    const c=crmData.contacts.find(x=>x.id===crmActiveDetail);if(c)renderDetailBody(c);
+  } else {crmRender();}
+}
+function crmDelLog(logId, contactId){
+  crmData.logs=crmData.logs.filter(l=>l.id!==logId);
+  crmSave();
+  const c=crmData.contacts.find(x=>x.id===contactId);if(c)renderDetailBody(c);
+}
+
+// ── Init ─────────────────────────────────────────────
+
+// ═══ INIT ════════════════════════════════════════
+</script>
+</body>
+</html>

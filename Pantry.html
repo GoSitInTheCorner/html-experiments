@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Pantry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;
+  --accent:#60aaff;--accent2:#a0cfff;--accent3:#60d4ff;--accent4:#f0a060;--accent5:#60c8f0;
+  --text:#e8e8f0;--muted:#888898;--danger:#f06060;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:clamp(12px,1.5vw,15px)}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.back-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
+.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;padding:5px 11px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-title{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:200;color:var(--accent)}
+.tab-row{display:flex;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.tab-row::-webkit-scrollbar{display:none}
+.gtab{flex:1;min-width:72px;padding:11px 6px;text-align:center;font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.gtab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.gview{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px}
+.gview.active{display:block}
+.loc-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.loc-btn{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
+.loc-btn.active{background:var(--surface2);color:var(--accent);border-color:var(--accent)}
+.gcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.item-row{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--border)}
+.item-row:last-of-type{border-bottom:none}
+.iname{flex:1;font-size:.8rem}
+.iqty{width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 6px;color:var(--text);font-family:'DM Mono',monospace;font-size:.73rem;text-align:center;outline:none}
+.iunit{width:54px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 6px;color:var(--text);font-family:'DM Mono',monospace;font-size:.7rem;outline:none}
+.ilow{color:var(--danger);font-size:.6rem;flex-shrink:0}
+.add-row{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.gi{flex:1;min-width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;outline:none}
+.gi:focus{border-color:var(--accent)}
+.gi::placeholder{color:var(--muted)}
+.gbtn{background:var(--accent);color:#0e0e10;border:none;border-radius:7px;padding:8px 13px;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;cursor:pointer;white-space:nowrap}
+.gbtn-sm{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--text);font-family:'DM Mono',monospace;font-size:.7rem;cursor:pointer}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-ttl{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:200}
+.cal-nav-btn{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;cursor:pointer}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:12px}
+.cdname{text-align:center;font-size:.6rem;color:var(--muted);padding:4px 0;text-transform:uppercase}
+.cday{min-height:clamp(44px,8vw,60px);background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:3px;cursor:pointer}
+.cday.om{opacity:.3}
+.cday.tod{border-color:var(--accent2)}
+.cday-n{font-size:.6rem;color:var(--muted);margin-bottom:1px}
+.cmeal{font-size:.55rem;background:var(--surface2);border-radius:2px;padding:1px 3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--accent);line-height:1.4}
+.cmeal.lunch{color:var(--accent2)}.cmeal.dinner{color:var(--accent4)}
+.twrow{display:flex;align-items:stretch;border-bottom:1px solid var(--border);padding:7px 0;gap:8px}
+.twdate{width:68px;flex-shrink:0}
+.twdate .dn{font-size:.65rem;color:var(--muted);text-transform:uppercase}
+.twdate .dd{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:200;line-height:1}
+.twmeals{flex:1;display:flex;flex-direction:column;gap:3px}
+.mslot{display:flex;align-items:center;gap:5px}
+.mlabel{font-size:.6rem;color:var(--muted);width:44px;flex-shrink:0;text-transform:uppercase}
+.mval{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-size:.73rem;color:var(--text);font-family:'DM Mono',monospace;outline:none}
+.mval:focus{border-color:var(--accent)}
+.mval::placeholder{color:var(--muted)}
+.rpick-btn{font-size:.65rem;background:transparent;border:none;color:var(--accent2);cursor:pointer;font-family:'DM Mono',monospace}
+.shop-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.schk{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);background:transparent;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+.schk.chk{background:var(--accent);border-color:var(--accent);color:#0e0e10}
+.sname{flex:1;font-size:.8rem}
+.sname.done{text-decoration:line-through;color:var(--muted)}
+.sdet{font-size:.65rem;color:var(--muted)}
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.rec-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px;cursor:pointer}
+.rec-name{font-family:'Fraunces',serif;font-size:1rem;font-weight:200}
+.rec-body{display:none;padding:0 12px 12px;border-top:1px solid var(--border)}
+.rec-body.open{display:block}
+.rec-ta{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.73rem;line-height:1.5;resize:none;outline:none;min-height:70px;margin-top:8px}
+.rec-ta:focus{border-color:var(--accent)}
+.rtag{font-size:.6rem;padding:2px 6px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
+.xbtn{background:transparent;border:none;color:var(--border);font-size:1rem;cursor:pointer;padding:0 3px;flex-shrink:0}
+.xbtn:active{color:var(--danger)}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end}
+.modal-ov.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:20px 16px 40px;width:100%;animation:slideUp .22s ease;max-height:80dvh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{font-family:'Fraunces',serif;font-weight:200;font-size:1.25rem;margin-bottom:14px;color:var(--accent)}
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;outline:none;margin-bottom:10px}
+.mi:focus{border-color:var(--accent)}
+.mi::placeholder{color:var(--muted)}
+.mact{display:flex;gap:8px;margin-top:6px}
+.mprim{flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;cursor:pointer}
+.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a class="back-btn" href="index.html">← Back</a>
+  <span class="page-title">🛒 Pantry</span>
+</div>
+
+<div class="tab-row">
+  <div class="gtab active" onclick="gTab('inv')">🗄 Pantry</div>
+  <div class="gtab" onclick="gTab('cal')">📅 Calendar</div>
+  <div class="gtab" onclick="gTab('shop')">🛒 Shopping</div>
+  <div class="gtab" onclick="gTab('rec')">📖 Recipes</div>
+</div>
+
+<!-- INVENTORY -->
+<div class="gview active" id="gv-inv">
+  <div class="loc-row" id="g-loc-tabs"></div>
+  <div class="gcard">
+    <div id="g-items-list"></div>
+    <div class="add-row">
+      <input class="gi" id="g-iname" placeholder="Item..." />
+      <input class="gi" id="g-iqty" placeholder="Qty" style="width:52px;flex:none" type="number" min="0" />
+      <input class="gi" id="g-iunit" placeholder="unit" style="width:56px;flex:none" />
+      <button class="gbtn" onclick="gAddItem()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div class="gview" id="gv-cal">
+  <div class="cal-hdr">
+    <button class="cal-nav-btn" onclick="gNavCal(-1)">‹</button>
+    <div class="cal-ttl" id="g-cal-title"></div>
+    <button class="cal-nav-btn" onclick="gNavCal(1)">›</button>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button class="gbtn-sm" onclick="gSetCalView('month')" id="g-btn-month">Month</button>
+    <button class="gbtn-sm" onclick="gSetCalView('twoweek')" id="g-btn-2wk">2-Week</button>
+  </div>
+  <div id="g-cal-container"></div>
+</div>
+
+<!-- SHOPPING -->
+<div class="gview" id="gv-shop">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Shopping List</span>
+    <button class="gbtn-sm" onclick="gGenShop()">Auto-generate</button>
+  </div>
+  <div class="gcard" style="margin-bottom:10px">
+    <div class="add-row">
+      <input class="gi" id="g-sname" placeholder="Item..." />
+      <select class="gi" id="g-sstore" style="width:90px;flex:none;appearance:none">
+        <option value="General">General</option>
+        <option value="Grocery">Grocery</option>
+        <option value="Costco">Costco</option>
+        <option value="Walmart">Walmart</option>
+        <option value="Target">Target</option>
+      </select>
+      <button class="gbtn" onclick="gAddShop()">Add</button>
+    </div>
+  </div>
+  <div id="g-shop-list"></div>
+</div>
+
+<!-- RECIPES -->
+<div class="gview" id="gv-rec">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Recipes</span>
+    <button class="gbtn" style="padding:6px 12px;font-size:.73rem" onclick="openRecModal()">+ New</button>
+  </div>
+  <div id="g-rec-list"></div>
+</div>
+
+<!-- Meal modal -->
+<div class="modal-ov" id="meal-modal">
+  <div class="modal">
+    <h2 id="meal-modal-ttl">Meals</h2>
+    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Breakfast</div>
+    <input class="mi" id="mm-b" placeholder="e.g. Oatmeal" /><button class="rpick-btn" onclick="gPickRec('mm-b')">📖 pick recipe</button>
+    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:10px 0 4px">Lunch</div>
+    <input class="mi" id="mm-l" placeholder="e.g. Sandwiches" /><button class="rpick-btn" onclick="gPickRec('mm-l')">📖 pick recipe</button>
+    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:10px 0 4px">Dinner</div>
+    <input class="mi" id="mm-d" placeholder="e.g. Pasta" /><button class="rpick-btn" onclick="gPickRec('mm-d')">📖 pick recipe</button>
+    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:10px 0 4px">Snack</div>
+    <input class="mi" id="mm-s" placeholder="e.g. Fruit..." style="margin-bottom:14px" />
+    <div class="mact">
+      <button class="msec" onclick="closeMealModal()">Cancel</button>
+      <button class="mprim" onclick="saveMealModal()">Save</button>
+    </div>
+  </div>
+</div>
+<!-- Recipe modal -->
+<div class="modal-ov" id="rec-modal">
+  <div class="modal">
+    <h2>New Recipe</h2>
+    <input class="mi" id="rm-name" placeholder="Recipe name..." />
+    <input class="mi" id="rm-tags" placeholder="Tags (chicken, quick, ...)" />
+    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Ingredients</div>
+    <textarea class="mi" id="rm-ing" placeholder="1 cup flour&#10;2 eggs..." style="min-height:70px;resize:none"></textarea>
+    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:8px 0 4px">Instructions</div>
+    <textarea class="mi" id="rm-inst" placeholder="Steps..." style="min-height:70px;resize:none;margin-bottom:14px"></textarea>
+    <div class="mact">
+      <button class="msec" onclick="closeRecModal()">Cancel</button>
+      <button class="mprim" onclick="saveRecModal()">Save Recipe</button>
+    </div>
+  </div>
+</div>
+<!-- Recipe pick modal -->
+<div class="modal-ov" id="rpick-modal">
+  <div class="modal">
+    <h2>Pick a Recipe</h2>
+    <div id="rpick-list"></div>
+    <div class="mact"><button class="msec" onclick="closeRpick()">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+const GSK='grocery_v2';
+function gLoad(){try{return JSON.parse(localStorage.getItem(GSK))||gDefault()}catch{return gDefault()}}
+function gDefault(){return{inventory:{'Kitchen Fridge':[],'Kitchen Freezer':[],'Pantry':[],'Garage Fridge':[],'Garage Freezer':[],'Deep Freeze':[]},meals:{},shopping:[],recipes:[]}}
+function gSave(){localStorage.setItem(GSK,JSON.stringify(gdb))}
+let gdb=gLoad(),gLoc='Kitchen Fridge',gCalView='month',gCalOff=0,gMealKey=null,gRpickTarget=null;
+
+function gTab(t){
+  document.querySelectorAll('.gtab').forEach((x,i)=>x.classList.toggle('active',['inv','cal','shop','rec'][i]===t));
+  document.querySelectorAll('.gview').forEach(v=>v.classList.remove('active'));
+  document.getElementById('gv-'+t).classList.add('active');
+  if(t==='cal')gRenderCal();
+  if(t==='shop')gRenderShop();
+  if(t==='rec')gRenderRec();
+}
+function gRenderInv(){
+  const locs=Object.keys(gdb.inventory);
+  const lt=document.getElementById('g-loc-tabs');lt.innerHTML='';
+  locs.forEach(loc=>{const b=document.createElement('button');b.className='loc-btn'+(loc===gLoc?' active':'');b.textContent=loc;b.onclick=()=>{gLoc=loc;gRenderInv()};lt.appendChild(b);});
+  const items=gdb.inventory[gLoc]||[];
+  const il=document.getElementById('g-items-list');il.innerHTML='';
+  if(!items.length){il.innerHTML='<div style="color:var(--muted);padding:6px 0;font-size:.73rem">No items yet.</div>';return;}
+  items.forEach((item,i)=>{const row=document.createElement('div');row.className='item-row';row.innerHTML=`<span class="iname">${escH(item.name)}</span><input class="iqty" type="number" min="0" value="${item.qty}" onchange="gUpdQty(${i},this.value)"/><input class="iunit" value="${escH(item.unit||'')}" placeholder="unit" onchange="gUpdUnit(${i},this.value)"/>${item.qty<=1?'<span class="ilow">low</span>':''}<button class="xbtn" onclick="gDelItem(${i})">×</button>`;il.appendChild(row);});
+}
+function gAddItem(){const name=document.getElementById('g-iname').value.trim();if(!name)return;gdb.inventory[gLoc].push({name,qty:parseFloat(document.getElementById('g-iqty').value)||0,unit:document.getElementById('g-iunit').value.trim()});gSave();['g-iname','g-iqty','g-iunit'].forEach(id=>document.getElementById(id).value='');gRenderInv();}
+function gUpdQty(i,v){gdb.inventory[gLoc][i].qty=parseFloat(v)||0;gSave();gRenderInv()}
+function gUpdUnit(i,v){gdb.inventory[gLoc][i].unit=v;gSave()}
+function gDelItem(i){gdb.inventory[gLoc].splice(i,1);gSave();gRenderInv()}
+function gSetCalView(v){gCalView=v;document.getElementById('g-btn-month').style.borderColor=v==='month'?'var(--accent)':'var(--border)';document.getElementById('g-btn-2wk').style.borderColor=v==='twoweek'?'var(--accent)':'var(--border)';gRenderCal();}
+function gNavCal(d){gCalOff+=d;gRenderCal()}
+function gDK(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function gSameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function gRenderCal(){const today=new Date();if(gCalView==='month'){const base=new Date(today.getFullYear(),today.getMonth()+gCalOff,1);document.getElementById('g-cal-title').textContent=base.toLocaleDateString('en-US',{month:'long',year:'numeric'});gRenderMonth(base);}else{const start=new Date(today);start.setDate(start.getDate()+gCalOff*14);document.getElementById('g-cal-title').textContent='2-Week View';gRenderTwoWeek(start);}}
+function gRenderMonth(base){const today=new Date(),year=base.getFullYear(),month=base.getMonth();const firstDay=new Date(year,month,1).getDay(),dim=new Date(year,month+1,0).getDate();let html='<div class="cal-grid">';['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>html+=`<div class="cdname">${d}</div>`);for(let i=0;i<firstDay;i++){const d=new Date(year,month,-(firstDay-i-1));html+=`<div class="cday om"><div class="cday-n">${d.getDate()}</div></div>`}for(let d=1;d<=dim;d++){const date=new Date(year,month,d),key=gDK(date),isT=gSameDay(date,today);const m=gdb.meals[key]||{};let mh='';if(m.breakfast)mh+=`<div class="cmeal">${escH(m.breakfast.substring(0,10))}</div>`;if(m.lunch)mh+=`<div class="cmeal lunch">${escH(m.lunch.substring(0,10))}</div>`;if(m.dinner)mh+=`<div class="cmeal dinner">${escH(m.dinner.substring(0,10))}</div>`;html+=`<div class="cday${isT?' tod':''}" onclick="gOpenMealModal('${key}')"><div class="cday-n">${d}</div>${mh}</div>`;}html+='</div>';document.getElementById('g-cal-container').innerHTML=html;}
+function gRenderTwoWeek(start){const today=new Date();let html='';for(let i=0;i<14;i++){const date=new Date(start);date.setDate(start.getDate()+i);const key=gDK(date),m=gdb.meals[key]||{},isT=gSameDay(date,today);html+=`<div class="twrow"><div class="twdate"><div class="dn">${date.toLocaleDateString('en-US',{weekday:'short'})}</div><div class="dd" style="color:${isT?'var(--accent)':'var(--text)'}">${date.getDate()}</div><div class="dn" style="font-size:.6rem">${date.toLocaleDateString('en-US',{month:'short'})}</div></div><div class="twmeals">${['breakfast','lunch','dinner','snack'].map(t=>`<div class="mslot"><span class="mlabel">${t}</span><input class="mval" value="${escH(m[t]||'')}" placeholder="..." data-key="${key}" data-type="${t}"/><button class="rpick-btn" data-inp-key="${key}" data-inp-type="${t}">📖</button></div>`).join('')}</div></div>`;}const c=document.getElementById('g-cal-container');c.innerHTML=html;c.querySelectorAll('.mval').forEach(inp=>inp.onchange=()=>{if(!gdb.meals[inp.dataset.key])gdb.meals[inp.dataset.key]={};gdb.meals[inp.dataset.key][inp.dataset.type]=inp.value;gSave();});c.querySelectorAll('.rpick-btn').forEach(btn=>btn.onclick=()=>{gRpickTarget={key:btn.dataset.inpKey,type:btn.dataset.inpType};gOpenRpick();});}
+function gOpenMealModal(key){gMealKey=key;const d=new Date(key);document.getElementById('meal-modal-ttl').textContent='Meals — '+d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});const m=gdb.meals[key]||{};document.getElementById('mm-b').value=m.breakfast||'';document.getElementById('mm-l').value=m.lunch||'';document.getElementById('mm-d').value=m.dinner||'';document.getElementById('mm-s').value=m.snack||'';document.getElementById('meal-modal').classList.add('active');}
+function closeMealModal(){document.getElementById('meal-modal').classList.remove('active')}
+function saveMealModal(){if(!gMealKey)return;if(!gdb.meals[gMealKey])gdb.meals[gMealKey]={};gdb.meals[gMealKey].breakfast=document.getElementById('mm-b').value;gdb.meals[gMealKey].lunch=document.getElementById('mm-l').value;gdb.meals[gMealKey].dinner=document.getElementById('mm-d').value;gdb.meals[gMealKey].snack=document.getElementById('mm-s').value;gSave();closeMealModal();gRenderCal();}
+function gPickRec(fieldId){gRpickTarget={fieldId};gOpenRpick()}
+function gOpenRpick(){const list=document.getElementById('rpick-list');list.innerHTML='';if(!gdb.recipes.length){list.innerHTML='<div style="color:var(--muted)">No recipes yet.</div>';document.getElementById('rpick-modal').classList.add('active');return;}gdb.recipes.forEach(r=>{const b=document.createElement('button');b.style.cssText='display:block;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-family:DM Mono,monospace;font-size:.8rem;cursor:pointer;margin-bottom:7px';b.textContent=r.name;b.onclick=()=>{if(gRpickTarget){if(gRpickTarget.fieldId){const el=document.getElementById(gRpickTarget.fieldId);if(el)el.value=r.name;}else if(gRpickTarget.key){if(!gdb.meals[gRpickTarget.key])gdb.meals[gRpickTarget.key]={};gdb.meals[gRpickTarget.key][gRpickTarget.type]=r.name;gSave();gRenderCal();}}closeRpick();};list.appendChild(b);});document.getElementById('rpick-modal').classList.add('active');}
+function closeRpick(){document.getElementById('rpick-modal').classList.remove('active')}
+function gRenderShop(){const c=document.getElementById('g-shop-list');if(!gdb.shopping.length){c.innerHTML='<div style="color:var(--muted);font-size:.73rem">No items.</div>';return;}const byStore={};gdb.shopping.forEach((item,i)=>{const s=item.store||'General';if(!byStore[s])byStore[s]=[];byStore[s].push({...item,idx:i})});c.innerHTML='';Object.keys(byStore).forEach(store=>{const div=document.createElement('div');let html=`<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:10px 0 4px">${escH(store)}</div>`;byStore[store].forEach(item=>{html+=`<div class="shop-item"><div class="schk${item.checked?' chk':''}" onclick="gTogShop(${item.idx})">${item.checked?'✓':''}</div><span class="sname${item.checked?' done':''}">${escH(item.name)}</span>${item.detail?`<span class="sdet">${escH(item.detail)}</span>`:''}<button class="xbtn" onclick="gDelShop(${item.idx})">×</button></div>`;});div.innerHTML=html;c.appendChild(div);});}
+function gAddShop(){const name=document.getElementById('g-sname').value.trim();if(!name)return;gdb.shopping.push({name,store:document.getElementById('g-sstore').value,checked:false});gSave();document.getElementById('g-sname').value='';gRenderShop();}
+function gTogShop(i){gdb.shopping[i].checked=!gdb.shopping[i].checked;gSave();gRenderShop()}
+function gDelShop(i){gdb.shopping.splice(i,1);gSave();gRenderShop()}
+function gGenShop(){const today=new Date();const added=new Set(gdb.shopping.map(s=>s.name.toLowerCase()));let count=0;for(let i=0;i<14;i++){const d=new Date(today);d.setDate(today.getDate()+i);const m=gdb.meals[gDK(d)];if(!m)continue;['breakfast','lunch','dinner','snack'].forEach(t=>{if(!m[t])return;const rec=gdb.recipes.find(r=>r.name.toLowerCase()===m[t].toLowerCase());if(rec&&rec.ingredients){rec.ingredients.split('\n').forEach(line=>{const ing=line.trim();if(ing&&!added.has(ing.toLowerCase())){gdb.shopping.push({name:ing,store:'Grocery',checked:false,detail:'for '+m[t]});added.add(ing.toLowerCase());count++;}});}});}gSave();gRenderShop();alert(count?'Added '+count+' ingredients!':'No new ingredients found.');}
+function gRenderRec(){const c=document.getElementById('g-rec-list');if(!gdb.recipes.length){c.innerHTML='<div style="color:var(--muted);font-size:.73rem">No recipes yet.</div>';return;}c.innerHTML='';gdb.recipes.forEach((r,i)=>{const card=document.createElement('div');card.className='rec-card';const tags=(r.tags||'').split(',').filter(Boolean).map(t=>`<span class="rtag">${escH(t.trim())}</span>`).join(' ');card.innerHTML=`<div class="rec-hdr" onclick="gTogRec(${i})"><div class="rec-name">${escH(r.name)}</div><button class="xbtn" onclick="event.stopPropagation();gDelRec(${i})">×</button></div><div class="rec-body" id="rb-${i}">${tags?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">${tags}</div>`:''}<div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:10px 0 3px">Ingredients</div><textarea class="rec-ta" onchange="gUpdRec(${i},'ingredients',this.value)">${escH(r.ingredients||'')}</textarea><div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:8px 0 3px">Instructions</div><textarea class="rec-ta" onchange="gUpdRec(${i},'instructions',this.value)">${escH(r.instructions||'')}</textarea></div>`;c.appendChild(card);});}
+function gTogRec(i){document.getElementById('rb-'+i).classList.toggle('open')}
+function gUpdRec(i,f,v){gdb.recipes[i][f]=v;gSave()}
+function gDelRec(i){if(confirm('Delete recipe?')){gdb.recipes.splice(i,1);gSave();gRenderRec()}}
+function openRecModal(){document.getElementById('rec-modal').classList.add('active')}
+function closeRecModal(){document.getElementById('rec-modal').classList.remove('active')}
+function saveRecModal(){const name=document.getElementById('rm-name').value.trim();if(!name)return;gdb.recipes.push({name,tags:document.getElementById('rm-tags').value,ingredients:document.getElementById('rm-ing').value,instructions:document.getElementById('rm-inst').value});gSave();closeRecModal();['rm-name','rm-tags','rm-ing','rm-inst'].forEach(id=>document.getElementById(id).value='');gRenderRec();}
+
+gRenderInv();
+</script>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Cinéma</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
+:root{
+  --bg:#0a0608;--s1:#110d0f;--s2:#181214;--s3:#201820;--b:#2d2028;
+  --gold:#c9a84c;--gold2:#e8c878;--red:#8b1a1a;--rose:#c44;
+  --cream:#f0e8d8;--muted:#6a5060;--soft:#c0a8b0;
+  --grad:linear-gradient(135deg,#1a0810,#0a0608,#08080a);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--cream);font-family:'Crimson Pro',serif;display:flex;flex-direction:column;overflow:hidden}
+
+/* film grain */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.05'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.6}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--b);flex-shrink:0;z-index:2;position:relative;background:var(--bg)}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Crimson Pro',serif}
+#title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;font-style:italic;flex:1;letter-spacing:.02em;color:var(--gold)}
+#add-btn{background:var(--gold);color:var(--bg);border:none;border-radius:6px;padding:7px 14px;font-family:'Playfair Display',serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.04em}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:2;position:relative;background:var(--bg)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:70px;padding:10px 4px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Crimson Pro',serif}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;z-index:1;position:relative}
+.view{display:none;padding:14px 14px 80px}
+.view.active{display:block}
+
+/* ── STATS BAR ── */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.sstat{background:var(--s1);border:1px solid var(--b);border-radius:8px;padding:10px;text-align:center}
+.sstat-num{font-family:'Playfair Display',serif;font-size:24px;color:var(--gold);line-height:1}
+.sstat-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:3px}
+
+/* ── MEDIA CARDS ── */
+.media-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s;cursor:pointer}
+.media-card:hover{border-color:rgba(201,168,76,.3)}
+.media-card.expanded{border-color:rgba(201,168,76,.4)}
+.mc-header{display:flex;gap:12px;padding:12px}
+.mc-poster{width:52px;height:72px;border-radius:6px;background:var(--s3);border:1px solid var(--b);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;position:relative}
+.mc-poster-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.mc-info{flex:1;min-width:0}
+.mc-type{font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:3px}
+.mc-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-year{font-size:11px;color:var(--muted);margin-top:2px}
+.mc-rating{display:flex;gap:2px;margin-top:5px}
+.mc-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.status-badge{font-size:8px;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.08em}
+.sb-watching{background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.25);color:var(--gold)}
+.sb-finished{background:rgba(58,138,58,.1);border:1px solid rgba(58,138,58,.25);color:#5a8a5a}
+.sb-watchlist{background:rgba(100,80,96,.15);border:1px solid var(--b);color:var(--soft)}
+.sb-dropped{background:rgba(139,26,26,.1);border:1px solid rgba(139,26,26,.25);color:#a06060}
+.mc-genre{font-size:9px;color:var(--muted)}
+
+.mc-body{display:none;padding:0 12px 12px;border-top:1px solid var(--b)}
+.media-card.expanded .mc-body{display:block}
+.mc-review{font-size:12px;line-height:1.7;color:var(--soft);font-style:italic;margin-top:8px;padding:8px;background:var(--s2);border-radius:6px;border-left:2px solid var(--gold)}
+.mc-meta-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mc-tag{font-size:9px;padding:2px 8px;border-radius:4px;background:var(--s3);border:1px solid var(--b);color:var(--muted)}
+.mc-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.mc-btn{padding:5px 12px;border-radius:6px;font-size:10px;border:1px solid var(--b);background:transparent;color:var(--soft);cursor:pointer;font-family:'Crimson Pro',serif;letter-spacing:.04em}
+.mc-btn:hover{border-color:var(--gold);color:var(--gold)}
+.mc-btn.danger:hover{border-color:var(--rose);color:var(--rose)}
+.mc-progress{margin-top:8px}
+.mc-progress-label{font-size:9px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:3px}
+.mc-progress-track{height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
+.mc-progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+
+/* star rating */
+.stars{display:flex;gap:2px}
+.star{font-size:14px;cursor:pointer;color:var(--muted);transition:color .1s;line-height:1}
+.star.on{color:var(--gold)}
+.star.half{color:var(--gold);opacity:.6}
+
+/* ── SECTION TITLE ── */
+.sec-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;font-style:italic;color:var(--gold);margin-bottom:10px;letter-spacing:.02em;display:flex;align-items:center;justify-content:space-between}
+.sec-count{font-size:11px;color:var(--muted);font-style:normal;font-weight:400;font-family:'Crimson Pro',serif}
+
+/* ── FILTER ROW ── */
+.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.fc{padding:5px 12px;border-radius:20px;font-size:10px;border:1px solid var(--b);background:var(--s2);color:var(--muted);cursor:pointer;white-space:nowrap;font-family:'Crimson Pro',serif;letter-spacing:.04em}
+.fc.on{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold)}
+
+/* ── STATS VIEW ── */
+.chart-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:12px}
+.chart-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+canvas{width:100%}
+.genre-bar{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.gb-label{font-size:10px;color:var(--soft);width:80px;flex-shrink:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.gb-track{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.gb-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--red),var(--gold))}
+.gb-count{font-size:9px;color:var(--muted);width:20px;text-align:right;font-family:'Crimson Pro',serif}
+
+/* ── DISCOVER ── */
+.discover-section{margin-bottom:16px}
+.discover-label{font-size:8px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-bottom:8px;padding-left:2px}
+.suggest-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;align-items:center;cursor:pointer;transition:border-color .15s}
+.suggest-card:hover{border-color:rgba(201,168,76,.3)}
+.suggest-emoji{font-size:26px;flex-shrink:0}
+.suggest-info{flex:1;min-width:0}
+.suggest-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:700}
+.suggest-meta{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
+.suggest-add{font-size:10px;padding:4px 10px;border:1px solid rgba(201,168,76,.3);color:var(--gold);background:transparent;border-radius:6px;cursor:pointer;font-family:'Crimson Pro',serif;flex-shrink:0;white-space:nowrap}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border:1px solid var(--b);border-top:1px solid var(--gold);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px;padding-bottom:40px;max-height:90vh;overflow-y:auto}
+#modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;font-style:italic;margin-bottom:14px;color:var(--gold)}
+.mf{margin-bottom:10px}
+.ml{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;font-family:'Crimson Pro',serif}
+.mi{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--cream);outline:none;transition:border-color .15s}
+.mi:focus{border-color:var(--gold)}
+select.mi option{background:var(--s2)}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-star-row{display:flex;gap:4px;margin-top:2px}
+.modal-star{font-size:22px;cursor:pointer;color:var(--muted);transition:color .15s}
+.modal-star.on{color:var(--gold)}
+.msave{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#a07030);border:none;border-radius:10px;color:var(--bg);font-weight:700;font-size:15px;cursor:pointer;margin-top:8px;font-family:'Playfair Display',serif;font-style:italic;letter-spacing:.04em}
+.mcancel{width:100%;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:8px;font-family:'Crimson Pro',serif}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;font-style:italic;line-height:1.8}
+.empty-icon{font-size:36px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title">Cin&#233;ma</div>
+  <button id="add-btn" onclick="openAddModal()">+ Add</button>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('watching')">Watching</div>
+  <div class="tab" onclick="showTab('finished')">Finished</div>
+  <div class="tab" onclick="showTab('list')">Watchlist</div>
+  <div class="tab" onclick="showTab('stats')">Stats</div>
+  <div class="tab" onclick="showTab('discover')">Discover</div>
+</div>
+
+<div id="content">
+
+  <!-- WATCHING -->
+  <div class="view active" id="v-watching">
+    <div class="stats-strip">
+      <div class="sstat"><div class="sstat-num" id="st-watching">0</div><div class="sstat-label">Watching</div></div>
+      <div class="sstat"><div class="sstat-num" id="st-finished">0</div><div class="sstat-label">Finished</div></div>
+      <div class="sstat"><div class="sstat-num" id="st-list">0</div><div class="sstat-label">Queued</div></div>
+      <div class="sstat"><div class="sstat-num" id="st-avg">—</div><div class="sstat-label">Avg Rating</div></div>
+    </div>
+    <div class="sec-title">Currently Watching <span class="sec-count" id="cnt-watching"></span></div>
+    <div id="watching-list"></div>
+  </div>
+
+  <!-- FINISHED -->
+  <div class="view" id="v-finished">
+    <div class="filter-row">
+      <div class="fc on" onclick="setFinFilter(this,'all')">All</div>
+      <div class="fc" onclick="setFinFilter(this,'film')">Films</div>
+      <div class="fc" onclick="setFinFilter(this,'series')">Series</div>
+      <div class="fc" onclick="setFinFilter(this,'5')">&#9733; 5 Stars</div>
+      <div class="fc" onclick="setFinFilter(this,'4')">&#9733; 4+ Stars</div>
+    </div>
+    <div class="sec-title">Finished <span class="sec-count" id="cnt-finished"></span></div>
+    <div id="finished-list"></div>
+  </div>
+
+  <!-- WATCHLIST -->
+  <div class="view" id="v-list">
+    <div class="filter-row">
+      <div class="fc on" onclick="setListFilter(this,'all')">All</div>
+      <div class="fc" onclick="setListFilter(this,'film')">Films</div>
+      <div class="fc" onclick="setListFilter(this,'series')">Series</div>
+      <div class="fc" onclick="setListFilter(this,'high')">Must Watch</div>
+    </div>
+    <div class="sec-title">Watchlist <span class="sec-count" id="cnt-list"></span></div>
+    <div id="list-list"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="view" id="v-stats">
+    <div class="sec-title">Your Cinema Stats</div>
+
+    <div class="stats-strip" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">
+      <div class="sstat"><div class="sstat-num" id="ss-films">0</div><div class="sstat-label">Films Watched</div></div>
+      <div class="sstat"><div class="sstat-num" id="ss-series">0</div><div class="sstat-label">Series Finished</div></div>
+      <div class="sstat"><div class="sstat-num" id="ss-hours">0</div><div class="sstat-label">Est. Hours</div></div>
+      <div class="sstat"><div class="sstat-num" id="ss-top-genre">—</div><div class="sstat-label">Top Genre</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Rating Distribution</div>
+      <canvas id="rating-chart" height="120"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Genre Breakdown (Finished)</div>
+      <div id="genre-bars"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Monthly Activity</div>
+      <canvas id="monthly-chart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- DISCOVER -->
+  <div class="view" id="v-discover">
+    <div id="discover-content"></div>
+  </div>
+
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div id="modal-overlay" onclick="overlayClick(event)">
+  <div id="modal">
+    <div id="modal-title">Add to Collection</div>
+    <div id="modal-body"></div>
+    <button class="msave" id="modal-save">Save</button>
+    <button class="mcancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const STORE = 'cinema_v2';
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE))||{items:[]}; }catch{ return {items:[]}; }}
+function persist(){ localStorage.setItem(STORE,JSON.stringify(D)); }
+function ge(id){ return document.getElementById(id); }
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let D = load();
+let expanded = new Set();
+let finFilter = 'all', listFilter = 'all';
+let editId = null, modalRating = 0;
+
+const GENRES = ['Action','Animation','Comedy','Crime','Documentary','Drama','Fantasy','Horror','Mystery','Romance','Sci-Fi','Thriller'];
+
+// ── TABS ────────────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['watching','finished','list','stats','discover'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+  if(t==='stats') renderStats();
+  if(t==='discover') renderDiscover();
+}
+
+// ── RENDER ALL ───────────────────────────────────────────
+function renderAll(){
+  renderWatching();
+  renderFinished();
+  renderWatchlist();
+  updateCountBadges();
+}
+
+function updateCountBadges(){
+  const items = D.items;
+  const watching  = items.filter(i=>i.status==='watching').length;
+  const finished  = items.filter(i=>i.status==='finished').length;
+  const list      = items.filter(i=>i.status==='watchlist').length;
+  const ratings   = items.filter(i=>i.rating>0);
+  const avg       = ratings.length ? (ratings.reduce((s,i)=>s+i.rating,0)/ratings.length).toFixed(1) : '—';
+
+  ge('st-watching').textContent  = watching;
+  ge('st-finished').textContent  = finished;
+  ge('st-list').textContent      = list;
+  ge('st-avg').textContent       = avg;
+  ge('cnt-watching').textContent = watching ? '('+watching+')' : '';
+  ge('cnt-finished').textContent = finished ? '('+finished+')' : '';
+  ge('cnt-list').textContent     = list     ? '('+list+')' : '';
+}
+
+// ── WATCHING ────────────────────────────────────────────
+function renderWatching(){
+  const items = D.items.filter(i=>i.status==='watching');
+  ge('watching-list').innerHTML = items.length
+    ? items.map(i=>mediaCard(i)).join('')
+    : '<div class="empty-state"><div class="empty-icon">&#127909;</div>Nothing playing right now.<br>Start watching something!</div>';
+}
+
+// ── FINISHED ────────────────────────────────────────────
+function setFinFilter(el,f){ document.querySelectorAll('#v-finished .fc').forEach(c=>c.classList.remove('on')); el.classList.add('on'); finFilter=f; renderFinished(); }
+
+function renderFinished(){
+  let items = D.items.filter(i=>i.status==='finished'||i.status==='dropped');
+  if(finFilter==='film') items=items.filter(i=>i.type==='film');
+  else if(finFilter==='series') items=items.filter(i=>i.type==='series');
+  else if(finFilter==='5') items=items.filter(i=>i.rating===5);
+  else if(finFilter==='4') items=items.filter(i=>i.rating>=4);
+  items.sort((a,b)=>(b.rating||0)-(a.rating||0));
+  ge('finished-list').innerHTML = items.length
+    ? items.map(i=>mediaCard(i)).join('')
+    : '<div class="empty-state"><div class="empty-icon">&#127775;</div>Nothing finished yet.<br>Your watched titles will appear here.</div>';
+}
+
+// ── WATCHLIST ────────────────────────────────────────────
+function setListFilter(el,f){ document.querySelectorAll('#v-list .fc').forEach(c=>c.classList.remove('on')); el.classList.add('on'); listFilter=f; renderWatchlist(); }
+
+function renderWatchlist(){
+  let items = D.items.filter(i=>i.status==='watchlist');
+  if(listFilter==='film') items=items.filter(i=>i.type==='film');
+  else if(listFilter==='series') items=items.filter(i=>i.type==='series');
+  else if(listFilter==='high') items=items.filter(i=>i.priority==='high');
+  ge('list-list').innerHTML = items.length
+    ? items.map(i=>mediaCard(i)).join('')
+    : '<div class="empty-state"><div class="empty-icon">&#128218;</div>Your watchlist is empty.<br>Add films and series to watch later.</div>';
+}
+
+// ── MEDIA CARD ───────────────────────────────────────────
+function mediaCard(item){
+  const isExp = expanded.has(item.id);
+  const statusClass = {watching:'sb-watching',finished:'sb-finished',watchlist:'sb-watchlist',dropped:'sb-dropped'}[item.status]||'sb-watchlist';
+  const statusLabel = {watching:'Watching',finished:'Finished',watchlist:'To Watch',dropped:'Dropped'}[item.status]||'';
+  const typeLabel = item.type==='film'?'Film':'Series';
+  const emoji = item.type==='film'?'🎬':'📺';
+
+  let starsHtml = '';
+  if(item.status==='finished'&&item.rating){
+    starsHtml = '<div class="mc-rating">'
+      +[1,2,3,4,5].map(n=>'<span class="star'+(n<=item.rating?' on':'')+'">&#9733;</span>').join('')
+      +'</div>';
+  }
+
+  let progressHtml = '';
+  if(item.type==='series'&&item.status==='watching'&&item.totalEp){
+    const ep = item.currentEp||0, total=item.totalEp;
+    const pct = Math.min(100,ep/total*100);
+    progressHtml = '<div class="mc-progress">'
+      +'<div class="mc-progress-label"><span>Ep '+ep+' / '+total+'</span><span>'+pct.toFixed(0)+'%</span></div>'
+      +'<div class="mc-progress-track"><div class="mc-progress-fill" style="width:'+pct+'%"></div></div>'
+      +'</div>';
+  }
+
+  let bodyHtml = '';
+  if(isExp){
+    bodyHtml = '<div class="mc-body">';
+    bodyHtml += progressHtml;
+    if(item.review) bodyHtml += '<div class="mc-review">&#8220;'+escH(item.review)+'&#8221;</div>';
+    if(item.genre||item.year||item.director){
+      bodyHtml += '<div class="mc-meta-row">';
+      if(item.genre) bodyHtml += '<span class="mc-tag">'+escH(item.genre)+'</span>';
+      if(item.year)  bodyHtml += '<span class="mc-tag">'+escH(item.year)+'</span>';
+      if(item.director) bodyHtml += '<span class="mc-tag">'+escH(item.director)+'</span>';
+      if(item.platform) bodyHtml += '<span class="mc-tag">'+escH(item.platform)+'</span>';
+      bodyHtml += '</div>';
+    }
+    bodyHtml += '<div class="mc-actions">'
+      +'<button class="mc-btn" onclick="editItem(\''+item.id+'\')">Edit</button>';
+    if(item.status==='watchlist')  bodyHtml += '<button class="mc-btn" onclick="changeStatus(\''+item.id+'\',\'watching\')">&#9654; Start Watching</button>';
+    if(item.status==='watching')   bodyHtml += '<button class="mc-btn" onclick="changeStatus(\''+item.id+'\',\'finished\')">&#10003; Mark Finished</button>';
+    if(item.status!=='dropped')    bodyHtml += '<button class="mc-btn danger" onclick="changeStatus(\''+item.id+'\',\'dropped\')">Drop</button>';
+    bodyHtml += '<button class="mc-btn danger" onclick="deleteItem(\''+item.id+'\')">Delete</button>';
+    bodyHtml += '</div></div>';
+  }
+
+  return '<div class="media-card'+(isExp?' expanded':'')+'" id="mc-'+item.id+'" onclick="toggleCard(\''+item.id+'\')">'
+    +'<div class="mc-header">'
+      +'<div class="mc-poster">'+emoji+'</div>'
+      +'<div class="mc-info">'
+        +'<div class="mc-type">'+typeLabel+'</div>'
+        +'<div class="mc-title">'+escH(item.title)+'</div>'
+        +'<div class="mc-year">'+(item.year||'')+(item.director?' &middot; '+escH(item.director):'')+'</div>'
+        +starsHtml
+      +'</div>'
+      +'<div class="mc-right">'
+        +'<div class="status-badge '+statusClass+'">'+statusLabel+'</div>'
+        +(item.genre?'<div class="mc-genre">'+escH(item.genre)+'</div>':'')
+      +'</div>'
+    +'</div>'
+    +bodyHtml
+    +'</div>';
+}
+
+function toggleCard(id){ if(expanded.has(id)) expanded.delete(id); else expanded.add(id); renderAll(); }
+function changeStatus(id,status){ const i=D.items.find(x=>x.id===id); if(i){ i.status=status; if(status==='finished'&&!i.finishedAt) i.finishedAt=new Date().toISOString(); } persist(); renderAll(); }
+function deleteItem(id){ if(confirm('Delete this title?')){ D.items=D.items.filter(i=>i.id!==id); expanded.delete(id); persist(); renderAll(); } }
+
+// ── ADD / EDIT MODAL ─────────────────────────────────────
+function openAddModal(){
+  editId=null; modalRating=0;
+  ge('modal-title').textContent='Add to Collection';
+  buildForm(null);
+  ge('modal-overlay').classList.add('open');
+  ge('modal-save').onclick=saveFromModal;
+}
+
+function editItem(id){
+  editId=id;
+  const item=D.items.find(i=>i.id===id);
+  if(!item) return;
+  modalRating=item.rating||0;
+  ge('modal-title').textContent='Edit Title';
+  buildForm(item);
+  ge('modal-overlay').classList.add('open');
+  ge('modal-save').onclick=saveFromModal;
+}
+
+function buildForm(item){
+  const v=s=>escH(item?.[s]||'');
+  ge('modal-body').innerHTML=`
+<div class="mrow">
+  <div class="mf"><div class="ml">Type</div>
+    <select class="mi" id="mf-type">
+      <option value="film" ${item?.type==='film'?'selected':''}>🎬 Film</option>
+      <option value="series" ${item?.type==='series'?'selected':''}>📺 Series</option>
+    </select></div>
+  <div class="mf"><div class="ml">Status</div>
+    <select class="mi" id="mf-status">
+      <option value="watchlist" ${item?.status==='watchlist'?'selected':''}>To Watch</option>
+      <option value="watching" ${item?.status==='watching'?'selected':''}>Watching</option>
+      <option value="finished" ${item?.status==='finished'?'selected':''}>Finished</option>
+      <option value="dropped" ${item?.status==='dropped'?'selected':''}>Dropped</option>
+    </select></div>
+</div>
+<div class="mf"><div class="ml">Title *</div><input class="mi" id="mf-title" type="text" value="${v('title')}" placeholder="Title of film or series"></div>
+<div class="mrow">
+  <div class="mf"><div class="ml">Year</div><input class="mi" id="mf-year" type="text" value="${v('year')}" placeholder="2024"></div>
+  <div class="mf"><div class="ml">Genre</div>
+    <select class="mi" id="mf-genre">
+      <option value="">Select genre</option>
+      ${GENRES.map(g=>`<option value="${g}" ${item?.genre===g?'selected':''}>${g}</option>`).join('')}
+    </select></div>
+</div>
+<div class="mrow">
+  <div class="mf"><div class="ml">Director / Creator</div><input class="mi" id="mf-director" type="text" value="${v('director')}"></div>
+  <div class="mf"><div class="ml">Platform</div><input class="mi" id="mf-platform" type="text" value="${v('platform')}" placeholder="Netflix, HBO..."></div>
+</div>
+<div id="series-fields" style="${item?.type!=='series'?'':''}">
+  <div class="mrow">
+    <div class="mf"><div class="ml">Current Episode</div><input class="mi" id="mf-cur-ep" type="number" value="${item?.currentEp||''}" placeholder="Ep #"></div>
+    <div class="mf"><div class="ml">Total Episodes</div><input class="mi" id="mf-total-ep" type="number" value="${item?.totalEp||''}" placeholder="Total"></div>
+  </div>
+</div>
+<div class="mf"><div class="ml">Your Rating</div>
+  <div class="modal-star-row" id="modal-stars">
+    ${[1,2,3,4,5].map(n=>`<span class="modal-star${n<=modalRating?' on':''}" onclick="setModalRating(${n})">&#9733;</span>`).join('')}
+  </div>
+</div>
+<div class="mf"><div class="ml">Review / Notes</div>
+  <textarea class="mi" id="mf-review" rows="3" style="resize:none" placeholder="Your thoughts...">${v('review')}</textarea></div>
+<div class="mf"><div class="ml">Priority</div>
+  <select class="mi" id="mf-priority">
+    <option value="normal" ${item?.priority==='normal'?'selected':''}>Normal</option>
+    <option value="high" ${item?.priority==='high'?'selected':''}>Must Watch</option>
+    <option value="low" ${item?.priority==='low'?'selected':''}>Low</option>
+  </select></div>`;
+}
+
+function setModalRating(n){
+  modalRating=n;
+  document.querySelectorAll('.modal-star').forEach((s,i)=>s.classList.toggle('on',i<n));
+}
+
+function saveFromModal(){
+  const title=ge('mf-title')?.value?.trim();
+  if(!title){ alert('Enter a title'); return; }
+  const item = editId ? D.items.find(i=>i.id===editId) : {id:Date.now().toString(),addedAt:new Date().toISOString()};
+  if(!editId) D.items.unshift(item);
+
+  item.title    = title;
+  item.type     = ge('mf-type').value;
+  item.status   = ge('mf-status').value;
+  item.year     = ge('mf-year').value.trim();
+  item.genre    = ge('mf-genre').value;
+  item.director = ge('mf-director').value.trim();
+  item.platform = ge('mf-platform').value.trim();
+  item.currentEp= parseInt(ge('mf-cur-ep').value)||0;
+  item.totalEp  = parseInt(ge('mf-total-ep').value)||0;
+  item.rating   = modalRating;
+  item.review   = ge('mf-review').value.trim();
+  item.priority = ge('mf-priority').value;
+  if(item.status==='finished'&&!item.finishedAt) item.finishedAt=new Date().toISOString();
+
+  persist(); closeModal(); renderAll();
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function renderStats(){
+  const finished = D.items.filter(i=>i.status==='finished');
+  const films    = finished.filter(i=>i.type==='film');
+  const series   = finished.filter(i=>i.type==='series');
+  const hours    = films.length*1.8 + series.reduce((s,i)=>s+(i.totalEp||12)*0.4,0);
+
+  // Genre breakdown
+  const genreCount = {};
+  finished.forEach(i=>{ if(i.genre) genreCount[i.genre]=(genreCount[i.genre]||0)+1; });
+  const topGenre = Object.entries(genreCount).sort((a,b)=>b[1]-a[1])[0];
+
+  ge('ss-films').textContent = films.length;
+  ge('ss-series').textContent = series.length;
+  ge('ss-hours').textContent = Math.round(hours);
+  ge('ss-top-genre').textContent = topGenre ? topGenre[0].slice(0,6) : '—';
+
+  drawRatingChart(finished);
+  drawGenreBars(genreCount);
+  drawMonthlyChart(finished);
+}
+
+function mkCanvas(id){
+  const c=ge(id); if(!c) return null;
+  const dpr=window.devicePixelRatio||1;
+  const pw=c.parentElement.clientWidth-28;
+  const h=parseInt(c.getAttribute('height'));
+  c.width=pw*dpr; c.height=h*dpr;
+  c.style.width=pw+'px'; c.style.height=h+'px';
+  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,pw,h);
+  return {ctx,w:pw,h};
+}
+
+function drawRatingChart(finished){
+  const r=mkCanvas('rating-chart'); if(!r) return;
+  const {ctx,w,h}=r;
+  const counts=[0,0,0,0,0];
+  finished.forEach(i=>{ if(i.rating>=1&&i.rating<=5) counts[i.rating-1]++; });
+  const maxC=Math.max(...counts,1);
+  const pad={t:10,r:10,b:28,l:30};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const bw=cw/5*0.55, gap=cw/5;
+  const labels=['★1','★2','★3','★4','★5'];
+  const cols=['#5a2020','#7a4020','#8a6020','#a07828','#c9a84c'];
+
+  counts.forEach((c,i)=>{
+    const bh=c/maxC*ch;
+    const x=pad.l+i*gap+(gap-bw)/2;
+    const y=pad.t+ch-bh;
+    ctx.fillStyle=cols[i]; ctx.fillRect(x,y,bw,bh);
+    if(c>0){ ctx.fillStyle=cols[i]; ctx.font='9px Crimson Pro'; ctx.textAlign='center'; ctx.fillText(c,x+bw/2,y-3); }
+    ctx.fillStyle='#6a5060'; ctx.font='9px Crimson Pro'; ctx.textAlign='center'; ctx.fillText(labels[i],x+bw/2,h-8);
+  });
+}
+
+function drawGenreBars(genreCount){
+  const entries=Object.entries(genreCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxC=entries[0]?.[1]||1;
+  ge('genre-bars').innerHTML=entries.length
+    ?entries.map(([g,n])=>'<div class="genre-bar"><div class="gb-label">'+escH(g)+'</div><div class="gb-track"><div class="gb-fill" style="width:'+(n/maxC*100)+'%"></div></div><div class="gb-count">'+n+'</div></div>').join('')
+    :'<div style="color:var(--muted);font-size:12px;font-style:italic">No genre data yet.</div>';
+}
+
+function drawMonthlyChart(finished){
+  const r=mkCanvas('monthly-chart'); if(!r) return;
+  const {ctx,w,h}=r;
+  const months=[];
+  const now=new Date();
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push({label:d.toLocaleDateString('en-US',{month:'short'}),key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),count:0});
+  }
+  finished.forEach(i=>{ if(i.finishedAt){ const key=i.finishedAt.slice(0,7); const m=months.find(m=>m.key===key); if(m) m.count++; } });
+  const maxC=Math.max(...months.map(m=>m.count),1);
+  const pad={t:10,r:10,b:26,l:26};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const bw=cw/6*0.5, gap=cw/6;
+  months.forEach((m,i)=>{
+    const bh=m.count/maxC*ch;
+    const x=pad.l+i*gap+(gap-bw)/2;
+    const y=pad.t+ch-bh;
+    if(m.count>0){
+      ctx.fillStyle='rgba(201,168,76,0.7)'; ctx.fillRect(x,y,bw,bh);
+      ctx.fillStyle='var(--gold)'; ctx.font='9px Crimson Pro'; ctx.textAlign='center'; ctx.fillText(m.count,x+bw/2,y-3);
+    } else {
+      ctx.fillStyle='#1a1214'; ctx.fillRect(x,pad.t,bw,ch);
+    }
+    ctx.fillStyle='#6a5060'; ctx.font='9px Crimson Pro'; ctx.textAlign='center'; ctx.fillText(m.label,x+bw/2,h-8);
+  });
+}
+
+// ── DISCOVER ─────────────────────────────────────────────
+const CURATED = {
+  'Acclaimed Dramas':[
+    {title:'Oppenheimer',year:'2023',type:'film',emoji:'💣',meta:'Dir. Christopher Nolan · Biography/Drama · 3h'},
+    {title:'All Quiet on the Western Front',year:'2022',type:'film',emoji:'⚔️',meta:'Dir. Edward Berger · War Drama · 2.5h'},
+    {title:'The Bear',year:'2022',type:'series',emoji:'🔪',meta:'Hulu · Drama/Comedy · 3 seasons'},
+    {title:'Succession',year:'2018',type:'series',emoji:'💼',meta:'HBO · Drama · 4 seasons'},
+  ],
+  'Mind-Bending Sci-Fi':[
+    {title:'Dune: Part Two',year:'2024',type:'film',emoji:'🏜️',meta:'Dir. Denis Villeneuve · Sci-Fi Epic · 2.5h'},
+    {title:'Severance',year:'2022',type:'series',emoji:'🧠',meta:'Apple TV+ · Sci-Fi Thriller · 2 seasons'},
+    {title:'Dark',year:'2017',type:'series',emoji:'🕳️',meta:'Netflix · German Sci-Fi · 3 seasons'},
+    {title:'Annihilation',year:'2018',type:'film',emoji:'🌿',meta:'Dir. Alex Garland · Sci-Fi Horror · 1.5h'},
+  ],
+  'Crime & Thriller':[
+    {title:'True Detective: Night Country',year:'2024',type:'series',emoji:'🔦',meta:'HBO · Crime Drama · Season 4'},
+    {title:'Slow Horses',year:'2022',type:'series',emoji:'📁',meta:'Apple TV+ · Spy Thriller · 4 seasons'},
+    {title:'Parasite',year:'2019',type:'film',emoji:'🏠',meta:'Dir. Bong Joon-ho · Thriller · 2h'},
+    {title:'The Zone of Interest',year:'2023',type:'film',emoji:'🌺',meta:'Dir. Jonathan Glazer · Drama · 1.5h'},
+  ],
+  'Hidden Gems':[
+    {title:'Aftersun',year:'2022',type:'film',emoji:'☀️',meta:'Dir. Charlotte Wells · Drama · 1.5h'},
+    {title:'Beef',year:'2023',type:'series',emoji:'🚗',meta:'Netflix · Dark Comedy Drama · 1 season'},
+    {title:'Past Lives',year:'2023',type:'film',emoji:'💌',meta:'Dir. Celine Song · Romance Drama · 1.5h'},
+    {title:'The Rehearsal',year:'2022',type:'series',emoji:'🎭',meta:'HBO · Nathan Fielder · 1 season'},
+  ],
+};
+
+function renderDiscover(){
+  const existing = new Set(D.items.map(i=>i.title.toLowerCase()));
+  ge('discover-content').innerHTML = Object.entries(CURATED).map(([section,items])=>'<div class="discover-section">'
+    +'<div class="discover-label">'+section+'</div>'
+    +items.map(s=>{
+      const added = existing.has(s.title.toLowerCase());
+      return '<div class="suggest-card">'
+        +'<div class="suggest-emoji">'+s.emoji+'</div>'
+        +'<div class="suggest-info">'
+          +'<div class="suggest-title">'+escH(s.title)+' <span style="color:var(--muted);font-size:10px;font-style:normal">('+s.year+')</span></div>'
+          +'<div class="suggest-meta">'+escH(s.meta)+'</div>'
+        +'</div>'
+        +(added
+          ?'<div style="font-size:10px;color:var(--gold)">&#10003; Added</div>'
+          :'<button class="suggest-add" onclick="quickAdd(\''+escH(s.title)+'\',\''+s.year+'\',\''+s.type+'\',event)">+ Watchlist</button>')
+        +'</div>';
+    }).join('')
+    +'</div>').join('');
+}
+
+function quickAdd(title, year, type, e){
+  e.stopPropagation();
+  D.items.unshift({id:Date.now().toString(),title,year,type,status:'watchlist',addedAt:new Date().toISOString(),priority:'normal',rating:0});
+  persist(); renderAll(); renderDiscover();
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function closeModal(){ ge('modal-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===ge('modal-overlay')) closeModal(); }
+
+// ── INIT ──────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>

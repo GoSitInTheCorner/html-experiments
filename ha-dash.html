@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>HA Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#111318;--s1:#1a1d24;--s2:#22262f;--s3:#2a2f3a;--b:#323844;
+  --ha:#03a9f4;--ha2:#40c4ff;--orange:#ff9800;--green:#4caf50;--red:#f44336;--purple:#9c27b0;--yellow:#ffeb3b;
+  --text:#e8eaf0;--muted:#6b7280;--soft:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--b);flex-shrink:0;z-index:2;position:relative;background:var(--bg)}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif}
+#title{font-size:18px;font-weight:600;flex:1;letter-spacing:-.01em}
+#title span{color:var(--ha)}
+.ha-status{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green)}
+.ha-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:2;position:relative;background:var(--bg)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:70px;padding:9px 4px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500}
+.tab.active{color:var(--ha);border-bottom-color:var(--ha)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;z-index:1;position:relative}
+.view{display:none;padding:12px 12px 80px}
+.view.active{display:block}
+
+/* ── ENTITY GRID ── */
+.entity-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.entity-card{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.entity-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.entity-card.on::before{background:var(--ha)}
+.entity-card:hover{border-color:rgba(3,169,244,.3)}
+.ec-icon{font-size:24px;margin-bottom:8px;display:block}
+.ec-name{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ec-state{font-size:10px;color:var(--muted);margin-top:2px}
+.ec-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;margin-top:4px}
+.ec-value.on{color:var(--ha)}
+.ec-value.off{color:var(--muted)}
+.ec-toggle{position:absolute;top:10px;right:10px;width:34px;height:18px;border-radius:9px;background:var(--s3);border:none;cursor:pointer;transition:background .2s;position:relative;display:inline-block}
+.toggle-wrap{position:absolute;top:10px;right:10px}
+.toggle{width:34px;height:18px;border-radius:9px;background:var(--s3);border:none;cursor:pointer;transition:background .2s;position:relative;display:block}
+.toggle.on{background:var(--ha)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:white;transition:transform .2s}
+.toggle.on::after{transform:translateX(16px)}
+.ec-del{position:absolute;bottom:8px;right:8px;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;opacity:0;transition:opacity .15s}
+.entity-card:hover .ec-del{opacity:1}
+
+/* ── ROOM SECTIONS ── */
+.room-section{margin-bottom:16px}
+.room-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.room-name{font-size:13px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+.room-emoji{font-size:16px}
+.room-count{font-size:10px;color:var(--muted);font-weight:400}
+
+/* ── AUTOMATIONS ── */
+.auto-item{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+.auto-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--s2);border:1px solid var(--b)}
+.auto-info{flex:1;min-width:0}
+.auto-name{font-size:13px;font-weight:500}
+.auto-trigger{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
+.auto-action{font-size:10px;color:var(--ha);margin-top:2px}
+.auto-enabled{flex-shrink:0;margin-top:2px}
+.auto-del{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px;align-self:center}
+
+/* ── CONFIG GENERATOR ── */
+.config-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.config-head{padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.config-title{font-size:12px;font-weight:600}
+.config-copy{font-size:10px;padding:4px 10px;border:1px solid var(--b);border-radius:4px;background:transparent;color:var(--ha);cursor:pointer;font-family:'Inter',sans-serif}
+.config-body{padding:12px 14px}
+pre.yaml{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--soft);line-height:1.7;white-space:pre-wrap;word-break:break-word;background:var(--s2);border:1px solid var(--b);border-radius:6px;padding:10px;margin-top:8px;max-height:200px;overflow-y:auto}
+.yaml .key{color:var(--ha)}
+.yaml .val{color:var(--orange)}
+.yaml .str{color:var(--green)}
+.yaml .comment{color:var(--muted);font-style:italic}
+
+/* ── ADD MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border:1px solid var(--b);border-top:1px solid var(--ha);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:18px;padding-bottom:40px;max-height:88vh;overflow-y:auto}
+#modal-title{font-size:17px;font-weight:600;margin-bottom:14px;letter-spacing:-.01em}
+.mf{margin-bottom:10px}
+.ml{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;font-weight:600}
+.mi{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.mi:focus{border-color:var(--ha)}
+select.mi option{background:var(--s2)}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.msave{width:100%;padding:12px;background:var(--ha);color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;margin-top:8px;font-family:'Inter',sans-serif;letter-spacing:.01em}
+.mcancel{width:100%;background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:8px;font-family:'Inter',sans-serif}
+
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-size:14px;font-weight:600}
+.sec-btn{font-size:10px;padding:5px 11px;border:1px solid var(--ha);color:var(--ha);background:transparent;cursor:pointer;font-family:'Inter',sans-serif;border-radius:6px}
+
+/* ── SENSOR CARDS ── */
+.sensor-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.sensor-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:10px;text-align:center}
+.sensor-icon{font-size:20px;margin-bottom:4px}
+.sensor-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:500}
+.sensor-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+
+.scene-btn{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;width:100%;margin-bottom:6px;display:flex;align-items:center;gap:10px;transition:border-color .15s;font-family:'Inter',sans-serif}
+.scene-btn:hover{border-color:rgba(3,169,244,.3)}
+.scene-emoji{font-size:22px;flex-shrink:0}
+.scene-info{flex:1}
+.scene-name{font-size:13px;font-weight:500;text-align:left}
+.scene-desc{font-size:10px;color:var(--muted);margin-top:1px;text-align:left}
+.scene-active{font-size:10px;color:var(--ha);flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title">Home <span>Assistant</span></div>
+  <div class="ha-status"><div class="ha-dot"></div>Simulated</div>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('dash')">Dashboard</div>
+  <div class="tab" onclick="showTab('devices')">Devices</div>
+  <div class="tab" onclick="showTab('autos')">Automations</div>
+  <div class="tab" onclick="showTab('config')">Config</div>
+</div>
+
+<div id="content">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="view active" id="v-dash">
+
+    <!-- Sensor strip -->
+    <div class="sensor-strip">
+      <div class="sensor-card">
+        <div class="sensor-icon">🌡️</div>
+        <div class="sensor-val" id="s-temp">72°F</div>
+        <div class="sensor-label">Indoor Temp</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon">💧</div>
+        <div class="sensor-val" id="s-humid">45%</div>
+        <div class="sensor-label">Humidity</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon">☀️</div>
+        <div class="sensor-val" id="s-lux">-</div>
+        <div class="sensor-label">Lux</div>
+      </div>
+    </div>
+
+    <!-- Scenes -->
+    <div class="sec-header">
+      <div class="sec-title">Scenes</div>
+      <button class="sec-btn" onclick="openAddScene()">+ Scene</button>
+    </div>
+    <div id="scenes-list" style="margin-bottom:14px"></div>
+
+    <!-- Quick controls by room -->
+    <div class="sec-header">
+      <div class="sec-title">Rooms</div>
+      <button class="sec-btn" onclick="openAddDevice()">+ Device</button>
+    </div>
+    <div id="rooms-list"></div>
+
+  </div>
+
+  <!-- ── DEVICES ── -->
+  <div class="view" id="v-devices">
+    <div class="sec-header">
+      <div class="sec-title">All Devices</div>
+      <button class="sec-btn" onclick="openAddDevice()">+ Add Device</button>
+    </div>
+    <div class="entity-grid" id="all-devices"></div>
+  </div>
+
+  <!-- ── AUTOMATIONS ── -->
+  <div class="view" id="v-autos">
+    <div class="sec-header">
+      <div class="sec-title">Automations</div>
+      <button class="sec-btn" onclick="openAddAuto()">+ Add</button>
+    </div>
+    <div id="autos-list"></div>
+
+    <!-- Templates -->
+    <div class="sec-header" style="margin-top:16px">
+      <div class="sec-title">Templates</div>
+    </div>
+    <div id="auto-templates"></div>
+  </div>
+
+  <!-- ── CONFIG GENERATOR ── -->
+  <div class="view" id="v-config">
+    <div class="sec-header">
+      <div class="sec-title">YAML Config Generator</div>
+    </div>
+    <div id="config-content"></div>
+  </div>
+
+</div>
+
+<!-- ADD MODAL -->
+<div id="modal-overlay" onclick="overlayClick(event)">
+  <div id="modal">
+    <div id="modal-title">Add Device</div>
+    <div id="modal-body"></div>
+    <button class="msave" id="modal-save">Save</button>
+    <button class="mcancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const STORE='ha_dash_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE))||{}; }catch{ return {}; }}
+function persist(){ localStorage.setItem(STORE,JSON.stringify(D)); }
+function ge(id){ return document.getElementById(id); }
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const DEVICE_TYPES=[
+  {key:'light',     label:'Light',           icon:'💡', domain:'light',   hasToggle:true,  hasDimmer:true},
+  {key:'switch',    label:'Switch',          icon:'🔌', domain:'switch',  hasToggle:true,  hasDimmer:false},
+  {key:'fan',       label:'Fan',             icon:'🌀', domain:'fan',     hasToggle:true,  hasDimmer:false},
+  {key:'lock',      label:'Lock',            icon:'🔒', domain:'lock',    hasToggle:true,  hasDimmer:false},
+  {key:'thermostat',label:'Thermostat',      icon:'🌡️', domain:'climate', hasToggle:false, hasDimmer:false, isSensor:true},
+  {key:'sensor',    label:'Sensor',          icon:'📡', domain:'sensor',  hasToggle:false, hasDimmer:false, isSensor:true},
+  {key:'camera',    label:'Camera',          icon:'📷', domain:'camera',  hasToggle:false, hasDimmer:false},
+  {key:'cover',     label:'Blind/Cover',     icon:'🪟', domain:'cover',   hasToggle:true,  hasDimmer:false},
+  {key:'media',     label:'Media Player',    icon:'📺', domain:'media_player',hasToggle:true,hasDimmer:false},
+  {key:'vacuum',    label:'Vacuum',          icon:'🤖', domain:'vacuum',  hasToggle:true,  hasDimmer:false},
+];
+
+const ROOMS=['Living Room','Bedroom','Kitchen','Bathroom','Office','Garage','Outdoor','Basement','Dining Room','Hallway'];
+
+const AUTO_TEMPLATES=[
+  {name:'Sunrise lights on',trigger:'At sunrise',action:'Turn on all lights at 30% brightness',emoji:'🌅',yaml:`automation:\n  alias: Sunrise Lights\n  trigger:\n    platform: sun\n    event: sunrise\n  action:\n    service: light.turn_on\n    data:\n      brightness_pct: 30`},
+  {name:'Away mode',trigger:'Everyone leaves home',action:'Turn off all devices, set AC to 78°F',emoji:'🏠',yaml:`automation:\n  alias: Away Mode\n  trigger:\n    platform: state\n    entity_id: group.family\n    to: not_home\n  action:\n    - service: homeassistant.turn_off\n      entity_id: all\n    - service: climate.set_temperature\n      data:\n        temperature: 26`},
+  {name:'Bedtime routine',trigger:'Time is 10:30 PM',action:'Dim lights to 10%, lock front door',emoji:'🌙',yaml:`automation:\n  alias: Bedtime\n  trigger:\n    platform: time\n    at: '22:30:00'\n  action:\n    - service: light.turn_on\n      data:\n        brightness_pct: 10\n    - service: lock.lock\n      entity_id: lock.front_door`},
+  {name:'Motion-activated light',trigger:'Motion detected in hallway',action:'Turn on hallway light for 5 minutes',emoji:'👁️',yaml:`automation:\n  alias: Hallway Motion\n  trigger:\n    platform: state\n    entity_id: binary_sensor.hallway_motion\n    to: 'on'\n  action:\n    service: light.turn_on\n    entity_id: light.hallway\n  mode: restart`},
+  {name:'Low battery alert',trigger:'Any sensor battery below 20%',action:'Send notification to phone',emoji:'🔋',yaml:`automation:\n  alias: Low Battery Alert\n  trigger:\n    platform: numeric_state\n    entity_id: sensor.all_battery\n    below: 20\n  action:\n    service: notify.mobile_app\n    data:\n      message: "Battery low on {{ trigger.to_state.name }}"`},
+  {name:'Good morning',trigger:'Weekday alarm time',action:'Turn on bedroom lights gradually, start coffee',emoji:'☀️',yaml:`automation:\n  alias: Good Morning\n  trigger:\n    platform: time\n    at: '07:00:00'\n  condition:\n    platform: time\n    weekday: [mon, tue, wed, thu, fri]\n  action:\n    service: light.turn_on\n    data:\n      brightness_pct: 100\n      transition: 300`},
+];
+
+const DEFAULT_DEVICES=[
+  {id:1,name:'Living Room Lights',type:'light',room:'Living Room',state:true,icon:'💡',entityId:'light.living_room'},
+  {id:2,name:'Smart Thermostat',type:'thermostat',room:'Living Room',state:null,icon:'🌡️',entityId:'climate.main',value:'72°F'},
+  {id:3,name:'Front Door Lock',type:'lock',room:'Hallway',state:false,icon:'🔒',entityId:'lock.front_door'},
+  {id:4,name:'Bedroom Lights',type:'light',room:'Bedroom',state:false,icon:'💡',entityId:'light.bedroom'},
+  {id:5,name:'Kitchen Switch',type:'switch',room:'Kitchen',state:true,icon:'🔌',entityId:'switch.kitchen'},
+  {id:6,name:'Office Fan',type:'fan',room:'Office',state:false,icon:'🌀',entityId:'fan.office'},
+];
+
+const DEFAULT_SCENES=[
+  {id:101,name:'Movie Night',emoji:'🎬',desc:'Dim all lights, lower blinds',entities:['light.living_room'],active:false},
+  {id:102,name:'Morning Boost',emoji:'☀️',desc:'Full brightness, open blinds',entities:['light.living_room','light.bedroom'],active:false},
+  {id:103,name:'Good Night',emoji:'🌙',desc:'All lights off, lock doors',entities:['lock.front_door'],active:false},
+  {id:104,name:'Party Mode',emoji:'🎉',desc:'Color lights, music on',entities:[],active:false},
+];
+
+const DEFAULT_AUTOS=[
+  {id:201,name:'Motion Light',trigger:'Motion in hallway',action:'Turn on hallway light',emoji:'👁️',enabled:true},
+  {id:202,name:'Bedtime Routine',trigger:'10:30 PM weekdays',action:'Dim lights, lock doors',emoji:'🌙',enabled:true},
+  {id:203,name:'Away Mode',trigger:'All phones leave home',action:'Turn everything off',emoji:'🏠',enabled:false},
+];
+
+let D=load();
+if(!D.devices)  D.devices  = DEFAULT_DEVICES;
+if(!D.scenes)   D.scenes   = DEFAULT_SCENES;
+if(!D.autos)    D.autos    = DEFAULT_AUTOS;
+persist();
+
+// ── TABS ──────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['dash','devices','autos','config'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+  if(t==='config') renderConfig();
+}
+
+// ── RENDER DASHBOARD ──────────────────────────────
+function renderDash(){
+  // Scenes
+  ge('scenes-list').innerHTML=D.scenes.map(s=>'<button class="scene-btn" onclick="activateScene('+s.id+')">'
+    +'<div class="scene-emoji">'+s.emoji+'</div>'
+    +'<div class="scene-info"><div class="scene-name">'+escH(s.name)+'</div><div class="scene-desc">'+escH(s.desc)+'</div></div>'
+    +(s.active?'<div class="scene-active">Active &#10003;</div>':'')
+    +'</button>').join('');
+
+  // Rooms
+  const rooms={};
+  D.devices.forEach(d=>{ if(!rooms[d.room]) rooms[d.room]=[]; rooms[d.room].push(d); });
+  ge('rooms-list').innerHTML=Object.entries(rooms).map(([room,devs])=>'<div class="room-section">'
+    +'<div class="room-header"><div class="room-name"><span class="room-emoji">'+roomEmoji(room)+'</span>'+room+' <span class="room-count">'+devs.length+' device'+(devs.length!==1?'s':'')+'</span></div></div>'
+    +'<div class="entity-grid">'+devs.map(d=>entityCard(d)).join('')+'</div>'
+    +'</div>').join('');
+}
+
+function activateScene(id){
+  D.scenes.forEach(s=>s.active=s.id===id?!s.active:false);
+  persist(); renderDash();
+}
+
+function roomEmoji(room){
+  const map={'Living Room':'🛋️','Bedroom':'🛏️','Kitchen':'🍳','Bathroom':'🚿','Office':'💻','Garage':'🚗','Outdoor':'🌿','Basement':'🔧','Dining Room':'🍽️','Hallway':'🚪'};
+  return map[room]||'🏠';
+}
+
+// ── ENTITY CARD ───────────────────────────────────
+function entityCard(d){
+  const dt=DEVICE_TYPES.find(t=>t.key===d.type)||DEVICE_TYPES[0];
+  const hasToggle=dt.hasToggle;
+  const stateText=d.state===true?'On':d.state===false?'Off':d.value||'—';
+  return '<div class="entity-card'+(d.state?' on':'')+'" id="ec-'+d.id+'">'
+    +(hasToggle?'<div class="toggle-wrap"><div class="toggle'+(d.state?' on':'')+'" onclick="toggleDevice('+d.id+',event)"></div></div>':'')
+    +'<span class="ec-icon">'+d.icon+'</span>'
+    +'<div class="ec-name">'+escH(d.name)+'</div>'
+    +'<div class="ec-state">'+d.room+'</div>'
+    +'<div class="ec-value'+(d.state?' on':' off')+'">'+stateText+'</div>'
+    +'<button class="ec-del" onclick="deleteDevice('+d.id+',event)">&#215;</button>'
+    +'</div>';
+}
+
+function toggleDevice(id,e){
+  e.stopPropagation();
+  const d=D.devices.find(x=>x.id===id);
+  if(d&&d.state!==null) d.state=!d.state;
+  persist(); renderAll();
+}
+
+function deleteDevice(id,e){
+  e.stopPropagation();
+  if(confirm('Remove device?')){ D.devices=D.devices.filter(d=>d.id!==id); persist(); renderAll(); }
+}
+
+// ── DEVICES VIEW ──────────────────────────────────
+function renderDevices(){
+  ge('all-devices').innerHTML=D.devices.map(d=>entityCard(d)).join('');
+}
+
+// ── AUTOMATIONS ───────────────────────────────────
+function renderAutos(){
+  ge('autos-list').innerHTML=D.autos.map(a=>'<div class="auto-item">'
+    +'<div class="auto-icon">'+a.emoji+'</div>'
+    +'<div class="auto-info">'
+      +'<div class="auto-name">'+escH(a.name)+'</div>'
+      +'<div class="auto-trigger">Trigger: '+escH(a.trigger)+'</div>'
+      +'<div class="auto-action">Action: '+escH(a.action)+'</div>'
+    +'</div>'
+    +'<div class="auto-enabled"><div class="toggle'+(a.enabled?' on':'')+'" onclick="toggleAuto('+a.id+')"></div></div>'
+    +'<button class="auto-del" onclick="deleteAuto('+a.id+')">&#215;</button>'
+    +'</div>').join('');
+
+  ge('auto-templates').innerHTML=AUTO_TEMPLATES.map(t=>'<div class="auto-item" style="cursor:pointer;border-color:rgba(3,169,244,.15)" onclick="addTemplateAuto(\''+escH(t.name)+'\',\''+escH(t.trigger)+'\',\''+escH(t.action)+'\',\''+t.emoji+'\')">'
+    +'<div class="auto-icon">'+t.emoji+'</div>'
+    +'<div class="auto-info">'
+      +'<div class="auto-name" style="color:var(--ha)">'+escH(t.name)+'</div>'
+      +'<div class="auto-trigger">Trigger: '+escH(t.trigger)+'</div>'
+      +'<div class="auto-action">Action: '+escH(t.action)+'</div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:var(--ha);flex-shrink:0">+ Add</div>'
+    +'</div>').join('');
+}
+
+function toggleAuto(id){ const a=D.autos.find(x=>x.id===id); if(a) a.enabled=!a.enabled; persist(); renderAutos(); }
+function deleteAuto(id){ if(confirm('Delete automation?')){ D.autos=D.autos.filter(a=>a.id!==id); persist(); renderAutos(); } }
+function addTemplateAuto(name,trigger,action,emoji){ D.autos.unshift({id:Date.now(),name,trigger,action,emoji,enabled:true}); persist(); renderAutos(); }
+
+// ── CONFIG GENERATOR ──────────────────────────────
+function renderConfig(){
+  const lights=D.devices.filter(d=>d.type==='light');
+  const switches=D.devices.filter(d=>d.type==='switch');
+  const locks=D.devices.filter(d=>d.type==='lock');
+  const enabledAutos=D.autos.filter(a=>a.enabled);
+
+  const groupYaml=`group:
+  all_lights:
+    name: All Lights
+    entities:
+${lights.map(d=>'      - '+d.entityId).join('\n')||'      # No lights added yet'}
+
+  all_switches:
+    name: All Switches
+    entities:
+${switches.map(d=>'      - '+d.entityId).join('\n')||'      # No switches added yet'}`;
+
+  const sceneYaml=`scene:
+${D.scenes.map(s=>`  - name: ${s.name}
+    entities:
+${s.entities.length?s.entities.map(e=>`      ${e}:\n        state: on`).join('\n'):'      # No entities assigned'}`).join('\n\n')}`;
+
+  const autoYaml=`automation:
+${enabledAutos.map((a,i)=>`  - alias: "${a.name}"
+    # Trigger: ${a.trigger}
+    # Action: ${a.action}
+    trigger: []  # Configure in HA UI
+    action: []   # Configure in HA UI`).join('\n\n')}`;
+
+  const inputYaml=`input_boolean:
+  ha_dashboard_mode:
+    name: Dashboard Mode
+    initial: false
+
+input_number:
+  living_room_brightness:
+    name: Living Room Brightness
+    min: 0
+    max: 100
+    step: 5
+    unit_of_measurement: '%'`;
+
+  ge('config-content').innerHTML=[
+    {title:'Groups (groups.yaml)',yaml:groupYaml},
+    {title:'Scenes (scenes.yaml)',yaml:sceneYaml},
+    {title:'Automations (automations.yaml)',yaml:autoYaml},
+    {title:'Input Helpers (configuration.yaml)',yaml:inputYaml},
+  ].map((c,i)=>'<div class="config-card">'
+    +'<div class="config-head"><div class="config-title">'+c.title+'</div>'
+    +'<button class="config-copy" onclick="copyYaml('+i+')">Copy</button></div>'
+    +'<div class="config-body"><pre class="yaml" id="yaml-'+i+'">'+escH(c.yaml)+'</pre></div>'
+    +'</div>').join('');
+
+  window._yamlBlocks=[groupYaml,sceneYaml,autoYaml,inputYaml];
+}
+
+function copyYaml(i){
+  navigator.clipboard.writeText(window._yamlBlocks[i]).catch(()=>{});
+  const btn=document.querySelectorAll('.config-copy')[i];
+  if(btn){ btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',2000); }
+}
+
+// ── ADD MODALS ────────────────────────────────────
+function openAddDevice(){
+  ge('modal-title').textContent='Add Device';
+  ge('modal-body').innerHTML='<div class="mf"><div class="ml">Device Type</div>'
+    +'<select class="mi" id="d-type">'
+    +DEVICE_TYPES.map(t=>'<option value="'+t.key+'">'+t.icon+' '+t.label+'</option>').join('')
+    +'</select></div>'
+    +'<div class="mf"><div class="ml">Name</div><input class="mi" id="d-name" type="text" placeholder="e.g. Living Room Main Light"></div>'
+    +'<div class="mrow"><div class="mf"><div class="ml">Room</div><select class="mi" id="d-room">'+ROOMS.map(r=>'<option>'+r+'</option>').join('')+'</select></div>'
+    +'<div class="mf"><div class="ml">Entity ID</div><input class="mi" id="d-entity" type="text" placeholder="light.living_room"></div></div>'
+    +'<div class="mf"><div class="ml">Initial State</div><select class="mi" id="d-state"><option value="true">On</option><option value="false">Off</option></select></div>';
+  ge('modal-save').onclick=saveDevice;
+  ge('modal-overlay').classList.add('open');
+}
+
+function saveDevice(){
+  const name=ge('d-name').value.trim();
+  if(!name){ alert('Enter device name'); return; }
+  const typeKey=ge('d-type').value;
+  const dt=DEVICE_TYPES.find(t=>t.key===typeKey);
+  const entityId=ge('d-entity').value.trim()||typeKey+'.'+name.toLowerCase().replace(/\s+/g,'_');
+  D.devices.push({
+    id:Date.now(),
+    name,
+    type:typeKey,
+    room:ge('d-room').value,
+    entityId,
+    icon:dt.icon,
+    state:dt.hasToggle?(ge('d-state').value==='true'):null,
+  });
+  persist(); closeModal(); renderAll();
+}
+
+function openAddAuto(){
+  ge('modal-title').textContent='Add Automation';
+  ge('modal-body').innerHTML='<div class="mf"><div class="ml">Name</div><input class="mi" id="a-name" type="text" placeholder="e.g. Motion Light"></div>'
+    +'<div class="mf"><div class="ml">Trigger Description</div><input class="mi" id="a-trigger" type="text" placeholder="e.g. Motion detected at front door"></div>'
+    +'<div class="mf"><div class="ml">Action Description</div><input class="mi" id="a-action" type="text" placeholder="e.g. Turn on porch light for 5 min"></div>'
+    +'<div class="mrow"><div class="mf"><div class="ml">Emoji</div><input class="mi" id="a-emoji" type="text" value="⚡" style="font-size:20px;text-align:center"></div>'
+    +'<div class="mf"><div class="ml">Enabled</div><select class="mi" id="a-enabled"><option value="true">Yes</option><option value="false">No</option></select></div></div>';
+  ge('modal-save').onclick=saveAuto;
+  ge('modal-overlay').classList.add('open');
+}
+
+function saveAuto(){
+  const name=ge('a-name').value.trim();
+  if(!name){ alert('Enter automation name'); return; }
+  D.autos.unshift({id:Date.now(),name,trigger:ge('a-trigger').value||'—',action:ge('a-action').value||'—',emoji:ge('a-emoji').value||'⚡',enabled:ge('a-enabled').value==='true'});
+  persist(); closeModal(); renderAutos();
+}
+
+function openAddScene(){
+  ge('modal-title').textContent='Add Scene';
+  ge('modal-body').innerHTML='<div class="mf"><div class="ml">Name</div><input class="mi" id="sc-name" type="text" placeholder="e.g. Reading Mode"></div>'
+    +'<div class="mrow"><div class="mf"><div class="ml">Emoji</div><input class="mi" id="sc-emoji" type="text" value="✨" style="font-size:20px;text-align:center"></div>'
+    +'</div>'
+    +'<div class="mf"><div class="ml">Description</div><input class="mi" id="sc-desc" type="text" placeholder="e.g. Warm lights at 50%"></div>';
+  ge('modal-save').onclick=saveScene;
+  ge('modal-overlay').classList.add('open');
+}
+
+function saveScene(){
+  const name=ge('sc-name').value.trim();
+  if(!name){ alert('Enter scene name'); return; }
+  D.scenes.push({id:Date.now(),name,emoji:ge('sc-emoji').value||'✨',desc:ge('sc-desc').value||'',entities:[],active:false});
+  persist(); closeModal(); renderDash();
+}
+
+function closeModal(){ ge('modal-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===ge('modal-overlay')) closeModal(); }
+
+// ── RENDER ALL ────────────────────────────────────
+function renderAll(){
+  renderDash();
+  renderDevices();
+  renderAutos();
+}
+
+// ── LIVE SENSOR SIMULATION ────────────────────────
+function updateSensors(){
+  const temp=70+Math.round(Math.random()*6);
+  const humid=40+Math.round(Math.random()*20);
+  const lux=Math.round(200+Math.random()*800);
+  ge('s-temp').textContent=temp+'°F';
+  ge('s-humid').textContent=humid+'%';
+  ge('s-lux').textContent=lux;
+}
+
+renderAll();
+updateSensors();
+setInterval(updateSensors, 8000);
+</script>
+</body>
+</html>

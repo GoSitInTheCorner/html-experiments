@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Financial Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
+:root{
+  --bg:#070608;--s1:#0e0c10;--s2:#161318;--s3:#1e1a22;--b:#2a2530;
+  --gold:#e8b84b;--gold2:#f5d080;--green:#39e87a;--red:#e84b4b;--blue:#4b9ee8;
+  --text:#f0ecf8;--muted:#7a7090;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--b);flex-shrink:0}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace}
+#title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.1em;flex:1}
+#title span{color:var(--gold)}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+.view{display:none;padding:14px 14px 60px;flex-direction:column;gap:12px}
+.view.active{display:block}
+
+/* ── INPUT CARD ── */
+.calc-card{background:var(--s1);border:1px solid var(--b);border-radius:14px;overflow:hidden}
+.calc-card-title{padding:10px 14px;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);border-bottom:1px solid var(--b);background:var(--s2)}
+.field-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--b);gap:10px}
+.field-row:last-child{border-bottom:none}
+.field-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;flex:1;min-width:0}
+.field-input-wrap{display:flex;align-items:center;gap:4px}
+.field-prefix{font-size:12px;color:var(--gold)}
+.field-input{background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--text);text-align:right;width:110px}
+.field-suffix{font-size:11px;color:var(--muted)}
+.field-input:focus{color:var(--gold)}
+
+/* range slider */
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--s3);border-radius:2px;outline:none;margin-top:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+.slider-wrap{padding:4px 14px 12px;border-bottom:1px solid var(--b)}
+.slider-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:4px}
+
+/* ── RESULTS ── */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b)}
+.result-cell{background:var(--s1);padding:12px 14px}
+.result-cell.full{grid-column:span 2}
+.result-cell.highlight{background:var(--s2)}
+.result-label{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.result-val{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.04em;line-height:1}
+.result-val.gold{color:var(--gold)}
+.result-val.green{color:var(--green)}
+.result-val.red{color:var(--red)}
+.result-sub{font-size:9px;color:var(--muted);margin-top:3px}
+
+/* ── CHART ── */
+.chart-wrap{background:var(--s1);border:1px solid var(--b);border-radius:14px;padding:14px;margin-top:0}
+.chart-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+canvas{width:100%;border-radius:4px}
+
+/* ── AMORTIZATION TABLE ── */
+.amort-wrap{background:var(--s1);border:1px solid var(--b);border-radius:14px;overflow:hidden;margin-top:0}
+.amort-head{display:grid;grid-template-columns:40px 1fr 1fr 1fr 1fr;padding:8px 10px;background:var(--s2);border-bottom:1px solid var(--b);gap:4px}
+.amort-col{font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:right}
+.amort-col:first-child{text-align:left}
+.amort-row{display:grid;grid-template-columns:40px 1fr 1fr 1fr 1fr;padding:7px 10px;border-bottom:1px solid var(--b);gap:4px}
+.amort-row:last-child{border-bottom:none}
+.amort-row:nth-child(even){background:rgba(255,255,255,.015)}
+.amort-cell{font-size:10px;text-align:right;color:var(--text)}
+.amort-cell:first-child{text-align:left;color:var(--muted)}
+.amort-cell.interest{color:var(--red)}
+.amort-cell.principal{color:var(--green)}
+.amort-toggle{padding:10px 14px;font-size:10px;color:var(--gold);cursor:pointer;text-align:center;border-top:1px solid var(--b)}
+
+/* ── ROI SCENARIOS ── */
+.scenario-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--b)}
+.scenario-row:last-child{border-bottom:none}
+.scenario-label{font-size:11px;flex:1}
+.scenario-bar-wrap{width:80px;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.scenario-bar{height:100%;border-radius:3px}
+.scenario-val{font-family:'Bebas Neue',sans-serif;font-size:16px;width:60px;text-align:right}
+
+/* ── SECTION TITLE ── */
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.06em;color:var(--text);margin-bottom:2px;margin-top:4px}
+
+/* ── BREAK-EVEN BAR ── */
+.breakeven-wrap{padding:12px 14px}
+.be-track{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin:8px 0 4px}
+.be-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--red),var(--gold),var(--green));transition:width .4s}
+.be-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">← Hub</button>
+  <div id="title">CALC <span>//</span></div>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('roi')">ROI</div>
+  <div class="tab" onclick="showTab('mortgage')">Mortgage</div>
+  <div class="tab" onclick="showTab('compare')">Compare</div>
+</div>
+
+<div id="content">
+
+  <!-- ══ ROI TAB ══ -->
+  <div class="view active" id="v-roi">
+    <div class="sec-title">Return on Investment</div>
+
+    <div class="calc-card">
+      <div class="calc-card-title">Investment Details</div>
+      <div class="field-row">
+        <div class="field-label">Initial Investment</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="roi-initial" type="number" value="10000" oninput="calcROI()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Final Value / Return</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="roi-final" type="number" value="15000" oninput="calcROI()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Duration</div>
+        <div class="field-input-wrap"><input class="field-input" id="roi-years" type="number" value="3" min="0.1" step="0.5" oninput="calcROI()"><span class="field-suffix">yrs</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Additional Costs</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="roi-costs" type="number" value="0" oninput="calcROI()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Tax Rate</div>
+        <div class="field-input-wrap"><input class="field-input" id="roi-tax" type="number" value="25" min="0" max="60" oninput="calcROI()"><span class="field-suffix">%</span></div>
+      </div>
+    </div>
+
+    <div class="calc-card">
+      <div class="result-grid" id="roi-results">
+        <div class="result-cell highlight full">
+          <div class="result-label">Total ROI</div>
+          <div class="result-val gold" id="r-roi">50.0%</div>
+          <div class="result-sub" id="r-roi-sub">Net gain: $5,000</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">Annualized ROI</div>
+          <div class="result-val" id="r-ann">14.5%</div>
+          <div class="result-sub">per year (CAGR)</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">After-Tax Gain</div>
+          <div class="result-val green" id="r-aftertax">$3,750</div>
+          <div class="result-sub" id="r-taxamt">Tax: $1,250</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">Payback Period</div>
+          <div class="result-val" id="r-payback">3.0 yrs</div>
+          <div class="result-sub">to break even</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">vs S&P 500 (10%)</div>
+          <div class="result-val" id="r-vsSP">+4.5%</div>
+          <div class="result-sub">annualized diff</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Investment Growth Over Time</div>
+      <canvas id="roi-chart" height="160"></canvas>
+    </div>
+
+    <div class="calc-card">
+      <div class="calc-card-title">Scenario Comparison</div>
+      <div id="roi-scenarios"></div>
+    </div>
+  </div>
+
+  <!-- ══ MORTGAGE TAB ══ -->
+  <div class="view" id="v-mortgage">
+    <div class="sec-title">Mortgage Calculator</div>
+
+    <div class="calc-card">
+      <div class="calc-card-title">Loan Details</div>
+      <div class="field-row">
+        <div class="field-label">Home Price</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="m-price" type="number" value="400000" oninput="calcMortgage()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Down Payment</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="m-down" type="number" value="80000" oninput="calcMortgage()"></div>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="m-down-pct" min="3" max="50" value="20" oninput="syncDownPct()">
+        <div class="slider-labels"><span>3%</span><span id="m-down-pct-label">20% down</span><span>50%</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Interest Rate</div>
+        <div class="field-input-wrap"><input class="field-input" id="m-rate" type="number" value="6.75" step="0.05" oninput="calcMortgage()"><span class="field-suffix">%</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Loan Term</div>
+        <div class="field-input-wrap">
+          <select id="m-term" onchange="calcMortgage()" style="background:transparent;border:none;outline:none;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);text-align:right">
+            <option value="30">30 years</option>
+            <option value="20">20 years</option>
+            <option value="15">15 years</option>
+            <option value="10">10 years</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Property Tax /yr</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="m-tax" type="number" value="4800" oninput="calcMortgage()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Insurance /yr</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="m-ins" type="number" value="1200" oninput="calcMortgage()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">PMI (if &lt;20% down)</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="m-pmi" type="number" value="0" oninput="calcMortgage()"><span class="field-suffix">/mo</span></div>
+      </div>
+    </div>
+
+    <div class="calc-card">
+      <div class="result-grid">
+        <div class="result-cell highlight full">
+          <div class="result-label">Monthly Payment (P&I)</div>
+          <div class="result-val gold" id="m-monthly">—</div>
+          <div class="result-sub" id="m-total-monthly">Total with tax/ins: —</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">Total Interest</div>
+          <div class="result-val red" id="m-total-int">—</div>
+          <div class="result-sub" id="m-int-pct">% of loan</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">Total Cost</div>
+          <div class="result-val" id="m-total-cost">—</div>
+          <div class="result-sub">principal + interest</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">Loan Amount</div>
+          <div class="result-val" id="m-loan">—</div>
+          <div class="result-sub" id="m-ltv">LTV ratio</div>
+        </div>
+        <div class="result-cell">
+          <div class="result-label">Break-even (rent)</div>
+          <div class="result-val" id="m-breakeven">—</div>
+          <div class="result-sub">vs renting equivalent</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie-style breakdown -->
+    <div class="chart-wrap">
+      <div class="chart-title">Payment Breakdown over Loan Life</div>
+      <canvas id="mortgage-chart" height="160"></canvas>
+    </div>
+
+    <div class="amort-wrap" id="amort-wrap">
+      <div class="calc-card-title" style="padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--b);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold)">Amortization Schedule</div>
+      <div class="amort-head">
+        <div class="amort-col">Yr</div>
+        <div class="amort-col">Payment</div>
+        <div class="amort-col">Principal</div>
+        <div class="amort-col">Interest</div>
+        <div class="amort-col">Balance</div>
+      </div>
+      <div id="amort-body"></div>
+      <div class="amort-toggle" id="amort-toggle" onclick="toggleAmort()">Show all years ▾</div>
+    </div>
+  </div>
+
+  <!-- ══ COMPARE TAB ══ -->
+  <div class="view" id="v-compare">
+    <div class="sec-title">Loan Comparison</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Same loan, different terms & rates</div>
+
+    <div class="calc-card">
+      <div class="calc-card-title">Base Loan</div>
+      <div class="field-row">
+        <div class="field-label">Loan Amount</div>
+        <div class="field-input-wrap"><span class="field-prefix">$</span><input class="field-input" id="c-loan" type="number" value="320000" oninput="calcCompare()"></div>
+      </div>
+    </div>
+
+    <div id="compare-scenarios">
+      <!-- Generated dynamically -->
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Total Interest Paid by Scenario</div>
+      <canvas id="compare-chart" height="200"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ UTILITIES ══════════════════════════════════════
+function fmt(n,dec=0){
+  if(isNaN(n)||!isFinite(n)) return '—';
+  return '$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function fmtPct(n,dec=1){ return (n>=0?'+':'')+n.toFixed(dec)+'%'; }
+function fmtNum(n,dec=0){ return n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+function v(id){ return parseFloat(document.getElementById(id).value)||0; }
+function el(id){ return document.getElementById(id); }
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['roi','mortgage','compare'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  el('v-'+t).classList.add('active');
+  if(t==='compare') calcCompare();
+}
+
+// ══ CANVAS CHART HELPERS ═══════════════════════════
+function clearCanvas(id){
+  const c=el(id); if(!c)return null;
+  const dpr=window.devicePixelRatio||1;
+  const w=c.parentElement.clientWidth-28;
+  const h=parseInt(c.getAttribute('height'));
+  c.width=w*dpr; c.height=h*dpr;
+  c.style.width=w+'px'; c.style.height=h+'px';
+  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  return {ctx,w,h};
+}
+
+function drawLineChart(canvasId, datasets, labels, yFmt){
+  const r=clearCanvas(canvasId); if(!r)return;
+  const {ctx,w,h}=r;
+  const pad={t:10,r:10,b:28,l:60};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+
+  const allVals=datasets.flatMap(d=>d.data);
+  const minV=Math.min(...allVals), maxV=Math.max(...allVals);
+  const range=maxV-minV||1;
+
+  function px(i){ return pad.l+i/(labels.length-1)*cw; }
+  function py(v){ return pad.t+ch-(v-minV)/range*ch; }
+
+  // Grid
+  ctx.strokeStyle='#2a2530'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const yv=minV+range*i/4;
+    const yp=py(yv);
+    ctx.beginPath(); ctx.moveTo(pad.l,yp); ctx.lineTo(pad.l+cw,yp); ctx.stroke();
+    ctx.fillStyle='#7a7090'; ctx.font='9px DM Mono'; ctx.textAlign='right';
+    ctx.fillText(yFmt(yv),pad.l-4,yp+3);
+  }
+
+  // X labels
+  ctx.fillStyle='#7a7090'; ctx.font='9px DM Mono'; ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(labels.length/5));
+  labels.forEach((l,i)=>{ if(i%step===0) ctx.fillText(l,px(i),h-8); });
+
+  // Lines
+  const COLORS=['#e8b84b','#39e87a','#4b9ee8','#e84b4b'];
+  datasets.forEach((ds,di)=>{
+    ctx.beginPath(); ctx.strokeStyle=COLORS[di%COLORS.length]; ctx.lineWidth=2;
+    ds.data.forEach((v,i)=>{ i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)); });
+    ctx.stroke();
+    // Fill under
+    ctx.globalAlpha=0.08;
+    ctx.lineTo(px(ds.data.length-1),py(minV)); ctx.lineTo(px(0),py(minV));
+    ctx.closePath(); ctx.fillStyle=COLORS[di%COLORS.length]; ctx.fill();
+    ctx.globalAlpha=1;
+  });
+}
+
+function drawBarChart(canvasId, labels, values, colors){
+  const r=clearCanvas(canvasId); if(!r)return;
+  const {ctx,w,h}=r;
+  const pad={t:10,r:10,b:40,l:70};
+  const cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const maxV=Math.max(...values)||1;
+  const bw=cw/values.length*0.6;
+  const gap=cw/values.length;
+
+  values.forEach((v,i)=>{
+    const bh=v/maxV*ch;
+    const x=pad.l+i*gap+gap*0.2;
+    const y=pad.t+ch-bh;
+    ctx.fillStyle=colors[i%colors.length]+'33';
+    ctx.fillRect(x,y,bw,bh);
+    ctx.strokeStyle=colors[i%colors.length];
+    ctx.lineWidth=1.5;
+    ctx.strokeRect(x,y,bw,bh);
+    // Value
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.font='9px DM Mono'; ctx.textAlign='center';
+    const shortV=v>=1000000?'$'+(v/1000000).toFixed(1)+'M':v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+v.toFixed(0);
+    ctx.fillText(shortV,x+bw/2,y-4);
+    // Label
+    ctx.fillStyle='#7a7090'; ctx.font='8px DM Mono';
+    const words=labels[i].split(' ');
+    words.forEach((word,wi)=>ctx.fillText(word,x+bw/2,h-8+(wi-words.length+1)*10));
+  });
+}
+
+// ══ ROI CALCULATOR ═════════════════════════════════
+function calcROI(){
+  const init=v('roi-initial'), final=v('roi-final'), years=v('roi-years')||1;
+  const costs=v('roi-costs'), taxRate=v('roi-tax')/100;
+
+  const gain=final-init-costs;
+  const roi=gain/init*100;
+  const cagr=(Math.pow(final/init,1/years)-1)*100;
+  const taxAmt=Math.max(0,gain*taxRate);
+  const afterTax=gain-taxAmt;
+  const sp500cagr=10;
+
+  el('r-roi').textContent=roi.toFixed(1)+'%';
+  el('r-roi').className='result-val '+(roi>=0?'gold':'red');
+  el('r-roi-sub').textContent=(gain>=0?'Net gain: ':'Net loss: ')+fmt(Math.abs(gain));
+  el('r-ann').textContent=cagr.toFixed(1)+'%';
+  el('r-ann').className='result-val '+(cagr>=0?'green':'red');
+  el('r-aftertax').textContent=fmt(afterTax);
+  el('r-aftertax').className='result-val '+(afterTax>=0?'green':'red');
+  el('r-taxamt').textContent='Tax paid: '+fmt(taxAmt);
+  const payback=init/(gain/years);
+  el('r-payback').textContent=payback>0&&isFinite(payback)?payback.toFixed(1)+' yrs':'N/A';
+  const diff=cagr-sp500cagr;
+  el('r-vsSP').textContent=fmtPct(diff);
+  el('r-vsSP').className='result-val '+(diff>=0?'green':'red');
+
+  // Growth chart
+  const pts=Math.max(12,Math.round(years*4));
+  const growthData=[], sp500Data=[], labels=[];
+  for(let i=0;i<=pts;i++){
+    const t=i/pts*years;
+    growthData.push(init*Math.pow(final/init,t/years));
+    sp500Data.push(init*Math.pow(1+sp500cagr/100,t));
+    labels.push(t.toFixed(1)+'y');
+  }
+  drawLineChart('roi-chart',
+    [{data:growthData},{data:sp500Data}],
+    labels, v=>v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+v.toFixed(0));
+
+  // Scenarios
+  const scenarios=[
+    {label:'Conservative (50% return)',mult:.5},
+    {label:'Base Case',mult:1},
+    {label:'Optimistic (150% return)',mult:1.5},
+    {label:'Home Run (200% return)',mult:2},
+  ];
+  const maxGain=init*2;
+  el('roi-scenarios').innerHTML=scenarios.map(s=>{
+    const sg=gain*s.mult, sr=sg/init*100;
+    const pct=Math.max(0,Math.min(100,sg/maxGain*100));
+    const col=sr>=0?'#39e87a':'#e84b4b';
+    return '<div class="scenario-row">'
+      +'<div class="scenario-label">'+s.label+'</div>'
+      +'<div class="scenario-bar-wrap"><div class="scenario-bar" style="width:'+pct+'%;background:'+col+'"></div></div>'
+      +'<div class="scenario-val" style="color:'+col+'">'+sr.toFixed(0)+'%</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ══ MORTGAGE CALCULATOR ════════════════════════════
+let amortExpanded=false;
+let fullSchedule=[];
+
+function syncDownPct(){
+  const pct=v('m-down-pct');
+  const price=v('m-price');
+  el('m-down').value=(price*pct/100).toFixed(0);
+  el('m-down-pct-label').textContent=pct+'% down';
+  calcMortgage();
+}
+
+function calcMortgage(){
+  const price=v('m-price'), down=v('m-down');
+  const rateAnn=v('m-rate'), termYrs=parseInt(el('m-term').value)||30;
+  const propTax=v('m-tax'), ins=v('m-ins'), pmi=v('m-pmi');
+
+  const loan=price-down;
+  const r=rateAnn/100/12;
+  const n=termYrs*12;
+
+  // Monthly P&I
+  let monthly;
+  if(r===0){ monthly=loan/n; }
+  else { monthly=loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1); }
+
+  const totalPaid=monthly*n;
+  const totalInt=totalPaid-loan;
+  const totalMonthly=monthly+propTax/12+ins/12+pmi;
+  const ltv=loan/price*100;
+
+  el('m-monthly').textContent=fmt(monthly);
+  el('m-total-monthly').textContent='Total w/ escrow: '+fmt(totalMonthly)+'/mo';
+  el('m-total-int').textContent=fmt(totalInt);
+  el('m-int-pct').textContent=(totalInt/loan*100).toFixed(0)+'% of loan amount';
+  el('m-total-cost').textContent=fmt(totalPaid);
+  el('m-loan').textContent=fmt(loan);
+  el('m-ltv').textContent='LTV: '+ltv.toFixed(1)+'%'+(ltv>80?' ⚠ PMI likely':'');
+  el('m-breakeven').textContent=fmt(totalMonthly)+'/mo';
+
+  // Build amortization
+  fullSchedule=[];
+  let balance=loan;
+  for(let mo=1;mo<=n;mo++){
+    const intPmt=balance*r;
+    const prinPmt=monthly-intPmt;
+    balance=Math.max(0,balance-prinPmt);
+    if(mo%12===0||mo===n){
+      const yr=Math.ceil(mo/12);
+      // Sum year
+      const yInt=intPmt*12, yPrin=prinPmt*12;
+      fullSchedule.push({yr,payment:monthly*12,principal:yPrin,interest:yInt,balance});
+    }
+  }
+
+  renderAmortTable();
+
+  // Chart: stacked bar — principal vs interest vs tax/ins over years
+  const chartYrs=Math.min(termYrs,30);
+  const intData=[], prinData=[], labels=[];
+  let bal=loan;
+  for(let y=1;y<=chartYrs;y++){
+    let yInt=0, yPrin=0;
+    for(let m=0;m<12&&(y-1)*12+m<n;m++){
+      const ip=bal*r; const pp=monthly-ip;
+      yInt+=ip; yPrin+=pp; bal=Math.max(0,bal-pp);
+    }
+    intData.push(yInt); prinData.push(yPrin);
+    labels.push('Y'+y);
+  }
+
+  // Horizontal stacked-ish bar chart showing total composition
+  drawMortgageChart(loan, totalInt, propTax*termYrs, ins*termYrs);
+}
+
+function drawMortgageChart(principal, interest, tax, insurance){
+  const r=clearCanvas('mortgage-chart'); if(!r)return;
+  const {ctx,w,h}=r;
+  const total=principal+interest+tax+insurance;
+  const segments=[
+    {label:'Principal',val:principal,color:'#39e87a'},
+    {label:'Interest',val:interest,color:'#e84b4b'},
+    {label:'Property Tax',val:tax,color:'#e8b84b'},
+    {label:'Insurance',val:insurance,color:'#4b9ee8'},
+  ];
+  const pad={t:10,r:10,b:10,l:10};
+  const barH=32, barY=(h-barH)/2;
+  let x=pad.l;
+  const bw=w-pad.l-pad.r;
+
+  segments.forEach(s=>{
+    const sw=s.val/total*bw;
+    ctx.fillStyle=s.color+'33'; ctx.fillRect(x,barY,sw,barH);
+    ctx.strokeStyle=s.color; ctx.lineWidth=1; ctx.strokeRect(x,barY,sw,barH);
+    if(sw>40){
+      ctx.fillStyle=s.color; ctx.font='8px DM Mono'; ctx.textAlign='center';
+      const shortV=s.val>=1000000?'$'+(s.val/1000000).toFixed(1)+'M':'$'+(s.val/1000).toFixed(0)+'K';
+      ctx.fillText(shortV,x+sw/2,barY+barH/2-3);
+      ctx.fillStyle='rgba(255,255,255,.5)';
+      ctx.fillText((s.val/total*100).toFixed(0)+'%',x+sw/2,barY+barH/2+8);
+    }
+    x+=sw;
+  });
+
+  // Legend
+  let lx=pad.l;
+  segments.forEach(s=>{
+    ctx.fillStyle=s.color; ctx.fillRect(lx,barY+barH+8,8,8);
+    ctx.fillStyle='#7a7090'; ctx.font='8px DM Mono'; ctx.textAlign='left';
+    ctx.fillText(s.label,lx+10,barY+barH+16);
+    lx+=s.label.length*5+20;
+  });
+}
+
+function renderAmortTable(){
+  const rows=amortExpanded?fullSchedule:fullSchedule.slice(0,5);
+  el('amort-body').innerHTML=rows.map(r=>'<div class="amort-row">'
+    +'<div class="amort-cell">'+r.yr+'</div>'
+    +'<div class="amort-cell">'+fmt(r.payment)+'</div>'
+    +'<div class="amort-cell principal">'+fmt(r.principal)+'</div>'
+    +'<div class="amort-cell interest">'+fmt(r.interest)+'</div>'
+    +'<div class="amort-cell">'+fmt(r.balance)+'</div>'
+    +'</div>').join('');
+  el('amort-toggle').textContent=amortExpanded?'Show less ▴':'Show all '+fullSchedule.length+' years ▾';
+}
+
+function toggleAmort(){
+  amortExpanded=!amortExpanded;
+  renderAmortTable();
+}
+
+// ══ COMPARE TAB ════════════════════════════════════
+const COMPARE_SCENARIOS=[
+  {label:'30yr 7%',term:30,rate:7.0},
+  {label:'30yr 6.5%',term:30,rate:6.5},
+  {label:'20yr 6.5%',term:20,rate:6.5},
+  {label:'15yr 6%',term:15,rate:6.0},
+];
+
+function calcCompare(){
+  const loan=v('c-loan');
+  const results=COMPARE_SCENARIOS.map(s=>{
+    const r=s.rate/100/12, n=s.term*12;
+    const monthly=r===0?loan/n:loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+    const totalInt=monthly*n-loan;
+    return {...s,monthly,totalInt,totalPaid:monthly*n};
+  });
+
+  el('compare-scenarios').innerHTML=results.map((r,i)=>{
+    const best=results.reduce((a,b)=>a.totalInt<b.totalInt?a:b);
+    const isBest=r===best;
+    return '<div class="calc-card" style="margin-bottom:10px">'
+      +'<div class="result-grid">'
+      +'<div class="result-cell highlight full"><div class="result-label">'+r.label+(isBest?' ⭐ BEST':'')+'</div>'
+      +'<div class="result-val gold">'+fmt(r.monthly)+'/mo</div></div>'
+      +'<div class="result-cell"><div class="result-label">Total Interest</div>'
+      +'<div class="result-val red">'+fmt(r.totalInt)+'</div></div>'
+      +'<div class="result-cell"><div class="result-label">Total Cost</div>'
+      +'<div class="result-val">'+fmt(r.totalPaid)+'</div></div>'
+      +'</div></div>';
+  }).join('');
+
+  drawBarChart('compare-chart',
+    results.map(r=>r.label),
+    results.map(r=>r.totalInt),
+    ['#e84b4b','#e8b84b','#39e87a','#4b9ee8']
+  );
+}
+
+// ══ INIT ══════════════════════════════════════════
+calcROI();
+calcMortgage();
+calcCompare();
+
+// Re-render charts on resize
+window.addEventListener('resize',()=>{ calcROI(); calcMortgage(); calcCompare(); });
+</script>
+</body>
+</html>

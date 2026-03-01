@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Venture Analyst</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
+:root{
+  --bg:#f7f5f0;--s1:#ffffff;--s2:#f0ede6;--s3:#e8e3d8;--b:#d8d0c0;
+  --ink:#1a1610;--muted:#8a7a60;--soft:#5a4e3a;
+  --green:#1a5c2a;--green2:#2a8a40;--amber:#b07010;--red:#8b1a1a;--blue:#1a3a6a;
+  --accent:#2a1a4a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;display:flex;flex-direction:column;overflow:hidden}
+
+/* subtle paper lines */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(180,160,120,.08) 27px,rgba(180,160,120,.08) 28px);pointer-events:none;z-index:0}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:2px solid var(--ink);flex-shrink:0;z-index:2;position:relative;background:var(--bg)}
+#back-btn{background:transparent;border:1.5px solid var(--b);color:var(--muted);border-radius:4px;padding:5px 10px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace}
+#title-wrap{flex:1}
+#title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.01em;line-height:1}
+#title-sub{font-size:9px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-top:1px}
+#new-btn{background:var(--ink);color:var(--bg);border:none;border-radius:6px;padding:7px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.02em}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:2px solid var(--ink);flex-shrink:0;z-index:2;position:relative;background:var(--bg)}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:'Syne',sans-serif;font-weight:600}
+.tab.active{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;z-index:1;position:relative}
+.view{display:none;padding:14px 14px 80px}
+.view.active{display:block}
+
+/* ── SCORE RING ── */
+.score-hero{text-align:center;padding:20px 0 14px}
+.score-ring-wrap{position:relative;display:inline-block;margin-bottom:8px}
+.score-ring-wrap svg{transform:rotate(-90deg)}
+.score-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-num{font-family:'Syne',sans-serif;font-size:40px;font-weight:800;line-height:1}
+.score-label{font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-top:2px}
+.verdict{font-family:'Instrument Serif',serif;font-size:22px;font-style:italic;margin-top:4px}
+.verdict.go{color:var(--green)}
+.verdict.maybe{color:var(--amber)}
+.verdict.no{color:var(--red)}
+
+/* ── DIMENSION SCORES ── */
+.dim-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.dim-card{background:var(--s1);border:1.5px solid var(--b);border-radius:10px;padding:10px 12px}
+.dim-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.dim-bar-wrap{display:flex;align-items:center;gap:6px}
+.dim-track{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.dim-fill{height:100%;border-radius:3px;transition:width .5s}
+.dim-score{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;width:24px;text-align:right}
+
+/* ── SCORE FORM ── */
+.question-section{background:var(--s1);border:1.5px solid var(--b);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.qs-header{padding:12px 14px;background:var(--s2);border-bottom:1.5px solid var(--b);display:flex;align-items:center;gap:8px}
+.qs-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qs-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.02em}
+.qs-body{padding:12px 14px}
+.question-row{margin-bottom:14px}
+.question-row:last-child{margin-bottom:0}
+.q-text{font-size:12px;color:var(--soft);line-height:1.6;margin-bottom:8px}
+.q-text strong{color:var(--ink);font-weight:500}
+.slider-wrap{display:flex;align-items:center;gap:8px}
+.q-slider{flex:1;-webkit-appearance:none;height:4px;background:var(--s3);border-radius:2px;outline:none}
+.q-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ink);cursor:pointer;border:2px solid var(--bg);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.q-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--ink);cursor:pointer;border:2px solid var(--bg)}
+.slider-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;width:20px;text-align:right}
+.slider-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);margin-top:3px;padding:0 2px}
+
+/* ── SAVED IDEAS ── */
+.idea-card{background:var(--s1);border:1.5px solid var(--b);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s;position:relative}
+.idea-card:hover{border-color:var(--ink)}
+.ic-score{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1;float:right;margin-left:8px}
+.ic-score.go{color:var(--green)}
+.ic-score.maybe{color:var(--amber)}
+.ic-score.no{color:var(--red)}
+.ic-name{font-family:'Instrument Serif',serif;font-size:17px;font-style:italic;line-height:1.2}
+.ic-date{font-size:9px;color:var(--muted);margin-top:3px}
+.ic-verdict{font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-top:6px;font-family:'Syne',sans-serif;font-weight:700}
+.ic-verdict.go{color:var(--green)}
+.ic-verdict.maybe{color:var(--amber)}
+.ic-verdict.no{color:var(--red)}
+.ic-dims{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.ic-dim{font-size:8px;padding:2px 7px;border-radius:4px;background:var(--s2);border:1px solid var(--b);color:var(--muted)}
+.ic-del{position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px;z-index:2}
+
+/* ── REPORT ── */
+.report-section{background:var(--s1);border:1.5px solid var(--b);border-radius:12px;padding:14px;margin-bottom:10px}
+.rs-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rs-body{font-size:12px;line-height:1.8;color:var(--soft)}
+.rs-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--s3)}
+.rs-item:last-child{border-bottom:none}
+.rs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.rs-dot.go{background:var(--green2)}
+.rs-dot.warn{background:var(--amber)}
+.rs-dot.no{background:var(--red)}
+.rs-text{font-size:11px;line-height:1.6;color:var(--soft)}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(26,22,16,.7);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border-top:3px solid var(--ink);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px;padding-bottom:40px}
+#modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:4px}
+#modal-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.mf{margin-bottom:12px}
+.ml{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:600}
+.mi{width:100%;background:var(--s2);border:1.5px solid var(--b);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:13px;color:var(--ink);outline:none;transition:border-color .15s}
+.mi:focus{border-color:var(--ink)}
+.msave{width:100%;padding:13px;background:var(--ink);color:var(--bg);border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:6px;font-family:'Syne',sans-serif;letter-spacing:.04em}
+.mcancel{width:100%;background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:8px;font-family:'DM Mono',monospace}
+
+.top-note{background:var(--s2);border:1.5px solid var(--b);border-left:3px solid var(--ink);border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:14px;font-size:11px;line-height:1.7;color:var(--soft)}
+.sec-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title-wrap">
+    <div id="title">VENTURE ANALYST</div>
+    <div id="title-sub">Business Viability Scorer</div>
+  </div>
+  <button id="new-btn" onclick="showTab('score')">Score Idea</button>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('score')">Score</div>
+  <div class="tab" onclick="showTab('report')">Report</div>
+  <div class="tab" onclick="showTab('history')">History</div>
+</div>
+
+<div id="content">
+
+  <!-- ── SCORE TAB ── -->
+  <div class="view active" id="v-score">
+
+    <div class="top-note">
+      Score your business idea across 8 dimensions. Each question scored 1–10. Total = weighted viability score out of 100.
+    </div>
+
+    <!-- Idea name -->
+    <div style="background:var(--s1);border:1.5px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+      <div class="ml">Business / Idea Name</div>
+      <input class="mi" id="idea-name" type="text" placeholder="e.g. AI-powered meal planning app" style="background:transparent;border:none;padding:6px 0;font-size:15px;font-family:'Instrument Serif',serif;font-style:italic">
+    </div>
+
+    <!-- Section 1: Market -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">1</div>
+        <div class="qs-title">Market Opportunity</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Market size:</strong> How large is the addressable market? (1 = niche/tiny, 10 = massive/global)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-market-size" type="range" min="1" max="10" value="5" oninput="updateSlider('q-market-size');calcScore()">
+            <div class="slider-val" id="q-market-size-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Tiny</span><span>Huge</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Market growth:</strong> Is the market growing, stable, or shrinking?</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-growth" type="range" min="1" max="10" value="5" oninput="updateSlider('q-growth');calcScore()">
+            <div class="slider-val" id="q-growth-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Shrinking</span><span>Explosive</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Problem & Solution -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">2</div>
+        <div class="qs-title">Problem &amp; Solution Fit</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Problem severity:</strong> How painful is the problem you're solving? (1 = minor inconvenience, 10 = desperate need)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-problem" type="range" min="1" max="10" value="5" oninput="updateSlider('q-problem');calcScore()">
+            <div class="slider-val" id="q-problem-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Nice to have</span><span>Must have</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Solution clarity:</strong> How clear and differentiated is your solution? (1 = vague/generic, 10 = unique/10x better)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-solution" type="range" min="1" max="10" value="5" oninput="updateSlider('q-solution');calcScore()">
+            <div class="slider-val" id="q-solution-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Generic</span><span>10x better</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Revenue -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">3</div>
+        <div class="qs-title">Revenue &amp; Business Model</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Willingness to pay:</strong> Will customers pay, and how much? (1 = hard to charge/free expected, 10 = clear premium pricing)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-wtp" type="range" min="1" max="10" value="5" oninput="updateSlider('q-wtp');calcScore()">
+            <div class="slider-val" id="q-wtp-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Free only</span><span>Premium $$$</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Unit economics:</strong> Do the numbers work? (1 = unclear/poor margins, 10 = excellent margins/LTV &gt; CAC)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-economics" type="range" min="1" max="10" value="5" oninput="updateSlider('q-economics');calcScore()">
+            <div class="slider-val" id="q-economics-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Terrible</span><span>Excellent</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Competition -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">4</div>
+        <div class="qs-title">Competitive Landscape</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Competition level:</strong> How intense is existing competition? (1 = dominated by giants, 10 = fragmented/underserved)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-competition" type="range" min="1" max="10" value="5" oninput="updateSlider('q-competition');calcScore()">
+            <div class="slider-val" id="q-competition-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Dominated</span><span>Wide open</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Defensibility:</strong> How hard is it to copy you? (1 = easily replicated, 10 = strong moat/IP/network effects)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-moat" type="range" min="1" max="10" value="5" oninput="updateSlider('q-moat');calcScore()">
+            <div class="slider-val" id="q-moat-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Easily copied</span><span>Strong moat</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 5: Execution -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">5</div>
+        <div class="qs-title">Team &amp; Execution</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Founder fit:</strong> Do you (or your team) have the right skills &amp; experience? (1 = no relevant experience, 10 = unfair advantage)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-founder" type="range" min="1" max="10" value="5" oninput="updateSlider('q-founder');calcScore()">
+            <div class="slider-val" id="q-founder-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Wrong team</span><span>Dream team</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Capital efficiency:</strong> Can you get to revenue without massive investment? (1 = needs $10M to start, 10 = lean MVP possible)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-capital" type="range" min="1" max="10" value="5" oninput="updateSlider('q-capital');calcScore()">
+            <div class="slider-val" id="q-capital-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Capital hungry</span><span>Lean &amp; quick</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Timing & Risk -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">6</div>
+        <div class="qs-title">Timing &amp; Risk</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Market timing:</strong> Is now the right time? (1 = too early/too late, 10 = perfect window)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-timing" type="range" min="1" max="10" value="5" oninput="updateSlider('q-timing');calcScore()">
+            <div class="slider-val" id="q-timing-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Wrong timing</span><span>Perfect now</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Regulatory/legal risk:</strong> How exposed is this to regulation? (1 = heavily regulated/banned, 10 = no barriers)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-legal" type="range" min="1" max="10" value="5" oninput="updateSlider('q-legal');calcScore()">
+            <div class="slider-val" id="q-legal-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Highly regulated</span><span>Wide open</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 7: Customer -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">7</div>
+        <div class="qs-title">Customer Acquisition</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Reachability:</strong> How easy is it to reach your target customer? (1 = impossible to find/expensive, 10 = clear channel/viral)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-reach" type="range" min="1" max="10" value="5" oninput="updateSlider('q-reach');calcScore()">
+            <div class="slider-val" id="q-reach-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Hard to reach</span><span>Easy to find</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Retention potential:</strong> Will customers stick around? (1 = one-off purchase, 10 = high switching costs/recurring)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-retention" type="range" min="1" max="10" value="5" oninput="updateSlider('q-retention');calcScore()">
+            <div class="slider-val" id="q-retention-val">5</div>
+          </div>
+          <div class="slider-labels"><span>One-time</span><span>Recurring</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 8: Personal -->
+    <div class="question-section">
+      <div class="qs-header">
+        <div class="qs-num">8</div>
+        <div class="qs-title">Personal Alignment</div>
+      </div>
+      <div class="qs-body">
+        <div class="question-row">
+          <div class="q-text"><strong>Passion:</strong> How excited are you about working on this for 5–10 years? (1 = meh, 10 = obsessed)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-passion" type="range" min="1" max="10" value="5" oninput="updateSlider('q-passion');calcScore()">
+            <div class="slider-val" id="q-passion-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Could take it or leave it</span><span>Obsessed</span></div>
+        </div>
+        <div class="question-row">
+          <div class="q-text"><strong>Impact:</strong> Does this create meaningful value in the world? (1 = trivial, 10 = significant positive impact)</div>
+          <div class="slider-wrap">
+            <input class="q-slider" id="q-impact" type="range" min="1" max="10" value="5" oninput="updateSlider('q-impact');calcScore()">
+            <div class="slider-val" id="q-impact-val">5</div>
+          </div>
+          <div class="slider-labels"><span>Trivial</span><span>Meaningful</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div style="background:var(--s1);border:1.5px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+      <div class="ml">Additional Notes (optional)</div>
+      <textarea class="mi" id="idea-notes" rows="3" style="resize:none;margin-top:4px" placeholder="Key assumptions, risks, open questions..."></textarea>
+    </div>
+
+    <button onclick="saveScore()" style="width:100%;padding:14px;background:var(--ink);color:var(--bg);border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.04em;margin-bottom:8px">
+      GENERATE REPORT &#8594;
+    </button>
+
+  </div>
+
+  <!-- ── REPORT TAB ── -->
+  <div class="view" id="v-report">
+    <div id="report-content">
+      <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;font-style:italic;font-family:'Instrument Serif',serif">
+        Score a business idea to see your full report here.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HISTORY TAB ── -->
+  <div class="view" id="v-history">
+    <div class="sec-title">Saved Ideas</div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+<script>
+const STORE='venture_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE))||{ideas:[]}; }catch{ return {ideas:[]}; }}
+function persist(){ localStorage.setItem(STORE,JSON.stringify(D)); }
+function ge(id){ return document.getElementById(id); }
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let D = load();
+let currentScore = null;
+
+// ── TABS ──────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['score','report','history'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+  if(t==='history') renderHistory();
+}
+
+// ── SLIDERS ───────────────────────────────────────
+function updateSlider(id){
+  const val=ge(id).value;
+  ge(id+'-val').textContent=val;
+  const pct=(val-1)/9*100;
+  const col=pct>70?'#1a5c2a':pct>40?'#b07010':'#8b1a1a';
+  ge(id).style.background=`linear-gradient(90deg,${col} ${pct}%,#e8e3d8 ${pct}%)`;
+}
+
+// initialize all sliders
+const QUESTIONS=['market-size','growth','problem','solution','wtp','economics','competition','moat','founder','capital','timing','legal','reach','retention','passion','impact'];
+QUESTIONS.forEach(q=>updateSlider('q-'+q));
+
+// ── DIMENSIONS ────────────────────────────────────
+const DIMS = [
+  {key:'market',   label:'Market',    qs:['market-size','growth'],              weight:1.2},
+  {key:'product',  label:'Product',   qs:['problem','solution'],                weight:1.3},
+  {key:'revenue',  label:'Revenue',   qs:['wtp','economics'],                   weight:1.2},
+  {key:'compete',  label:'Competition',qs:['competition','moat'],               weight:1.0},
+  {key:'execution',label:'Execution', qs:['founder','capital'],                 weight:1.1},
+  {key:'timing',   label:'Timing',    qs:['timing','legal'],                    weight:0.9},
+  {key:'customer', label:'Customer',  qs:['reach','retention'],                 weight:1.0},
+  {key:'personal', label:'Personal',  qs:['passion','impact'],                  weight:0.8},
+];
+
+function getScores(){
+  const raw={};
+  QUESTIONS.forEach(q=>{ raw[q]=parseInt(ge('q-'+q).value)||5; });
+  const dims={};
+  DIMS.forEach(d=>{
+    const avg=d.qs.reduce((s,q)=>s+raw[q],0)/d.qs.length;
+    dims[d.key]=avg;
+  });
+  const totalWeight=DIMS.reduce((s,d)=>s+d.weight,0);
+  const weightedAvg=DIMS.reduce((s,d)=>s+dims[d.key]*d.weight,0)/totalWeight;
+  const total=Math.round(weightedAvg*10);
+  return {raw,dims,total};
+}
+
+function calcScore(){
+  const {total}=getScores();
+  // could update live indicator
+}
+
+function verdict(score){
+  if(score>=75) return {text:'Strong Go',cls:'go'};
+  if(score>=60) return {text:'Promising',cls:'go'};
+  if(score>=45) return {text:'Proceed with Caution',cls:'maybe'};
+  if(score>=30) return {text:'Major Red Flags',cls:'no'};
+  return {text:'Do Not Pursue',cls:'no'};
+}
+
+// ── SAVE & GENERATE REPORT ─────────────────────────
+function saveScore(){
+  const {raw,dims,total}=getScores();
+  const name=ge('idea-name').value.trim()||'Unnamed Idea';
+  const notes=ge('idea-notes').value.trim();
+  const v=verdict(total);
+
+  const idea={
+    id:Date.now(),
+    name,notes,total,dims,raw,
+    verdict:v.cls,
+    verdictText:v.text,
+    date:new Date().toISOString(),
+  };
+
+  currentScore=idea;
+  D.ideas.unshift(idea);
+  persist();
+
+  renderReport(idea);
+  showTab('report');
+}
+
+// ── RENDER REPORT ──────────────────────────────────
+function renderReport(idea){
+  const v=verdict(idea.total);
+  const dimColor=s=>s>7?'#1a5c2a':s>5?'#8a7060':s>3?'#b07010':'#8b1a1a';
+
+  // Strengths and weaknesses
+  const dimList=DIMS.map(d=>({...d,score:idea.dims[d.key]})).sort((a,b)=>b.score-a.score);
+  const strengths=dimList.slice(0,3);
+  const risks=dimList.slice(-3).reverse();
+
+  // Category-specific advice
+  const advice={
+    market: ['Consider starting with a narrow niche before expanding.','Validate market size with real customer conversations, not just desk research.','Look for underserved sub-segments within the larger market.'],
+    product: ['Build a concierge MVP to validate the core value prop before coding.','Talk to 20+ potential customers about the problem before building anything.','Find your 10x advantage — what makes this dramatically better, not just different?'],
+    revenue: ['Test willingness to pay early with a landing page before building.','Calculate your LTV:CAC ratio target before acquiring customers at scale.','Consider freemium vs paid-only models for your specific market.'],
+    compete: ['Map all competitors including indirect substitutes customers use today.','Find the wedge: the specific use case incumbents serve poorly.','Build lock-in before scaling — switching costs protect revenue.'],
+    execution: ['Identify the specific skill gaps in your team and plan to fill them.','Find an advisor or co-founder with domain expertise you lack.','Your first 10 customers should come from your personal network.'],
+    timing: ['Research what macro trends are tailwinds for this idea right now.','Identify the enabling technology or behavior change that makes this possible now.','Check for regulatory changes on the horizon that could help or hurt.'],
+    customer: ['Define your ideal customer profile (ICP) with extreme specificity.','Identify your top 3 customer acquisition channels and test small.','Build a retention moat: content, community, integrations, or data.'],
+    personal: ['A 10-year commitment requires deep intrinsic motivation — be honest.','Consider whether the impact potential matches your personal ambitions.','Talk to founders who have built similar companies about the reality.'],
+  };
+
+  const weakestDim=dimList[dimList.length-1];
+  const strongestDim=dimList[0];
+
+  // Build strengths items
+  const strengthItems=strengths.map(d=>`<div class="rs-item"><div class="rs-dot go"></div><div class="rs-text"><strong>${d.label}</strong> (${d.score.toFixed(1)}/10): ${getInsight(d.key, d.score, 'strength')}</div></div>`).join('');
+
+  // Build risk items
+  const riskItems=risks.map(d=>`<div class="rs-item"><div class="rs-dot ${d.score<4?'no':'warn'}"></div><div class="rs-text"><strong>${d.label}</strong> (${d.score.toFixed(1)}/10): ${getInsight(d.key, d.score, 'risk')}</div></div>`).join('');
+
+  // Action items
+  const actions=advice[weakestDim.key]||[];
+  const actionItems=actions.map(a=>`<div class="rs-item"><div class="rs-dot warn"></div><div class="rs-text">${a}</div></div>`).join('');
+
+  const ringColor=idea.total>=60?'#1a5c2a':idea.total>=40?'#b07010':'#8b1a1a';
+  const ringFill=idea.total/100*283;
+
+  ge('report-content').innerHTML=`
+  <div class="score-hero">
+    <div class="score-ring-wrap">
+      <svg width="130" height="130" viewBox="0 0 130 130">
+        <circle cx="65" cy="65" r="45" fill="none" stroke="#e8e3d8" stroke-width="8"/>
+        <circle cx="65" cy="65" r="45" fill="none" stroke="${ringColor}" stroke-width="8"
+          stroke-dasharray="${ringFill} 283" stroke-linecap="round"/>
+      </svg>
+      <div class="score-center">
+        <div class="score-num" style="color:${ringColor}">${idea.total}</div>
+        <div class="score-label">/ 100</div>
+      </div>
+    </div>
+    <div class="verdict ${v.cls}">${v.text}</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">${escH(idea.name)}</div>
+  </div>
+
+  <div class="dim-grid">
+    ${DIMS.map(d=>{
+      const score=idea.dims[d.key];
+      const pct=score/10*100;
+      const col=dimColor(score);
+      return `<div class="dim-card">
+        <div class="dim-label">${d.label}</div>
+        <div class="dim-bar-wrap">
+          <div class="dim-track"><div class="dim-fill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="dim-score" style="color:${col}">${score.toFixed(1)}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">&#9650; Key Strengths</div>
+    <div>${strengthItems}</div>
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">&#9660; Critical Risks</div>
+    <div>${riskItems}</div>
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">&#9654; Recommended Next Actions</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Focused on your weakest dimension: <strong style="color:var(--ink)">${weakestDim.label}</strong></div>
+    <div>${actionItems}</div>
+  </div>
+
+  ${idea.notes?`<div class="report-section"><div class="rs-title">&#128221; Your Notes</div><div style="font-size:12px;color:var(--soft);line-height:1.8">${escH(idea.notes)}</div></div>`:''}
+
+  <div class="report-section" style="background:var(--s2)">
+    <div class="rs-title">&#9888; Analyst Disclaimer</div>
+    <div style="font-size:10px;color:var(--muted);line-height:1.7">This score is based entirely on your subjective self-assessment. It is a structured thinking tool, not a substitute for market research, customer interviews, or professional business advice. Many successful businesses scored poorly on frameworks like this — and many failures looked great on paper. Use this to identify blind spots, not as a go/no-go decision.</div>
+  </div>
+
+  <button onclick="showTab('score')" style="width:100%;padding:11px;background:transparent;border:1.5px solid var(--b);border-radius:10px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);margin-top:4px;letter-spacing:.04em">
+    Score Another Idea
+  </button>`;
+}
+
+function getInsight(key,score,type){
+  const insights={
+    market:{
+      strength:['Large, growing market with significant revenue potential.','Strong growth tailwinds create urgency and investor interest.'],
+      risk:['Market may be too small or shrinking — validate size before committing.','Slow/declining market makes customer acquisition more expensive.']
+    },
+    product:{
+      strength:['Clear, painful problem with a differentiated solution.','Strong product-market fit signals — customers should be easy to convince.'],
+      risk:['Problem may not be painful enough to drive behavior change.','Solution lacks differentiation — hard to stand out from alternatives.']
+    },
+    revenue:{
+      strength:['Clear willingness to pay with healthy unit economics.','Business model sustainability looks strong.'],
+      risk:['Revenue model is unclear or margins may be too thin.','Customers may not pay enough to build a sustainable business.']
+    },
+    compete:{
+      strength:['Favorable competitive environment with room to establish position.','Defensible moat should protect margins over time.'],
+      risk:['Heavy competition or low barriers to entry threaten viability.','Without a moat, you risk being copied or undercut quickly.']
+    },
+    execution:{
+      strength:['Team has relevant experience and can execute efficiently.','Capital efficiency means you can validate quickly without heavy funding.'],
+      risk:['Team may lack critical expertise — address gaps before scaling.','High capital requirements increase risk and reduce timeline.']
+    },
+    timing:{
+      strength:['Market timing appears favorable — the window is open now.','Low regulatory friction means faster time to market.'],
+      risk:['Timing may be off — too early means education burden, too late means entrenched players.','Regulatory risk could slow growth or require costly compliance.']
+    },
+    customer:{
+      strength:['Clear customer acquisition path and strong retention drivers.','Recurring revenue potential from sticky customers.'],
+      risk:['Customer acquisition may be expensive or unclear.','Low retention means you\'re constantly refilling a leaky bucket.']
+    },
+    personal:{
+      strength:['Strong personal alignment — you\'ll be motivated to push through hard times.','High impact potential creates meaning beyond revenue.'],
+      risk:['Low excitement is a red flag — hard times will test your commitment.','Without deeper purpose, motivation often fades at the critical moment.']
+    },
+  };
+  const arr=insights[key]?.[type]||['Score this dimension carefully — it significantly affects viability.'];
+  return arr[Math.floor(score/5*arr.length%(arr.length))];
+}
+
+// ── HISTORY ───────────────────────────────────────
+function renderHistory(){
+  ge('history-list').innerHTML=D.ideas.length
+    ?D.ideas.map((idea,idx)=>{
+      const v=verdict(idea.total);
+      const ringColor=idea.total>=60?'#1a5c2a':idea.total>=40?'#b07010':'#8b1a1a';
+      return `<div class="idea-card" onclick="loadIdea(${idx})">
+        <button class="ic-del" onclick="event.stopPropagation();deleteIdea(${idx})">&#215;</button>
+        <div class="ic-score ${v.cls}">${idea.total}</div>
+        <div class="ic-name">${escH(idea.name)}</div>
+        <div class="ic-date">${new Date(idea.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+        <div class="ic-verdict ${v.cls}">${idea.verdictText||v.text}</div>
+        <div class="ic-dims">
+          ${DIMS.map(d=>`<div class="ic-dim">${d.label}: ${(idea.dims[d.key]||0).toFixed(1)}</div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')
+    :'<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;font-style:italic;font-family:\'Instrument Serif\',serif">No ideas scored yet.<br>Go score your first business idea!</div>';
+}
+
+function loadIdea(idx){
+  const idea=D.ideas[idx];
+  currentScore=idea;
+  renderReport(idea);
+  showTab('report');
+}
+
+function deleteIdea(idx){
+  if(confirm('Delete this idea?')){ D.ideas.splice(idx,1); persist(); renderHistory(); }
+}
+
+// ── INIT ──────────────────────────────────────────
+renderHistory();
+if(D.ideas.length>0) renderReport(D.ideas[0]);
+</script>
+</body>
+</html>

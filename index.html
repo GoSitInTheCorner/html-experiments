@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;
+  --accent:#60aaff;--accent2:#a0cfff;--accent3:#60d4ff;--accent4:#f0a060;--accent5:#60c8f0;
+  --text:#e8e8f0;--muted:#888898;--danger:#f06060;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:clamp(12px,1.5vw,15px)}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── NAV ── */
+#main-nav{display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.mnav{flex:1;padding:13px 6px;text-align:center;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.mnav.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── DASHBOARD ── */
+#dash-body{padding:16px 14px 80px;display:flex;flex-direction:column;gap:16px}
+
+.dash-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
+.dash-sec-title{font-family:'Fraunces',serif;font-size:1rem;font-weight:200;color:var(--accent)}
+.dash-sec-sub{font-size:.65rem;color:var(--muted)}
+.dash-add-btn{background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;color:var(--muted);font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer}
+.dash-add-btn:active{border-color:var(--accent);color:var(--accent)}
+
+/* Projects list on dashboard */
+.dash-proj-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;position:relative}
+.dash-proj-item:last-child{border-bottom:none}
+.dash-proj-item:active{background:var(--surface2)}
+.dash-proj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dash-proj-name{flex:1;font-size:.85rem;font-family:'Fraunces',serif;font-weight:200}
+.dash-proj-status{font-size:.6rem;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;flex-shrink:0}
+.dash-proj-app{font-size:.65rem;color:var(--accent2);flex-shrink:0;text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:6px}
+.dash-proj-app:hover{border-color:var(--accent2)}
+.sp-ns{background:#2e2e38;color:var(--muted)}
+.sp-ip{background:#0e2040;color:var(--accent)}
+.sp-dn{background:#0e2535;color:var(--accent2)}
+.sp-oh{background:#2e1e1e;color:var(--accent4)}
+#dash-proj-empty{padding:20px 14px;font-size:.8rem;color:var(--muted);text-align:center}
+.dash-proj-add{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;color:var(--muted);font-size:.8rem;border-top:1px dashed var(--border)}
+.dash-proj-add:active{color:var(--accent)}
+
+/* Notes */
+#dash-notes{width:100%;min-height:100px;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;line-height:1.7;padding:12px 14px;resize:none}
+#dash-notes::placeholder{color:var(--muted)}
+
+/* Tasks */
+#dash-tasks-list{display:flex;flex-direction:column}
+.dash-task{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)}
+.dash-task:last-child{border-bottom:none}
+.dash-chk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+.dash-chk.chk{background:var(--accent);border-color:var(--accent);color:#0e0e10}
+.dash-task-inp{flex:1;font-size:.8rem;color:var(--text);background:transparent;border:none;outline:none;font-family:'DM Mono',monospace}
+.dash-task-inp.done{text-decoration:line-through;color:var(--muted)}
+.dash-task-del{background:transparent;border:none;color:var(--border);font-size:.9rem;cursor:pointer;padding:0 3px;flex-shrink:0}
+.dash-task-del:active{color:var(--danger)}
+.dash-task-add{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;color:var(--muted);font-size:.8rem;border-top:1px dashed var(--border)}
+.dash-task-add:active{color:var(--accent)}
+
+/* ── PROJECTS TAB ── */
+#proj-grid{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:80px}
+.proj-app-card{display:block;text-decoration:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);transition:border-color .15s}
+.proj-app-card:active{background:var(--surface2)}
+.proj-app-icon{font-size:24px;margin-bottom:8px}
+.proj-app-name{font-family:'Fraunces',serif;font-size:.9rem;font-weight:200;line-height:1.2;margin-bottom:4px}
+.proj-app-desc{font-size:.6rem;color:var(--muted);line-height:1.5;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end}
+.modal-ov.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:20px 16px 40px;width:100%;animation:slideUp .22s ease;max-height:80dvh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h2{font-family:'Fraunces',serif;font-weight:200;font-size:1.25rem;margin-bottom:14px;color:var(--accent)}
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;outline:none;margin-bottom:10px}
+.mi:focus{border-color:var(--accent)}
+.mi::placeholder{color:var(--muted)}
+.mact{display:flex;gap:8px;margin-top:6px}
+.mprim{flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;cursor:pointer}
+.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div id="main-nav">
+  <div class="mnav active" onclick="showScreen('dashboard')">Dashboard</div>
+  <div class="mnav" onclick="showScreen('projects')">Projects</div>
+</div>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div class="screen active" id="s-dashboard">
+<div id="dash-body">
+
+  <!-- Projects overview -->
+  <div class="dash-section">
+    <div class="dash-sec-hdr">
+      <span class="dash-sec-title">Projects</span>
+      <span class="dash-sec-sub" id="dash-proj-count"></span>
+    </div>
+    <div id="dash-proj-list"></div>
+    <div id="dash-proj-empty" style="display:none">No projects yet</div>
+    <div class="dash-proj-add" onclick="openProjModal()">+ New project</div>
+  </div>
+
+  <!-- Ideas & Notes -->
+  <div class="dash-section">
+    <div class="dash-sec-hdr">
+      <span class="dash-sec-title">Ideas & Notes</span>
+      <span class="dash-sec-sub">auto-saved</span>
+    </div>
+    <textarea id="dash-notes" placeholder="Brain dump, ideas, anything...&#10;&#10;This space is yours."></textarea>
+  </div>
+
+  <!-- Tasks -->
+  <div class="dash-section">
+    <div class="dash-sec-hdr">
+      <span class="dash-sec-title">Tasks</span>
+      <span class="dash-sec-sub" id="dash-task-count"></span>
+    </div>
+    <div id="dash-tasks-list"></div>
+    <div class="dash-task-add" onclick="addTask()">+ Add task</div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════ PROJECTS ══════════ -->
+<div class="screen" id="s-projects">
+<div id="proj-grid">
+
+  <a class="proj-app-card" href="Project List.html" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">✦</div>
+    <div class="proj-app-name">Project List</div>
+    <div class="proj-app-desc">Manage · Track · Plan</div>
+  </a>
+
+  <a class="proj-app-card" href="Pantry.html" onmouseover="this.style.borderColor='#60c860'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🛒</div>
+    <div class="proj-app-name">Pantry</div>
+    <div class="proj-app-desc">Inventory · Meals · Shopping</div>
+  </a>
+
+  <a class="proj-app-card" href="Tower Defense.html" onmouseover="this.style.borderColor='#f06060'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">⚔️</div>
+    <div class="proj-app-name">Tower Defense</div>
+    <div class="proj-app-desc">Strategy · Waves · Upgrades</div>
+  </a>
+
+  <a class="proj-app-card" href="Wordle.html" onmouseover="this.style.borderColor='#60d460'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🟩</div>
+    <div class="proj-app-name">Wordle+</div>
+    <div class="proj-app-desc">Word game · 3–8 letters</div>
+  </a>
+
+  <a class="proj-app-card" href="CRM.html" onmouseover="this.style.borderColor='var(--accent4)'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">👥</div>
+    <div class="proj-app-name">CRM</div>
+    <div class="proj-app-desc">Contacts · Follow-ups · Log</div>
+  </a>
+
+  <a class="proj-app-card" href="tesla.html" onmouseover="this.style.borderColor='#e82020'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">⚡</div>
+    <div class="proj-app-name">Tesla Charging</div>
+    <div class="proj-app-desc">Track charges · EV vs Gas · Costs</div>
+  </a>
+
+  <a class="proj-app-card" href="neurodivergent.html" onmouseover="this.style.borderColor='#b87fff'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">💜</div>
+    <div class="proj-app-name">ND Space</div>
+    <div class="proj-app-desc">Content ideas · Journal · Library</div>
+  </a>
+
+  <a class="proj-app-card" href="epstein.html" onmouseover="this.style.borderColor='#e8a020'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">📁</div>
+    <div class="proj-app-name">Epstein Files</div>
+    <div class="proj-app-desc">Timeline · People · Documents</div>
+  </a>
+
+  <a class="proj-app-card" href="pcbuilder.html" onmouseover="this.style.borderColor='#00d4ff'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🖥️</div>
+    <div class="proj-app-name">PC Builder</div>
+    <div class="proj-app-desc">Build · Compare · Wishlist</div>
+  </a>
+
+  <a class="proj-app-card" href="cinema.html" onmouseover="this.style.borderColor='#c9a84c'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🎬</div>
+    <div class="proj-app-name">Cinéma</div>
+    <div class="proj-app-desc">Watch list · Reviews · Stats</div>
+  </a>
+
+  <a class="proj-app-card" href="venture.html" onmouseover="this.style.borderColor='#60d060'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">📊</div>
+    <div class="proj-app-name">Venture Analyst</div>
+    <div class="proj-app-desc">Business idea scorer · Report</div>
+  </a>
+
+  <a class="proj-app-card" href="ha-dash.html" onmouseover="this.style.borderColor='#03a9f4'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🏠</div>
+    <div class="proj-app-name">Home Assistant</div>
+    <div class="proj-app-desc">Dashboard · Automations · YAML</div>
+  </a>
+
+  <a class="proj-app-card" href="blog.html" onmouseover="this.style.borderColor='#0f7b7b'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">✍️</div>
+    <div class="proj-app-name">Blog Studio</div>
+    <div class="proj-app-desc">Editor · SEO · Templates</div>
+  </a>
+
+  <a class="proj-app-card" href="energy.html" onmouseover="this.style.borderColor='#00e676'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">⚡</div>
+    <div class="proj-app-name">Energy Calc</div>
+    <div class="proj-app-desc">Electricity · Gas · Solar ROI</div>
+  </a>
+
+  <a class="proj-app-card" href="ai-models.html" onmouseover="this.style.borderColor='#9c27b0'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🤖</div>
+    <div class="proj-app-name">AI Models</div>
+    <div class="proj-app-desc">Open-source model comparison</div>
+  </a>
+
+  <a class="proj-app-card" href="calculator.html" onmouseover="this.style.borderColor='#ff9800'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">💰</div>
+    <div class="proj-app-name">ROI Calculator</div>
+    <div class="proj-app-desc">ROI · Mortgage · Loan compare</div>
+  </a>
+
+  <a class="proj-app-card" href="f1.html" onmouseover="this.style.borderColor='#e10600'" onmouseout="this.style.borderColor=''">
+    <div class="proj-app-icon">🏎️</div>
+    <div class="proj-app-name">F1 Tracker</div>
+    <div class="proj-app-desc">Live standings · Results · Schedule</div>
+  </a>
+
+</div>
+</div>
+
+<!-- New Project Modal -->
+<div class="modal-ov" id="proj-modal">
+  <div class="modal">
+    <h2>New Project</h2>
+    <input class="mi" id="new-proj-name" placeholder="Project name..." maxlength="60" />
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:8px">Has an app?</div>
+    <input class="mi" id="new-proj-app" placeholder="App filename (e.g. myapp.html) — optional" />
+    <div class="mact">
+      <button class="msec" onclick="closeProjModal()">Cancel</button>
+      <button class="mprim" onclick="createProj()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage keys ──
+const PSK = 'pt_v2';
+const NOTES_SK = 'dash_notes_v1';
+const TASKS_SK = 'dash_tasks_v1';
+
+// ── Screen switching ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.mnav').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.mnav').forEach((n, i) => {
+    if (['dashboard','projects'][i] === id) n.classList.add('active');
+  });
+}
+
+// ── Projects (shared storage with Project List.html) ──
+const PCOLS = ['#c8f060','#60c8f0','#f060c8','#f0a060','#a060f0','#60f0a0'];
+const SL = {ns:'Not Started',ip:'In Progress',dn:'Done',oh:'On Hold'};
+const SC = {ns:'sp-ns',ip:'sp-ip',dn:'sp-dn',oh:'sp-oh'};
+
+function pLoad() { try{return JSON.parse(localStorage.getItem(PSK))||[]}catch{return[]} }
+function pSave(data) { localStorage.setItem(PSK, JSON.stringify(data)) }
+
+// App links embedded in project data (stored separately)
+const APPS_SK = 'dash_proj_apps_v1';
+function appsLoad() { try{return JSON.parse(localStorage.getItem(APPS_SK))||{}}catch{return{}} }
+function appsSave(d) { localStorage.setItem(APPS_SK, JSON.stringify(d)) }
+
+function renderDashProjects() {
+  const projects = pLoad();
+  const apps = appsLoad();
+  const list = document.getElementById('dash-proj-list');
+  const empty = document.getElementById('dash-proj-empty');
+  const count = document.getElementById('dash-proj-count');
+  const active = projects.filter(p => p.status !== 'dn').length;
+  count.textContent = active + ' active';
+  list.innerHTML = '';
+  if (!projects.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  projects.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'dash-proj-item';
+    const appFile = apps[p.id] || '';
+    row.innerHTML = `
+      <div class="dash-proj-dot" style="background:${p.color}"></div>
+      <div class="dash-proj-name">${escH(p.name)}</div>
+      <div class="dash-proj-status ${SC[p.status]}">${SL[p.status]}</div>
+      ${appFile ? `<a class="dash-proj-app" href="${escH(appFile)}" onclick="event.stopPropagation()">↗ App</a>` : ''}
+    `;
+    row.onclick = () => { window.location.href = 'Project List.html'; };
+    list.appendChild(row);
+  });
+}
+
+function openProjModal() {
+  document.getElementById('new-proj-name').value = '';
+  document.getElementById('new-proj-app').value = '';
+  document.getElementById('proj-modal').classList.add('active');
+  setTimeout(() => document.getElementById('new-proj-name').focus(), 100);
+}
+function closeProjModal() { document.getElementById('proj-modal').classList.remove('active'); }
+document.getElementById('proj-modal').onclick = e => { if (e.target === document.getElementById('proj-modal')) closeProjModal(); };
+document.getElementById('new-proj-name').onkeydown = e => { if (e.key === 'Enter') createProj(); };
+
+function createProj() {
+  const name = document.getElementById('new-proj-name').value.trim();
+  if (!name) return;
+  const appFile = document.getElementById('new-proj-app').value.trim();
+  const projects = pLoad();
+  const p = {id: Date.now().toString(), name, status:'ns', notes:'', tasks:[], links:[], color: PCOLS[projects.length % PCOLS.length]};
+  projects.unshift(p);
+  pSave(projects);
+  if (appFile) {
+    const apps = appsLoad();
+    apps[p.id] = appFile;
+    appsSave(apps);
+  }
+  closeProjModal();
+  renderDashProjects();
+}
+
+// ── Notes ──
+const notesEl = document.getElementById('dash-notes');
+notesEl.value = localStorage.getItem(NOTES_SK) || '';
+notesEl.addEventListener('input', () => localStorage.setItem(NOTES_SK, notesEl.value));
+
+// ── Tasks ──
+function tasksLoad() { try{return JSON.parse(localStorage.getItem(TASKS_SK))||[]}catch{return[]} }
+function tasksSave(t) { localStorage.setItem(TASKS_SK, JSON.stringify(t)) }
+
+function renderTasks() {
+  const tasks = tasksLoad();
+  const list = document.getElementById('dash-tasks-list');
+  const count = document.getElementById('dash-task-count');
+  const done = tasks.filter(t => t.done).length;
+  count.textContent = done + '/' + tasks.length + ' done';
+  list.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'dash-task';
+    row.innerHTML = `
+      <div class="dash-chk${t.done?' chk':''}" data-i="${i}">${t.done ? '✓' : ''}</div>
+      <input class="dash-task-inp${t.done?' done':''}" value="${escH(t.text)}" placeholder="Task..." data-i="${i}"/>
+      <button class="dash-task-del" data-i="${i}">×</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.dash-chk').forEach(b => b.onclick = () => {
+    const tasks = tasksLoad();
+    tasks[+b.dataset.i].done = !tasks[+b.dataset.i].done;
+    tasksSave(tasks); renderTasks();
+  });
+  list.querySelectorAll('.dash-task-inp').forEach(inp => inp.oninput = () => {
+    const tasks = tasksLoad();
+    tasks[+inp.dataset.i].text = inp.value;
+    tasksSave(tasks); renderTasks(); // lightweight re-save but don't re-render to keep focus
+  });
+  // Better: just save on input without full re-render
+  list.querySelectorAll('.dash-task-inp').forEach(inp => {
+    inp.oninput = () => {
+      const tasks = tasksLoad();
+      tasks[+inp.dataset.i].text = inp.value;
+      tasksSave(tasks);
+      document.getElementById('dash-task-count').textContent =
+        tasks.filter(t=>t.done).length + '/' + tasks.length + ' done';
+    };
+  });
+  list.querySelectorAll('.dash-task-del').forEach(b => b.onclick = () => {
+    const tasks = tasksLoad();
+    tasks.splice(+b.dataset.i, 1);
+    tasksSave(tasks); renderTasks();
+  });
+}
+
+function addTask() {
+  const tasks = tasksLoad();
+  tasks.push({text:'', done:false});
+  tasksSave(tasks);
+  renderTasks();
+  const inputs = document.querySelectorAll('.dash-task-inp');
+  if (inputs.length) inputs[inputs.length-1].focus();
+}
+
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── Init ──
+renderDashProjects();
+renderTasks();
+</script>
+</body>
+</html>

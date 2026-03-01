@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ND Space</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#0f0d14;--s1:#161220;--s2:#1d1829;--s3:#241f32;--b:#322c44;
+  --purple:#b87fff;--teal:#5fdfcc;--peach:#ffb085;--pink:#ff85b3;--yellow:#ffe085;
+  --text:#f0ebff;--muted:#8a7fa8;--soft:#c4b8e0;
+  --grad1:linear-gradient(135deg,#3d1f5e,#1a3a4a);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;overflow:hidden}
+
+/* noise texture overlay */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--b);flex-shrink:0;position:relative;z-index:1}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
+#title{font-family:'Fraunces',serif;font-size:20px;font-weight:500;flex:1;letter-spacing:-.01em}
+#title em{font-style:italic;color:var(--purple)}
+
+/* ── IDENTITY PILLS ── */
+#id-pills{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none;position:relative;z-index:1}
+#id-pills::-webkit-scrollbar{display:none}
+.id-pill{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent;white-space:nowrap;transition:all .2s}
+.id-pill.adhd{background:rgba(255,176,133,.08);border-color:rgba(255,176,133,.25);color:var(--peach)}
+.id-pill.autism{background:rgba(95,223,204,.08);border-color:rgba(95,223,204,.25);color:var(--teal)}
+.id-pill.audhd{background:rgba(184,127,255,.08);border-color:rgba(184,127,255,.25);color:var(--purple)}
+.id-pill.active.adhd{background:rgba(255,176,133,.2);border-color:var(--peach)}
+.id-pill.active.autism{background:rgba(95,223,204,.2);border-color:var(--teal)}
+.id-pill.active.audhd{background:rgba(184,127,255,.2);border-color:var(--purple)}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;position:relative;z-index:1}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;position:relative;z-index:1}
+.view{display:none;padding:16px 16px 80px}
+.view.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--s1);border:1px solid var(--b);border-radius:20px;overflow:hidden;margin-bottom:12px}
+.card-head{padding:14px 16px;background:var(--s2);border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px}
+.card-emoji{font-size:18px}
+.card-title{font-family:'Fraunces',serif;font-size:15px;font-weight:500}
+.card-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ── CONTENT IDEAS ── */
+.idea-card{background:var(--s1);border:1px solid var(--b);border-radius:16px;padding:16px;margin-bottom:10px;position:relative;overflow:hidden}
+.idea-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.idea-card.adhd::before{background:linear-gradient(90deg,var(--peach),var(--pink))}
+.idea-card.autism::before{background:linear-gradient(90deg,var(--teal),#85c8ff)}
+.idea-card.audhd::before{background:linear-gradient(90deg,var(--purple),var(--teal))}
+.idea-card.all::before{background:linear-gradient(90deg,var(--peach),var(--purple),var(--teal))}
+.idea-format{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.idea-title{font-family:'Fraunces',serif;font-size:16px;font-weight:500;line-height:1.3;margin-bottom:6px}
+.idea-hook{font-size:12px;color:var(--soft);line-height:1.5;margin-bottom:10px}
+.idea-tags{display:flex;flex-wrap:wrap;gap:5px}
+.idea-tag{font-size:9px;padding:3px 9px;border-radius:20px;background:var(--s3);color:var(--muted);border:1px solid var(--b)}
+.idea-actions{display:flex;gap:8px;margin-top:10px}
+.idea-btn{padding:6px 14px;border-radius:20px;font-size:11px;border:1px solid var(--b);background:transparent;color:var(--soft);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.idea-btn:hover{border-color:var(--purple);color:var(--purple)}
+.idea-btn.save{background:rgba(184,127,255,.1);border-color:rgba(184,127,255,.3);color:var(--purple)}
+.idea-saved{font-size:9px;color:var(--purple);margin-top:6px;display:none}
+
+.generate-btn{width:100%;padding:14px;background:linear-gradient(135deg,rgba(184,127,255,.15),rgba(95,223,204,.1));border:1.5px solid rgba(184,127,255,.3);border-radius:16px;color:var(--purple);font-family:'Fraunces',serif;font-size:16px;cursor:pointer;margin-bottom:14px;letter-spacing:-.01em;transition:all .2s}
+.generate-btn:hover{background:linear-gradient(135deg,rgba(184,127,255,.25),rgba(95,223,204,.15));transform:translateY(-1px)}
+
+.filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{padding:5px 12px;border-radius:20px;font-size:10px;border:1px solid var(--b);background:var(--s2);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.filter-chip.on{background:rgba(184,127,255,.12);border-color:rgba(184,127,255,.3);color:var(--purple)}
+
+.sec-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px}
+
+/* ── JOURNAL ── */
+.journal-prompt{background:linear-gradient(135deg,rgba(184,127,255,.08),rgba(95,223,204,.05));border:1px solid rgba(184,127,255,.2);border-radius:16px;padding:16px;margin-bottom:14px}
+.prompt-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--purple);margin-bottom:6px}
+.prompt-text{font-family:'Fraunces',serif;font-size:16px;font-weight:300;font-style:italic;line-height:1.5;color:var(--text)}
+.prompt-btn{margin-top:10px;padding:5px 14px;border-radius:20px;font-size:10px;border:1px solid rgba(184,127,255,.3);background:transparent;color:var(--purple);cursor:pointer;font-family:'DM Sans',sans-serif}
+
+.entry-composer{background:var(--s1);border:1px solid var(--b);border-radius:16px;overflow:hidden;margin-bottom:14px}
+.entry-meta-row{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--b);align-items:center}
+.entry-mood-label{font-size:10px;color:var(--muted)}
+.mood-btns{display:flex;gap:4px}
+.mood-btn{font-size:16px;cursor:pointer;padding:2px 4px;border-radius:6px;border:1.5px solid transparent;transition:all .15s;line-height:1}
+.mood-btn.on{border-color:rgba(184,127,255,.4);background:rgba(184,127,255,.1)}
+.entry-textarea{width:100%;min-height:120px;background:transparent;border:none;outline:none;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);resize:none;line-height:1.7}
+.entry-textarea::placeholder{color:var(--muted)}
+.entry-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-top:1px solid var(--b)}
+.entry-energy{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}
+.energy-dot{width:10px;height:10px;border-radius:50%;cursor:pointer;border:1.5px solid transparent}
+.energy-dot.on{border-color:white}
+.entry-save-btn{padding:7px 18px;background:linear-gradient(135deg,var(--purple),var(--teal));border:none;border-radius:20px;color:#0f0d14;font-weight:600;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+.journal-entry{background:var(--s1);border:1px solid var(--b);border-radius:16px;padding:16px;margin-bottom:10px}
+.je-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.je-mood{font-size:18px}
+.je-date{font-size:10px;color:var(--muted);flex:1}
+.je-energy{display:flex;gap:3px}
+.je-dot{width:8px;height:8px;border-radius:50%}
+.je-prompt{font-size:10px;color:var(--purple);font-style:italic;margin-bottom:5px}
+.je-text{font-size:13px;color:var(--soft);line-height:1.7}
+.je-del{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px}
+
+/* ── RESOURCES ── */
+.resource-item{background:var(--s1);border:1px solid var(--b);border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px}
+.resource-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.resource-info{flex:1;min-width:0}
+.resource-title{font-size:14px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resource-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.resource-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.resource-tag{font-size:8px;padding:2px 8px;border-radius:20px;background:var(--s3);color:var(--muted);border:1px solid var(--b)}
+.resource-del{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;align-self:flex-start;flex-shrink:0}
+
+.add-resource-btn{width:100%;padding:13px;background:var(--s2);border:1.5px dashed var(--b);border-radius:16px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-bottom:14px;transition:all .2s}
+.add-resource-btn:hover{border-color:var(--purple);color:var(--purple)}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border:1px solid var(--b);border-radius:24px 24px 0 0;width:100%;max-width:500px;padding:20px;padding-bottom:40px;max-height:85vh;overflow-y:auto}
+#modal-title{font-family:'Fraunces',serif;font-size:20px;font-weight:500;margin-bottom:16px}
+.mfield{margin-bottom:12px}
+.mlabel{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+.minput{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
+.minput:focus{border-color:var(--purple)}
+.mtype-row{display:flex;gap:8px;flex-wrap:wrap}
+.mtype-btn{padding:7px 14px;border-radius:20px;border:1px solid var(--b);background:var(--s2);color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.mtype-btn.on{border-color:rgba(184,127,255,.4);background:rgba(184,127,255,.1);color:var(--purple)}
+.msave{width:100%;padding:14px;background:linear-gradient(135deg,rgba(184,127,255,.8),rgba(95,223,204,.7));border:none;border-radius:14px;color:#0f0d14;font-weight:700;font-size:15px;cursor:pointer;margin-top:8px;font-family:'DM Sans',sans-serif}
+.mcancel{width:100%;background:transparent;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:10px;font-family:'DM Sans',sans-serif}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title">my <em>nd</em> space</div>
+</div>
+
+<div id="id-pills">
+  <div class="id-pill adhd active" onclick="toggleId('adhd',this)">&#9889; ADHD</div>
+  <div class="id-pill autism active" onclick="toggleId('autism',this)">&#10024; Autism</div>
+  <div class="id-pill audhd active" onclick="toggleId('audhd',this)">&#128149; AuDHD</div>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('ideas')">&#128161; Ideas</div>
+  <div class="tab" onclick="showTab('journal')">&#128213; Journal</div>
+  <div class="tab" onclick="showTab('resources')">&#128218; Library</div>
+</div>
+
+<div id="content">
+
+  <!-- ══ IDEAS TAB ══ -->
+  <div class="view active" id="v-ideas">
+
+    <button class="generate-btn" onclick="generateIdeas()">
+      ✦ Generate Content Ideas
+    </button>
+
+    <div class="filter-row" id="format-filters">
+      <div class="filter-chip on" onclick="toggleFilter(this,'all')">All Formats</div>
+      <div class="filter-chip" onclick="toggleFilter(this,'video')">&#127916; Video</div>
+      <div class="filter-chip" onclick="toggleFilter(this,'reel')">&#127908; Reel/Short</div>
+      <div class="filter-chip" onclick="toggleFilter(this,'thread')">&#128313; Thread</div>
+      <div class="filter-chip" onclick="toggleFilter(this,'blog')">&#9997; Blog</div>
+      <div class="filter-chip" onclick="toggleFilter(this,'podcast')">&#127911; Podcast</div>
+    </div>
+
+    <div id="ideas-list"></div>
+
+    <div class="sec-label">Saved Ideas</div>
+    <div id="saved-ideas-list"></div>
+
+  </div>
+
+  <!-- ══ JOURNAL TAB ══ -->
+  <div class="view" id="v-journal">
+
+    <div class="journal-prompt" id="prompt-card">
+      <div class="prompt-label">&#9679; Today's Prompt</div>
+      <div class="prompt-text" id="prompt-text">Loading your prompt...</div>
+      <button class="prompt-btn" onclick="newPrompt()">&#8635; New prompt</button>
+    </div>
+
+    <div class="entry-composer">
+      <div class="entry-meta-row">
+        <div class="entry-mood-label">Mood:</div>
+        <div class="mood-btns">
+          <div class="mood-btn" onclick="setMood('&#128522;')">&#128522;</div>
+          <div class="mood-btn" onclick="setMood('&#128512;')">&#128512;</div>
+          <div class="mood-btn" onclick="setMood('&#128528;')">&#128528;</div>
+          <div class="mood-btn" onclick="setMood('&#128532;')">&#128532;</div>
+          <div class="mood-btn" onclick="setMood('&#129327;')">&#129327;</div>
+          <div class="mood-btn" onclick="setMood('&#128165;')">&#128165;</div>
+          <div class="mood-btn" onclick="setMood('&#127774;')">&#127774;</div>
+        </div>
+      </div>
+      <textarea class="entry-textarea" id="entry-text" placeholder="What's on your mind? No pressure, no perfection needed..."></textarea>
+      <div class="entry-footer">
+        <div class="entry-energy">
+          <span>Energy:</span>
+          <div class="energy-dot on" style="background:#e84b4b" onclick="setEnergy(1,this)" title="Crashed"></div>
+          <div class="energy-dot" style="background:#f0b840" onclick="setEnergy(2,this)" title="Low"></div>
+          <div class="energy-dot" style="background:#85c8ff" onclick="setEnergy(3,this)" title="Medium"></div>
+          <div class="energy-dot" style="background:#39e87a" onclick="setEnergy(4,this)" title="High"></div>
+        </div>
+        <button class="entry-save-btn" onclick="saveEntry()">Save ✦</button>
+      </div>
+    </div>
+
+    <div class="sec-label">Past Entries</div>
+    <div id="entries-list"></div>
+
+  </div>
+
+  <!-- ══ LIBRARY TAB ══ -->
+  <div class="view" id="v-resources">
+
+    <button class="add-resource-btn" onclick="openResourceModal()">+ Add Resource, Link or Note</button>
+
+    <div class="filter-row" id="resource-filters">
+      <div class="filter-chip on" onclick="toggleResFilter(this,'all')">All</div>
+      <div class="filter-chip" onclick="toggleResFilter(this,'book')">&#128218; Books</div>
+      <div class="filter-chip" onclick="toggleResFilter(this,'video')">&#127916; Videos</div>
+      <div class="filter-chip" onclick="toggleResFilter(this,'tool')">&#128295; Tools</div>
+      <div class="filter-chip" onclick="toggleResFilter(this,'article')">&#128240; Articles</div>
+      <div class="filter-chip" onclick="toggleResFilter(this,'community')">&#128101; Community</div>
+    </div>
+
+    <div id="resources-list"></div>
+
+  </div>
+
+</div>
+
+<!-- RESOURCE MODAL -->
+<div id="modal-overlay" onclick="overlayClick(event)">
+  <div id="modal">
+    <div id="modal-title">Add to Library</div>
+    <div class="mfield">
+      <div class="mlabel">Type</div>
+      <div class="mtype-row" id="res-types">
+        <div class="mtype-btn on" onclick="setResType('book',this)">&#128218; Book</div>
+        <div class="mtype-btn" onclick="setResType('video',this)">&#127916; Video</div>
+        <div class="mtype-btn" onclick="setResType('tool',this)">&#128295; Tool</div>
+        <div class="mtype-btn" onclick="setResType('article',this)">&#128240; Article</div>
+        <div class="mtype-btn" onclick="setResType('community',this)">&#128101; Community</div>
+        <div class="mtype-btn" onclick="setResType('note',this)">&#128203; Note</div>
+      </div>
+    </div>
+    <div class="mfield">
+      <div class="mlabel">Title</div>
+      <input class="minput" id="r-title" type="text" placeholder="Name or title">
+    </div>
+    <div class="mfield">
+      <div class="mlabel">URL / Link (optional)</div>
+      <input class="minput" id="r-url" type="url" placeholder="https://...">
+    </div>
+    <div class="mfield">
+      <div class="mlabel">Description / Notes</div>
+      <input class="minput" id="r-desc" type="text" placeholder="Why is this helpful?">
+    </div>
+    <div class="mfield">
+      <div class="mlabel">Tags (comma separated)</div>
+      <input class="minput" id="r-tags" type="text" placeholder="e.g. executive function, sensory, focus">
+    </div>
+    <div class="mfield">
+      <div class="mlabel">Relevant For</div>
+      <div class="mtype-row" id="res-nd">
+        <div class="mtype-btn on" onclick="toggleNd(this)">&#9889; ADHD</div>
+        <div class="mtype-btn on" onclick="toggleNd(this)">&#10024; Autism</div>
+        <div class="mtype-btn on" onclick="toggleNd(this)">&#128149; AuDHD</div>
+      </div>
+    </div>
+    <button class="msave" onclick="saveResource()">Add to Library</button>
+    <button class="mcancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ─────────────────────────────────────────────
+const KEY = 'nd_space_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||{savedIdeas:[],entries:[],resources:[],ids:['adhd','autism','audhd']}; }catch{ return {savedIdeas:[],entries:[],resources:[],ids:['adhd','autism','audhd']}; }}
+function save(d){ localStorage.setItem(KEY,JSON.stringify(d)); }
+let D = load();
+let ge = id => document.getElementById(id);
+
+// ── IDENTITY PILLS ──────────────────────────────────────
+let activeIds = new Set(D.ids||['adhd','autism','audhd']);
+function toggleId(id, el){
+  el.classList.toggle('active');
+  if(activeIds.has(id)) activeIds.delete(id); else activeIds.add(id);
+  D.ids = [...activeIds]; save(D);
+  generateIdeas();
+}
+
+// ── TABS ────────────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['ideas','journal','resources'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+}
+
+// ── CONTENT IDEAS ───────────────────────────────────────
+const IDEA_DB = [
+  // ADHD
+  {id:'adhd',format:'video',title:'Why My Brain Can\'t Start Tasks (Even Ones I Want To Do)',hook:'Explaining task initiation paralysis — not laziness, not procrastination. The science + real talk.',tags:['executive function','relatable','educational']},
+  {id:'adhd',format:'reel',title:'"ADHD Tax" Moments That Cost Me Money This Week',hook:'That thing where ADHD literally costs you cash — late fees, forgotten subscriptions, impulse buys.',tags:['money','relatable','humor']},
+  {id:'adhd',format:'thread',title:'Things I Wish I Knew Before My ADHD Diagnosis at [Age]',hook:'Late diagnosis thread: the grief, the relief, the "oh that\'s why" moments.',tags:['diagnosis','community','late discovery']},
+  {id:'adhd',format:'video',title:'My Hyperfocus Destroyed My Sleep Again',hook:'When your special interest keeps you up until 4am and you\'d do it again. A love letter to hyperfocus.',tags:['hyperfocus','sleep','relatable']},
+  {id:'adhd',format:'blog',title:'Body Doubling: The ADHD Productivity Hack I Swear By',hook:'Why working next to literally anyone helps ADHD brains focus — and how to find body doubles online.',tags:['productivity','tools','focus']},
+  {id:'adhd',format:'reel',title:'Rejection Sensitive Dysphoria in 60 Seconds',hook:'That emotional 0-to-100 response to criticism or perceived rejection. Real, valid, exhausting.',tags:['RSD','emotions','mental health']},
+  {id:'adhd',format:'podcast',title:'ADHD & Relationships: The Things We Don\'t Say',hook:'Talking about how ADHD impacts friendships, dating, and communication — with compassion.',tags:['relationships','communication','vulnerability']},
+  {id:'adhd',format:'video',title:'My ADHD Morning Routine (Realistic, Not Pinterest)',hook:'What actually works vs what productivity influencers tell you. Spoiler: I\'m still figuring it out.',tags:['routine','realistic','day in the life']},
+  {id:'adhd',format:'thread',title:'ADHD Accommodations at Work I Wish I\'d Asked For Sooner',hook:'Workplace accommodations thread: what you can ask for, what actually helps, how to advocate.',tags:['work','accommodations','advocacy']},
+  {id:'adhd',format:'reel',title:'The ADHD "Doom Pile" Room Tour',hook:'We don\'t talk about the pile enough. The pile is real. The pile is loved.',tags:['humor','relatable','environment']},
+  // AUTISM
+  {id:'autism',format:'video',title:'What Masking Actually Feels Like (And The Cost of It)',hook:'Performing neurotypicality 24/7 is exhausting. This is what autistic masking really looks like from inside.',tags:['masking','burnout','mental health']},
+  {id:'autism',format:'thread',title:'My Special Interests Over the Years — A Love Story',hook:'Celebrating the deep joy of special interests. Every autistic person should have this.',tags:['special interests','joy','identity']},
+  {id:'autism',format:'video',title:'Autistic Communication Styles: What I Do vs What People Think I Mean',hook:'The gap between what I say/do and how it\'s interpreted. How NT and ND communication styles clash.',tags:['communication','misunderstanding','social']},
+  {id:'autism',format:'reel',title:'Sensory Overload: What It Actually Feels Like',hook:'Trying to explain sensory overload to people who\'ve never experienced it. Visual + description.',tags:['sensory','overload','education']},
+  {id:'autism',format:'blog',title:'Autistic Burnout vs Depression: How I Tell the Difference',hook:'They overlap, they co-occur, and confusing them makes recovery harder. What I\'ve learned.',tags:['burnout','mental health','diagnosis']},
+  {id:'autism',format:'video',title:'Things I\'ve "Failed" That Were Actually Autism All Along',hook:'Reframing the "lazy," "rude," "too sensitive" narrative through an autistic lens.',tags:['reframing','diagnosis','identity']},
+  {id:'autism',format:'podcast',title:'Late-Identified Autistic Adults: Grief, Relief & Reclaiming Your Story',hook:'The experience of discovering you\'re autistic as an adult — with guests sharing their stories.',tags:['late discovery','identity','community']},
+  {id:'autism',format:'reel',title:'Stimming Explained: It\'s Not What You Think',hook:'What stimming is, why we do it, and why suppressing it is harmful. Quick education.',tags:['stimming','education','self-regulation']},
+  {id:'autism',format:'thread',title:'Unwritten Social Rules I Had to Learn Explicitly (And Still Find Absurd)',hook:'The unspoken rules everyone else somehow knows. Thread form because the list is long.',tags:['social rules','humor','relatable']},
+  {id:'autism',format:'blog',title:'Monotropism: The Theory That Finally Made My Brain Make Sense',hook:'A deep dive into monotropism — how single-channel focus shapes autistic experience.',tags:['monotropism','education','theory']},
+  // AUDHD
+  {id:'audhd',format:'video',title:'AuDHD: When Two Brains Fight Each Other',hook:'The specific chaos of being both autistic and ADHD — contradictions, paradoxes, and somehow thriving.',tags:['AuDHD','identity','humor']},
+  {id:'audhd',format:'thread',title:'AuDHD Diagnosis Story: Why It Took So Long to Get Both',hook:'How ADHD masks autism and autism masks ADHD — and the diagnostic mess that creates.',tags:['diagnosis','late discovery','medical']},
+  {id:'audhd',format:'reel',title:'The AuDHD Paradox: Need Routine, Hate Routine',hook:'Craving structure while being bored by it. The eternal AuDHD contradiction in 60 seconds.',tags:['AuDHD','routine','relatable']},
+  {id:'audhd',format:'video',title:'AuDHD Burnout: When Everything Shuts Down',hook:'The intersection of autistic burnout and ADHD crashes. Different from either alone, uniquely brutal.',tags:['burnout','energy','mental health']},
+  {id:'audhd',format:'blog',title:'Systems That Actually Work for AuDHD Brains (Low-Demand Edition)',hook:'Low-demand, high-reward systems that work with both brains instead of against them.',tags:['systems','productivity','practical']},
+  {id:'audhd',format:'podcast',title:'Hyperempathy + RSD: The AuDHD Emotional Experience',hook:'When you feel everything deeply AND have RSD — a conversation about emotional intensity.',tags:['emotions','RSD','empathy']},
+  {id:'audhd',format:'reel',title:'Me Explaining My Special Interest vs My ADHD Interrupting Itself',hook:'When hyperfocus meets tangent brain. A performance piece.',tags:['AuDHD','humor','special interests']},
+  {id:'audhd',format:'video',title:'AuDHD & Friendships: Why It\'s Complicated',hook:'Wanting deep connection + intense interests + low social battery + RSD. All at once.',tags:['relationships','social','AuDHD']},
+];
+
+let activeFormat = 'all';
+let generatedIdeas = [];
+
+function generateIdeas(){
+  const ids = [...activeIds];
+  const pool = IDEA_DB.filter(i=>ids.includes(i.id));
+  // Shuffle and pick 5 unique
+  const shuffled = [...pool].sort(()=>Math.random()-.5);
+  generatedIdeas = shuffled.slice(0,5);
+  renderIdeas();
+}
+
+function renderIdeas(){
+  const filtered = activeFormat==='all' ? generatedIdeas : generatedIdeas.filter(i=>i.format===activeFormat);
+  const saved = D.savedIdeas.map(i=>i.title);
+
+  ge('ideas-list').innerHTML = filtered.length
+    ? filtered.map((idea,idx)=>ideaCard(idea,idx,saved.includes(idea.title))).join('')
+    : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:13px">No ideas for this format. Generate more or change filters.</div>';
+
+  renderSavedIdeas();
+}
+
+function ideaCard(idea,idx,isSaved){
+  const formatIcons = {video:'&#127916;',reel:'&#127908;',thread:'&#128313;',blog:'&#9997;',podcast:'&#127911;'};
+  const ndColors = {adhd:'adhd',autism:'autism',audhd:'audhd'};
+  return '<div class="idea-card '+ndColors[idea.id]+'" id="idea-'+idx+'">'
+    +'<div class="idea-format">'+formatIcons[idea.format]+' '+idea.format.charAt(0).toUpperCase()+idea.format.slice(1)+'</div>'
+    +'<div class="idea-title">'+escH(idea.title)+'</div>'
+    +'<div class="idea-hook">'+escH(idea.hook)+'</div>'
+    +'<div class="idea-tags">'+idea.tags.map(t=>'<span class="idea-tag">'+t+'</span>').join('')+'</div>'
+    +'<div class="idea-actions">'
+    +'<button class="idea-btn '+(isSaved?'save':'')+'" onclick="toggleSaveIdea('+idx+',this)">'+(isSaved?'&#9733; Saved':'&#9734; Save')+'</button>'
+    +'<button class="idea-btn" onclick="copyIdea('+idx+')">&#128203; Copy</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function toggleSaveIdea(idx,btn){
+  const idea = generatedIdeas[idx];
+  const existing = D.savedIdeas.findIndex(i=>i.title===idea.title);
+  if(existing>=0){ D.savedIdeas.splice(existing,1); btn.classList.remove('save'); btn.innerHTML='&#9734; Save'; }
+  else { D.savedIdeas.unshift({...idea,savedAt:Date.now()}); btn.classList.add('save'); btn.innerHTML='&#9733; Saved'; }
+  save(D); renderSavedIdeas();
+}
+
+function renderSavedIdeas(){
+  ge('saved-ideas-list').innerHTML = D.savedIdeas.length
+    ? D.savedIdeas.map((idea,idx)=>'<div class="idea-card '+idea.id+'">'
+        +'<div class="idea-format" style="display:flex;justify-content:space-between"><span>'+idea.format+'</span><button onclick="deleteSaved('+idx+')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:12px">&#215;</button></div>'
+        +'<div class="idea-title">'+escH(idea.title)+'</div>'
+        +'<div class="idea-hook">'+escH(idea.hook)+'</div>'
+        +'</div>').join('')
+    : '<div style="text-align:center;color:var(--muted);padding:16px;font-size:12px">No saved ideas yet — save ideas from the generated list above.</div>';
+}
+
+function deleteSaved(idx){ D.savedIdeas.splice(idx,1); save(D); renderSavedIdeas(); }
+
+function copyIdea(idx){
+  const idea = generatedIdeas[idx];
+  const text = idea.title+'\n\n'+idea.hook+'\n\nTags: '+idea.tags.join(', ');
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.querySelectorAll('.idea-btn')[idx*2+1];
+    if(btn){ btn.textContent='&#10003; Copied!'; setTimeout(()=>btn.innerHTML='&#128203; Copy',2000); }
+  }).catch(()=>alert(idea.title+'\n\n'+idea.hook));
+}
+
+function toggleFilter(el,format){
+  document.querySelectorAll('#format-filters .filter-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); activeFormat=format; renderIdeas();
+}
+
+// ── JOURNAL ─────────────────────────────────────────────
+const PROMPTS = [
+  'What is something your brain did today that actually helped you, even if it felt inconvenient?',
+  'Describe your sensory experience right now. What do you notice?',
+  'What would you tell your younger self about being neurodivergent?',
+  'What\'s one thing you\'re hyperfocusing on lately? What does it feel like when you\'re in it?',
+  'When did you last feel truly understood? What made that moment possible?',
+  'What "failure" turned out to be your brain protecting you in some way?',
+  'Write about a time your neurodivergence was actually a superpower.',
+  'What does burnout feel like in your body? Where do you feel it first?',
+  'What accommodations do you wish the world would just automatically offer you?',
+  'Who in your life gets it? How do they show up for you?',
+  'What does your ideal low-demand day look like?',
+  'What are you currently hyperfixating on and what has it taught you?',
+  'How do you know when you\'re about to crash or melt down? What are the early signs?',
+  'What social rule do you still find genuinely baffling?',
+  'What\'s something you do differently that you used to be ashamed of but are now neutral or proud of?',
+  'Describe your relationship with time. Is it friend or enemy today?',
+  'What does masking feel like when you\'re doing it vs when you stop?',
+  'Write about a special interest that brought you unexpected joy.',
+  'What would "enough" look like for you today — no more, no less?',
+  'What parts of yourself are you still learning to accept?',
+];
+
+let currentPrompt = '';
+let currentMood = '';
+let currentEnergy = 1;
+
+function newPrompt(){
+  currentPrompt = PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
+  ge('prompt-text').textContent = currentPrompt;
+}
+
+function setMood(emoji){
+  currentMood = emoji;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('on',b.innerHTML===emoji||b.textContent===emoji));
+}
+
+function setEnergy(level,el){
+  currentEnergy = level;
+  document.querySelectorAll('.energy-dot').forEach((d,i)=>d.classList.toggle('on',i<level));
+}
+
+function saveEntry(){
+  const text = ge('entry-text').value.trim();
+  if(!text) return;
+  D.entries.unshift({
+    id: Date.now(),
+    text,
+    mood: currentMood,
+    energy: currentEnergy,
+    prompt: currentPrompt,
+    date: new Date().toISOString(),
+  });
+  save(D);
+  ge('entry-text').value = '';
+  renderEntries();
+}
+
+function renderEntries(){
+  const energyColors = ['#e84b4b','#f0b840','#85c8ff','#39e87a'];
+  ge('entries-list').innerHTML = D.entries.length
+    ? D.entries.map(e=>'<div class="journal-entry">'
+        +'<div class="je-header">'
+        +(e.mood?'<div class="je-mood">'+e.mood+'</div>':'')
+        +'<div class="je-date">'+fmtDate(e.date)+'</div>'
+        +'<div class="je-energy">'+Array.from({length:4},(_,i)=>'<div class="je-dot" style="background:'+(i<e.energy?energyColors[i]:'var(--s3)')+'"></div>').join('')+'</div>'
+        +'<button class="je-del" onclick="deleteEntry('+e.id+')">&#215;</button>'
+        +'</div>'
+        +(e.prompt?'<div class="je-prompt">'+escH(e.prompt)+'</div>':'')
+        +'<div class="je-text">'+escH(e.text)+'</div>'
+        +'</div>').join('')
+    : '<div style="text-align:center;color:var(--muted);padding:20px;font-size:12px;line-height:1.8">No entries yet. Write something — even one sentence counts. &#10024;</div>';
+}
+
+function deleteEntry(id){ D.entries=D.entries.filter(e=>e.id!==id); save(D); renderEntries(); }
+
+// ── RESOURCES ───────────────────────────────────────────
+const DEFAULT_RESOURCES = [
+  {id:Date.now()+1,type:'book',title:'ADHD 2.0 by Hallowell & Ratey',url:'',desc:'Updated science and strategies. Covers strengths-based approach to ADHD.',tags:['education','ADHD','book'],nd:['adhd','audhd']},
+  {id:Date.now()+2,type:'book',title:'Unmasking Autism by Devon Price',url:'',desc:'Essential reading on autistic masking, late diagnosis, and identity.',tags:['masking','identity','autism'],nd:['autism','audhd']},
+  {id:Date.now()+3,type:'tool',title:'Focusmate',url:'https://focusmate.com',desc:'Body doubling platform — virtual coworking sessions. ADHD game-changer.',tags:['focus','body doubling','productivity'],nd:['adhd','audhd']},
+  {id:Date.now()+4,type:'community',title:'r/ADHD',url:'https://reddit.com/r/ADHD',desc:'Large supportive community. Great for validation and shared strategies.',tags:['community','support'],nd:['adhd','audhd']},
+  {id:Date.now()+5,type:'community',title:'r/autism',url:'https://reddit.com/r/autism',desc:'Autistic-led community for discussion, support, and shared experience.',tags:['community','support'],nd:['autism','audhd']},
+  {id:Date.now()+6,type:'article',title:'What is Autistic Burnout?',url:'https://neuroclastic.com/its-not-depression-its-autistic-burnout/',desc:'NeuroClastic article explaining autistic burnout vs depression — essential read.',tags:['burnout','mental health'],nd:['autism','audhd']},
+];
+
+let resType = 'book';
+let resFilter = 'all';
+
+function initResources(){
+  if(!D.resources.length) D.resources = DEFAULT_RESOURCES;
+}
+
+function openResourceModal(){
+  ['r-title','r-url','r-desc','r-tags'].forEach(id=>ge(id).value='');
+  setResType('book', document.querySelector('#res-types .mtype-btn'));
+  ge('modal-overlay').classList.add('open');
+}
+function closeModal(){ ge('modal-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===ge('modal-overlay')) closeModal(); }
+
+function setResType(t,el){
+  resType=t;
+  document.querySelectorAll('#res-types .mtype-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+}
+
+function toggleNd(el){ el.classList.toggle('on'); }
+
+function saveResource(){
+  const title = ge('r-title').value.trim();
+  if(!title){ alert('Enter a title'); return; }
+  const ndEls = document.querySelectorAll('#res-nd .mtype-btn');
+  const ndMap = ['adhd','autism','audhd'];
+  const nd = [...ndEls].filter(b=>b.classList.contains('on')).map((_,i)=>ndMap[i]);
+
+  D.resources.unshift({
+    id: Date.now(),
+    type: resType,
+    title,
+    url: ge('r-url').value.trim(),
+    desc: ge('r-desc').value.trim(),
+    tags: ge('r-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    nd,
+  });
+  save(D); closeModal(); renderResources();
+}
+
+function deleteResource(id){ D.resources=D.resources.filter(r=>r.id!==id); save(D); renderResources(); }
+
+const TYPE_ICONS = {book:'&#128218;',video:'&#127916;',tool:'&#128295;',article:'&#128240;',community:'&#128101;',note:'&#128203;'};
+const TYPE_COLORS = {book:'#ffb085',video:'#ff85b3',tool:'#85c8ff',article:'#ffe085',community:'#b87fff',note:'#5fdfcc'};
+
+function renderResources(){
+  const ids = [...activeIds];
+  const filtered = D.resources.filter(r=>{
+    const typeOk = resFilter==='all'||r.type===resFilter;
+    const ndOk = !r.nd||r.nd.some(n=>ids.includes(n));
+    return typeOk && ndOk;
+  });
+
+  ge('resources-list').innerHTML = filtered.length
+    ? filtered.map(r=>'<div class="resource-item">'
+        +'<div class="resource-icon" style="background:'+TYPE_COLORS[r.type]+'18;border:1px solid '+TYPE_COLORS[r.type]+'33">'+TYPE_ICONS[r.type]+'</div>'
+        +'<div class="resource-info">'
+        +(r.url?'<a class="resource-title" href="'+escH(r.url)+'" target="_blank" style="color:var(--text);text-decoration:none">'+escH(r.title)+'</a>':'<div class="resource-title">'+escH(r.title)+'</div>')
+        +(r.desc?'<div class="resource-desc">'+escH(r.desc)+'</div>':'')
+        +'<div class="resource-tags">'+r.tags.map(t=>'<span class="resource-tag">'+escH(t)+'</span>').join('')+'</div>'
+        +'</div>'
+        +'<button class="resource-del" onclick="deleteResource('+r.id+')">&#215;</button>'
+        +'</div>').join('')
+    : '<div style="text-align:center;color:var(--muted);padding:24px;font-size:12px;line-height:1.8">No resources yet for this filter.<br>Add some! &#128218;</div>';
+}
+
+function toggleResFilter(el,type){
+  document.querySelectorAll('#resource-filters .filter-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); resFilter=type; renderResources();
+}
+
+// ── HELPERS ─────────────────────────────────────────────
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(iso){ return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+// ── INIT ────────────────────────────────────────────────
+initResources();
+newPrompt();
+generateIdeas();
+renderSavedIdeas();
+renderEntries();
+renderResources();
+
+// Set active identity pills from saved state
+document.querySelectorAll('.id-pill').forEach(p=>{
+  const id = p.classList[1];
+  if(!activeIds.has(id)) p.classList.remove('active');
+});
+</script>
+</body>
+</html>

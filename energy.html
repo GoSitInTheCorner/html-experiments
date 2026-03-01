@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Energy Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+:root{
+  --bg:#030f08;--s1:#061a0d;--s2:#0a2414;--s3:#0f2e1a;--b:#1a4028;
+  --green:#00e676;--green2:#69f0ae;--amber:#ffab40;--blue:#40c4ff;--red:#ff5252;--purple:#ce93d8;
+  --text:#e0f2e9;--muted:#4a7a5a;--soft:#8ab89a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;height:100dvh}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;display:flex;flex-direction:column;overflow:hidden}
+
+/* scan lines */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,230,118,.015) 2px,rgba(0,230,118,.015) 4px);pointer-events:none;z-index:0}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--b);flex-shrink:0;z-index:2;position:relative;background:var(--bg)}
+#back-btn{background:transparent;border:1px solid var(--b);color:var(--muted);border-radius:4px;padding:5px 10px;font-size:10px;cursor:pointer;font-family:'Space Mono',monospace}
+#title{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;flex:1;letter-spacing:.03em;color:var(--green)}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--b);flex-shrink:0;overflow-x:auto;scrollbar-width:none;z-index:2;background:var(--bg)}
+#tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:70px;padding:9px 4px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-family:'Space Mono',monospace}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;z-index:1;position:relative}
+.view{display:none;padding:12px 12px 80px}
+.view.active{display:block}
+
+/* ── INPUT CARDS ── */
+.input-section{background:var(--s1);border:1px solid var(--b);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.is-head{padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px}
+.is-icon{font-size:18px}
+.is-title{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--green);letter-spacing:.04em}
+.setting-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--b);gap:10px}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:11px;color:var(--soft);flex:1;line-height:1.4}
+.setting-input{background:transparent;border:none;outline:none;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--text);text-align:right;width:80px}
+.setting-input:focus{color:var(--green)}
+.setting-suffix{font-size:10px;color:var(--muted);flex-shrink:0;font-family:'Space Mono',monospace}
+
+/* ── RESULT CARDS ── */
+.result-hero{background:var(--s1);border:1px solid var(--b);border-radius:12px;padding:18px;margin-bottom:10px;text-align:center}
+.rh-label{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-bottom:5px}
+.rh-val{font-family:'Space Mono',monospace;font-size:44px;font-weight:700;color:var(--green);line-height:1}
+.rh-sub{font-size:11px;color:var(--soft);margin-top:5px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.result-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:12px}
+.rc-label{font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;font-family:'Space Mono',monospace}
+.rc-val{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;line-height:1}
+.rc-val.green{color:var(--green)}
+.rc-val.amber{color:var(--amber)}
+.rc-val.red{color:var(--red)}
+.rc-val.blue{color:var(--blue)}
+.rc-sub{font-size:9px;color:var(--muted);margin-top:3px}
+
+/* ── CHART ── */
+.chart-card{background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:10px}
+.chart-title{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
+canvas{width:100%}
+
+/* ── COMPARE TABLE ── */
+.compare-table{background:var(--s1);border:1px solid var(--b);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.cth{background:var(--s2);border-bottom:1px solid var(--b)}
+.ct-row{display:grid;padding:9px 12px;border-bottom:1px solid var(--b);align-items:center}
+.ct-row:last-child{border-bottom:none}
+.ct-row:nth-child(odd){background:rgba(0,230,118,.015)}
+.ct-label{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace}
+.ct-electric{font-size:11px;color:var(--amber)}
+.ct-gas{font-size:11px;color:var(--blue)}
+.ct-solar{font-size:11px;color:var(--green)}
+.best-tag{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.2);color:var(--green);margin-left:4px;font-family:'Space Mono',monospace}
+
+/* ── APPLIANCES ── */
+.appliance-item{background:var(--s1);border:1px solid var(--b);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.app-icon{font-size:20px;flex-shrink:0}
+.app-info{flex:1;min-width:0}
+.app-name{font-size:12px;font-weight:600}
+.app-watts{font-size:10px;color:var(--muted)}
+.app-cost{font-family:'Space Mono',monospace;font-size:13px;color:var(--amber);flex-shrink:0}
+.app-del{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px}
+
+.app-add-btn{width:100%;padding:10px;background:var(--s2);border:1px dashed var(--b);border-radius:8px;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;margin-bottom:10px;transition:all .15s}
+.app-add-btn:hover{border-color:var(--green);color:var(--green)}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--s1);border:1px solid var(--b);border-top:1px solid var(--green);border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:18px;padding-bottom:40px}
+#modal-title{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--green);margin-bottom:14px}
+.mf{margin-bottom:10px}
+.ml{font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;font-family:'Space Mono',monospace}
+.mi{width:100%;background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:9px 12px;font-family:'Space Mono',monospace;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.mi:focus{border-color:var(--green)}
+select.mi option{background:var(--s2)}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.msave{width:100%;padding:12px;background:var(--green);color:var(--bg);border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;font-family:'Space Mono',monospace}
+.mcancel{width:100%;background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:8px;font-family:'Space Mono',monospace}
+
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--green)}
+.sec-btn{font-size:9px;padding:5px 10px;border:1px solid var(--green);color:var(--green);background:transparent;cursor:pointer;font-family:'Space Mono',monospace;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <div id="title">ENERGY.CALC</div>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="showTab('electricity')">Electricity</div>
+  <div class="tab" onclick="showTab('gas')">Gas</div>
+  <div class="tab" onclick="showTab('solar')">Solar ROI</div>
+  <div class="tab" onclick="showTab('appliances')">Appliances</div>
+  <div class="tab" onclick="showTab('compare')">Compare</div>
+</div>
+
+<div id="content">
+
+  <!-- ── ELECTRICITY ── -->
+  <div class="view active" id="v-electricity">
+    <div class="input-section">
+      <div class="is-head"><div class="is-icon">&#9889;</div><div class="is-title">ELECTRICITY INPUTS</div></div>
+      <div class="setting-row"><div class="setting-label">Monthly kWh Usage</div><input class="setting-input" id="e-kwh" type="number" value="900" oninput="calcElectricity()"><div class="setting-suffix">kWh/mo</div></div>
+      <div class="setting-row"><div class="setting-label">Electricity Rate</div><input class="setting-input" id="e-rate" type="number" value="0.14" step="0.01" oninput="calcElectricity()"><div class="setting-suffix">$/kWh</div></div>
+      <div class="setting-row"><div class="setting-label">Peak Rate (on-peak hours)</div><input class="setting-input" id="e-peak" type="number" value="0.22" step="0.01" oninput="calcElectricity()"><div class="setting-suffix">$/kWh</div></div>
+      <div class="setting-row"><div class="setting-label">% Usage During Peak Hours</div><input class="setting-input" id="e-peak-pct" type="number" value="30" oninput="calcElectricity()"><div class="setting-suffix">%</div></div>
+      <div class="setting-row"><div class="setting-label">Annual Rate Increase</div><input class="setting-input" id="e-increase" type="number" value="3" step="0.5" oninput="calcElectricity()"><div class="setting-suffix">%/yr</div></div>
+      <div class="setting-row"><div class="setting-label">Fixed Monthly Charges</div><input class="setting-input" id="e-fixed" type="number" value="12" oninput="calcElectricity()"><div class="setting-suffix">$/mo</div></div>
+    </div>
+
+    <div class="result-hero">
+      <div class="rh-label">Monthly Electricity Bill</div>
+      <div class="rh-val" id="e-monthly-result">$0</div>
+      <div class="rh-sub" id="e-monthly-sub">Based on blended rate</div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-card"><div class="rc-label">Annual Cost</div><div class="rc-val amber" id="e-annual">$0</div><div class="rc-sub">without increases</div></div>
+      <div class="result-card"><div class="rc-label">Blended Rate</div><div class="rc-val" id="e-blended">$0</div><div class="rc-sub">effective $/kWh</div></div>
+      <div class="result-card"><div class="rc-label">5-Year Cost</div><div class="rc-val red" id="e-5yr">$0</div><div class="rc-sub">with rate increases</div></div>
+      <div class="result-card"><div class="rc-label">10-Year Cost</div><div class="rc-val red" id="e-10yr">$0</div><div class="rc-sub">with rate increases</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">10-Year Electricity Cost Projection</div>
+      <canvas id="e-chart" height="150"></canvas>
+    </div>
+  </div>
+
+  <!-- ── GAS ── -->
+  <div class="view" id="v-gas">
+    <div class="input-section">
+      <div class="is-head"><div class="is-icon">&#128293;</div><div class="is-title">NATURAL GAS INPUTS</div></div>
+      <div class="setting-row"><div class="setting-label">Monthly Usage</div><input class="setting-input" id="g-therms" type="number" value="60" oninput="calcGas()"><div class="setting-suffix">therms/mo</div></div>
+      <div class="setting-row"><div class="setting-label">Gas Rate</div><input class="setting-input" id="g-rate" type="number" value="1.20" step="0.05" oninput="calcGas()"><div class="setting-suffix">$/therm</div></div>
+      <div class="setting-row"><div class="setting-label">Fixed Monthly Charges</div><input class="setting-input" id="g-fixed" type="number" value="18" oninput="calcGas()"><div class="setting-suffix">$/mo</div></div>
+      <div class="setting-row"><div class="setting-label">Annual Rate Increase</div><input class="setting-input" id="g-increase" type="number" value="4" step="0.5" oninput="calcGas()"><div class="setting-suffix">%/yr</div></div>
+      <div class="setting-row"><div class="setting-label">Heating % of Gas Bill</div><input class="setting-input" id="g-heating-pct" type="number" value="60" oninput="calcGas()"><div class="setting-suffix">%</div></div>
+      <div class="setting-row"><div class="setting-label">Furnace Efficiency</div><input class="setting-input" id="g-afue" type="number" value="80" oninput="calcGas()"><div class="setting-suffix">% AFUE</div></div>
+    </div>
+
+    <div class="result-hero">
+      <div class="rh-label">Monthly Gas Bill</div>
+      <div class="rh-val" id="g-monthly-result">$0</div>
+      <div class="rh-sub" id="g-monthly-sub">usage + fixed charges</div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-card"><div class="rc-label">Annual Cost</div><div class="rc-val amber" id="g-annual">$0</div></div>
+      <div class="result-card"><div class="rc-label">CO₂ Emitted</div><div class="rc-val blue" id="g-co2">0 lbs</div><div class="rc-sub">per year</div></div>
+      <div class="result-card"><div class="rc-label">5-Year Cost</div><div class="rc-val red" id="g-5yr">$0</div></div>
+      <div class="result-card"><div class="rc-label">Heat Pump Savings</div><div class="rc-val green" id="g-hp-savings">$0</div><div class="rc-sub">if switching to electric</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Monthly Gas Cost by Season (estimated)</div>
+      <canvas id="g-chart" height="140"></canvas>
+    </div>
+  </div>
+
+  <!-- ── SOLAR ROI ── -->
+  <div class="view" id="v-solar">
+    <div class="input-section">
+      <div class="is-head"><div class="is-icon">&#9728;</div><div class="is-title">SOLAR SYSTEM INPUTS</div></div>
+      <div class="setting-row"><div class="setting-label">System Size</div><input class="setting-input" id="s-kw" type="number" value="8" step="0.5" oninput="calcSolar()"><div class="setting-suffix">kW</div></div>
+      <div class="setting-row"><div class="setting-label">System Cost</div><input class="setting-input" id="s-cost" type="number" value="24000" oninput="calcSolar()"><div class="setting-suffix">$</div></div>
+      <div class="setting-row"><div class="setting-label">Federal Tax Credit</div><input class="setting-input" id="s-credit" type="number" value="30" oninput="calcSolar()"><div class="setting-suffix">%</div></div>
+      <div class="setting-row"><div class="setting-label">State Rebate</div><input class="setting-input" id="s-rebate" type="number" value="1000" oninput="calcSolar()"><div class="setting-suffix">$</div></div>
+      <div class="setting-row"><div class="setting-label">Peak Sun Hours/Day</div><input class="setting-input" id="s-sun" type="number" value="5.0" step="0.5" oninput="calcSolar()"><div class="setting-suffix">hrs/day</div></div>
+      <div class="setting-row"><div class="setting-label">Panel Efficiency Loss/Yr</div><input class="setting-input" id="s-degrade" type="number" value="0.5" step="0.1" oninput="calcSolar()"><div class="setting-suffix">%/yr</div></div>
+      <div class="setting-row"><div class="setting-label">Net Metering Rate</div><input class="setting-input" id="s-nem" type="number" value="0.10" step="0.01" oninput="calcSolar()"><div class="setting-suffix">$/kWh</div></div>
+    </div>
+
+    <div class="result-hero">
+      <div class="rh-label">Payback Period</div>
+      <div class="rh-val" id="s-payback">0 yrs</div>
+      <div class="rh-sub" id="s-payback-sub">after incentives</div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-card"><div class="rc-label">Net System Cost</div><div class="rc-val amber" id="s-net-cost">$0</div><div class="rc-sub">after credits/rebates</div></div>
+      <div class="result-card"><div class="rc-label">Annual Production</div><div class="rc-val green" id="s-prod">0 kWh</div></div>
+      <div class="result-card"><div class="rc-label">Annual Savings</div><div class="rc-val green" id="s-savings-yr">$0</div></div>
+      <div class="result-card"><div class="rc-label">25-Year Net Benefit</div><div class="rc-val green" id="s-25yr">$0</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Cumulative Solar Savings vs Payback</div>
+      <canvas id="s-chart" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- ── APPLIANCES ── -->
+  <div class="view" id="v-appliances">
+    <div class="sec-header">
+      <div class="sec-title">APPLIANCE COSTS</div>
+      <button class="sec-btn" onclick="openAddAppliance()">+ Add</button>
+    </div>
+
+    <div class="input-section" style="margin-bottom:10px">
+      <div class="setting-row"><div class="setting-label">Your Electricity Rate</div><input class="setting-input" id="app-rate" type="number" value="0.14" step="0.01" oninput="renderAppliances()"><div class="setting-suffix">$/kWh</div></div>
+    </div>
+
+    <div style="background:var(--s1);border:1px solid var(--b);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">TOTAL MONTHLY APPLIANCE COST</div>
+      <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--green)" id="app-total">$0</div>
+    </div>
+
+    <div id="appliances-list"></div>
+  </div>
+
+  <!-- ── COMPARE ── -->
+  <div class="view" id="v-compare">
+    <div class="sec-title" style="margin-bottom:10px;font-family:'Space Mono',monospace;font-size:12px;color:var(--green)">ENERGY SOURCE COMPARISON</div>
+
+    <div class="compare-table">
+      <div class="ct-row cth" style="grid-template-columns:1.2fr 1fr 1fr 1fr">
+        <div class="ct-label">Metric</div>
+        <div class="ct-electric" style="font-weight:700">Electric</div>
+        <div class="ct-gas" style="font-weight:700">Gas</div>
+        <div class="ct-solar" style="font-weight:700">Solar</div>
+      </div>
+      <div id="compare-rows"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">10-Year Cost Comparison</div>
+      <canvas id="cmp-chart" height="180"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Monthly Cost Breakdown</div>
+      <canvas id="cmp-bar" height="120"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="overlayClick(event)">
+  <div id="modal">
+    <div id="modal-title">Add Appliance</div>
+    <div id="modal-body"></div>
+    <button class="msave" id="modal-save">Add</button>
+    <button class="mcancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+const STORE='energy_calc_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE))||{}; }catch{ return {}; }}
+function persist(){ localStorage.setItem(STORE,JSON.stringify(D)); }
+function ge(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(ge(id)?.value)||0; }
+function $k(n){ return n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0); }
+
+const DEFAULT_APPLIANCES=[
+  {id:1,name:'Central A/C',icon:'❄️',watts:3500,hours:8,days:90},
+  {id:2,name:'Electric Water Heater',icon:'🚿',watts:4000,hours:3,days:365},
+  {id:3,name:'Refrigerator',icon:'🧊',watts:150,hours:24,days:365},
+  {id:4,name:'Washer/Dryer',icon:'👕',watts:5000,hours:1,days:104},
+  {id:5,name:'Dishwasher',icon:'🍽️',watts:1800,hours:1,days:365},
+  {id:6,name:'EV Charger (L2)',icon:'🚗',watts:7200,hours:4,days:300},
+  {id:7,name:'Lighting (whole home)',icon:'💡',watts:400,hours:6,days:365},
+  {id:8,name:'Desktop Computer',icon:'💻',watts:200,hours:8,days:260},
+];
+
+let D=load();
+if(!D.appliances) D.appliances=DEFAULT_APPLIANCES;
+persist();
+
+// ── TABS ──────────────────────────────────────────
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((e,i)=>e.classList.toggle('active',['electricity','gas','solar','appliances','compare'][i]===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  ge('v-'+t).classList.add('active');
+  if(t==='compare') renderCompare();
+  if(t==='appliances') renderAppliances();
+}
+
+// ── CANVAS HELPER ─────────────────────────────────
+function mkC(id){
+  const c=ge(id); if(!c) return null;
+  const dpr=window.devicePixelRatio||1;
+  const pw=c.parentElement.clientWidth-28;
+  const h=parseInt(c.getAttribute('height'));
+  c.width=pw*dpr; c.height=h*dpr;
+  c.style.width=pw+'px'; c.style.height=h+'px';
+  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,pw,h);
+  return {ctx,w:pw,h};
+}
+
+// ── ELECTRICITY ───────────────────────────────────
+function calcElectricity(){
+  const kwh=num('e-kwh'), rate=num('e-rate'), peak=num('e-peak'),
+        peakPct=num('e-peak-pct')/100, inc=num('e-increase')/100, fixed=num('e-fixed');
+  const offPct=1-peakPct;
+  const blended=rate*offPct+peak*peakPct;
+  const monthly=kwh*blended+fixed;
+  const annual=monthly*12;
+
+  let cost5=0,cost10=0;
+  for(let y=1;y<=10;y++){
+    const yc=monthly*12*Math.pow(1+inc,y-1);
+    if(y<=5) cost5+=yc;
+    cost10+=yc;
+  }
+
+  ge('e-monthly-result').textContent='$'+monthly.toFixed(2);
+  ge('e-monthly-sub').textContent='Blended rate: $'+blended.toFixed(4)+'/kWh';
+  ge('e-annual').textContent=$k(annual);
+  ge('e-blended').textContent='$'+blended.toFixed(3);
+  ge('e-5yr').textContent=$k(cost5);
+  ge('e-10yr').textContent=$k(cost10);
+
+  // Chart: 10-year cost line
+  const r=mkC('e-chart'); if(!r) return;
+  const {ctx,w,h}=r;
+  const pad={t:16,r:10,b:26,l:52};
+  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const yrs=Array.from({length:10},(_, i)=>monthly*12*Math.pow(1+inc,i));
+  const maxV=Math.max(...yrs);
+  const px=i=>pad.l+i/9*cw;
+  const py=v=>pad.t+ch-v/maxV*ch;
+
+  // Grid
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch*i/4;
+    ctx.strokeStyle='#1a4028'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+    const v=maxV*(1-i/4);
+    ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='right';
+    ctx.fillText(v>=1000?'$'+(v/1000).toFixed(1)+'K':'$'+v.toFixed(0),pad.l-4,y+3);
+  }
+
+  // Fill area
+  ctx.globalAlpha=0.12; ctx.fillStyle='#ffab40';
+  ctx.beginPath(); ctx.moveTo(px(0),py(yrs[0]));
+  yrs.forEach((v,i)=>ctx.lineTo(px(i),py(v)));
+  ctx.lineTo(px(9),pad.t+ch); ctx.lineTo(px(0),pad.t+ch); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha=1;
+
+  // Line
+  ctx.beginPath(); ctx.strokeStyle='#ffab40'; ctx.lineWidth=2;
+  yrs.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+  ctx.stroke();
+
+  // Dots + x labels
+  yrs.forEach((v,i)=>{
+    ctx.fillStyle='#ffab40'; ctx.beginPath(); ctx.arc(px(i),py(v),3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='center';
+    ctx.fillText('Y'+(i+1),px(i),h-8);
+  });
+
+  // Save for compare
+  window._elMonthly=monthly; window._elAnnual=annual; window._elRate=blended; window._el10=cost10;
+}
+
+// ── GAS ───────────────────────────────────────────
+function calcGas(){
+  const therms=num('g-therms'), rate=num('g-rate'), fixed=num('g-fixed'),
+        inc=num('g-increase')/100, heatPct=num('g-heating-pct')/100, afue=num('g-afue')/100;
+  const monthly=therms*rate+fixed;
+  const annual=monthly*12;
+  const co2=therms*12*11.7; // lbs per therm
+  let cost5=0;
+  for(let y=1;y<=5;y++) cost5+=monthly*12*Math.pow(1+inc,y-1);
+
+  // Heat pump savings: assume 300% efficient heat pump vs AFUE gas
+  const heatCost=therms*heatPct*rate;
+  const heatKwh=(therms*heatPct*100)/afue*0.293; // kWh equivalent
+  const hpCost=heatKwh*(window._elRate||0.14)/3; // COP 3
+  const hpSavings=Math.max(0,(heatCost-hpCost)*12);
+
+  ge('g-monthly-result').textContent='$'+monthly.toFixed(2);
+  ge('g-monthly-sub').textContent=therms+' therms × $'+rate.toFixed(2)+' + $'+fixed+' fixed';
+  ge('g-annual').textContent=$k(annual);
+  ge('g-co2').textContent=(co2/1000).toFixed(1)+'K lbs';
+  ge('g-5yr').textContent=$k(cost5);
+  ge('g-hp-savings').textContent=$k(hpSavings)+'/yr';
+
+  // Seasonal chart
+  const r=mkC('g-chart'); if(!r) return;
+  const {ctx,w,h}=r;
+  const months=['J','F','M','A','M','J','J','A','S','O','N','D'];
+  // Seasonal multipliers (gas heavy in winter)
+  const mult=[2.2,2.0,1.5,0.8,0.5,0.3,0.2,0.3,0.5,0.9,1.5,2.0];
+  const avg=mult.reduce((a,b)=>a+b)/12;
+  const vals=mult.map(m=>monthly*m/avg);
+  const maxV=Math.max(...vals);
+  const pad={t:12,r:8,b:22,l:42};
+  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const bw=cw/12*0.55,gap=cw/12;
+  vals.forEach((v,i)=>{
+    const bh=v/maxV*ch;
+    const x=pad.l+i*gap+(gap-bw)/2;
+    const y=pad.t+ch-bh;
+    const g=ctx.createLinearGradient(0,y,0,y+bh);
+    g.addColorStop(0,'#40c4ff'); g.addColorStop(1,'#0a2414');
+    ctx.fillStyle=g; ctx.fillRect(x,y,bw,bh);
+    ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='center';
+    ctx.fillText(months[i],x+bw/2,h-6);
+  });
+  ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='right';
+  ctx.fillText('$'+maxV.toFixed(0),pad.l-4,pad.t+4);
+  ctx.fillText('$0',pad.l-4,pad.t+ch);
+
+  window._gasMonthly=monthly; window._gasAnnual=annual;
+}
+
+// ── SOLAR ─────────────────────────────────────────
+function calcSolar(){
+  const kw=num('s-kw'), cost=num('s-cost'), creditPct=num('s-credit')/100,
+        rebate=num('s-rebate'), sun=num('s-sun'), degrade=num('s-degrade')/100,
+        nem=num('s-nem');
+  const netCost=cost*(1-creditPct)-rebate;
+  const annualProd=kw*sun*365*0.8; // 80% system efficiency
+  const annualSavings=annualProd*(window._elRate||0.14);
+  const payback=netCost/annualSavings;
+
+  let total25=0;
+  for(let y=1;y<=25;y++){
+    const prod=annualProd*Math.pow(1-degrade,y-1);
+    const elRate=(window._elRate||0.14)*Math.pow(1+(num('e-increase')||3)/100,y-1);
+    total25+=prod*elRate;
+  }
+  const net25=total25-netCost;
+
+  ge('s-payback').textContent=payback.toFixed(1)+' yrs';
+  ge('s-payback-sub').textContent='Net cost after '+(creditPct*100).toFixed(0)+'% tax credit + rebates';
+  ge('s-net-cost').textContent=$k(netCost);
+  ge('s-prod').textContent=Math.round(annualProd).toLocaleString()+' kWh';
+  ge('s-savings-yr').textContent=$k(annualSavings);
+  ge('s-25yr').textContent=$k(net25);
+
+  // Cumulative savings chart
+  const r=mkC('s-chart'); if(!r) return;
+  const {ctx,w,h}=r;
+  const pad={t:14,r:10,b:26,l:56};
+  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const years=25;
+  let cumSavings=-netCost;
+  const data=[];
+  for(let y=1;y<=years;y++){
+    const prod=annualProd*Math.pow(1-degrade,y-1);
+    const elRate=(window._elRate||0.14)*Math.pow(1+(num('e-increase')||3)/100,y-1);
+    cumSavings+=prod*elRate;
+    data.push(cumSavings);
+  }
+  const maxV=Math.max(...data); const minV=Math.min(...data,-netCost);
+  const range=maxV-minV||1;
+  const px=i=>pad.l+i/(years-1)*cw;
+  const py=v=>pad.t+ch-((v-minV)/range)*ch;
+  const breakEven=data.findIndex(v=>v>=0);
+
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch*i/4;
+    ctx.strokeStyle='#1a4028'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+    const v=maxV*(1-i/4)+minV*i/4;
+    ctx.fillStyle='#4a7a5a'; ctx.font='7px Space Mono'; ctx.textAlign='right';
+    ctx.fillText(v>=0?$k(v):'-$'+Math.abs(v/1000).toFixed(0)+'K',pad.l-4,y+3);
+  }
+
+  // Zero line
+  const zeroY=py(0);
+  ctx.strokeStyle='rgba(0,230,118,.3)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l,zeroY); ctx.lineTo(pad.l+cw,zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Area fill
+  const negColor='rgba(255,82,82,.1)'; const posColor='rgba(0,230,118,.1)';
+  data.forEach((v,i)=>{
+    if(i===0) return;
+    const prev=data[i-1];
+    ctx.fillStyle=v>=0?posColor:negColor;
+    const x1=px(i-1),x2=px(i),y1=py(prev),y2=py(v),yz=py(0);
+    ctx.beginPath(); ctx.moveTo(x1,Math.min(y1,yz)); ctx.lineTo(x2,Math.min(y2,yz));
+    ctx.lineTo(x2,yz); ctx.lineTo(x1,yz); ctx.closePath(); ctx.fill();
+  });
+
+  // Line
+  ctx.beginPath(); ctx.lineWidth=2;
+  data.forEach((v,i)=>{
+    ctx.strokeStyle=v>=0?'#00e676':'#ff5252';
+    if(i===0){ ctx.moveTo(px(i),py(v)); return; }
+    ctx.lineTo(px(i),py(v)); ctx.stroke(); ctx.beginPath(); ctx.moveTo(px(i),py(v));
+  });
+
+  // Payback marker
+  if(breakEven>=0){
+    ctx.strokeStyle='rgba(0,230,118,.6)'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(px(breakEven),pad.t); ctx.lineTo(px(breakEven),pad.t+ch); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#00e676'; ctx.font='8px Space Mono'; ctx.textAlign='center';
+    ctx.fillText('Break-even yr '+(breakEven+1),px(breakEven),pad.t-2);
+  }
+
+  data.forEach((v,i)=>{
+    if(i%4===0){
+      ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='center';
+      ctx.fillText('Y'+(i+1),px(i),h-8);
+    }
+  });
+
+  window._solarMonthly=annualSavings/12; window._solarAnnual=annualSavings;
+}
+
+// ── APPLIANCES ────────────────────────────────────
+function renderAppliances(){
+  const rate=num('app-rate')||0.14;
+  const items=D.appliances.map(a=>{
+    const kwhPerYear=a.watts/1000*a.hours*a.days;
+    const costPerMonth=kwhPerYear*rate/12;
+    return {...a,kwhPerYear,costPerMonth};
+  });
+  const total=items.reduce((s,a)=>s+a.costPerMonth,0);
+  ge('app-total').textContent='$'+total.toFixed(2);
+  ge('appliances-list').innerHTML=items.map(a=>'<div class="appliance-item">'
+    +'<div class="app-icon">'+a.icon+'</div>'
+    +'<div class="app-info">'
+      +'<div class="app-name">'+a.name+'</div>'
+      +'<div class="app-watts">'+a.watts+'W × '+a.hours+'h × '+a.days+' days = '+(a.kwhPerYear).toFixed(0)+' kWh/yr</div>'
+    +'</div>'
+    +'<div class="app-cost">$'+a.costPerMonth.toFixed(2)+'/mo</div>'
+    +'<button class="app-del" onclick="deleteAppliance('+a.id+')">&#215;</button>'
+    +'</div>').join('');
+}
+
+function deleteAppliance(id){ D.appliances=D.appliances.filter(a=>a.id!==id); persist(); renderAppliances(); }
+
+function openAddAppliance(){
+  ge('modal-title').textContent='Add Appliance';
+  ge('modal-body').innerHTML='<div class="mrow">'
+    +'<div class="mf"><div class="ml">Emoji Icon</div><input class="mi" id="ap-icon" type="text" value="🔌" style="font-size:18px;text-align:center"></div>'
+    +'<div class="mf"><div class="ml">Watts</div><input class="mi" id="ap-watts" type="number" placeholder="1000"></div>'
+    +'</div>'
+    +'<div class="mf"><div class="ml">Name</div><input class="mi" id="ap-name" type="text" placeholder="e.g. Air Fryer"></div>'
+    +'<div class="mrow">'
+    +'<div class="mf"><div class="ml">Hours/Day Used</div><input class="mi" id="ap-hours" type="number" placeholder="2" step="0.5"></div>'
+    +'<div class="mf"><div class="ml">Days/Year</div><input class="mi" id="ap-days" type="number" placeholder="365"></div>'
+    +'</div>';
+  ge('modal-save').onclick=saveAppliance;
+  ge('modal-overlay').classList.add('open');
+}
+
+function saveAppliance(){
+  const name=ge('ap-name')?.value?.trim();
+  if(!name){ alert('Enter name'); return; }
+  D.appliances.unshift({id:Date.now(),name,icon:ge('ap-icon').value||'🔌',watts:parseFloat(ge('ap-watts').value)||100,hours:parseFloat(ge('ap-hours').value)||1,days:parseFloat(ge('ap-days').value)||365});
+  persist(); closeModal(); renderAppliances();
+}
+
+// ── COMPARE ───────────────────────────────────────
+function renderCompare(){
+  calcElectricity(); calcGas(); calcSolar();
+  const eM=window._elMonthly||0, gM=window._gasMonthly||0, sM=window._solarMonthly||0;
+  const eA=window._elAnnual||0, gA=window._gasAnnual||0, sA=window._solarAnnual||0;
+  const rows=[
+    {l:'Monthly Cost',e:'$'+eM.toFixed(2),g:'$'+gM.toFixed(2),s:'-$'+sM.toFixed(2)+' saved',best:'s'},
+    {l:'Annual Cost',e:$k(eA),g:$k(gA),s:$k(window._el10/10||eA),best:'s'},
+    {l:'Rate',e:'$'+(window._elRate||0.14).toFixed(3)+'/kWh',g:'$'+(num('g-rate')||1.20).toFixed(2)+'/therm',s:'~$0/kWh after install',best:'s'},
+    {l:'CO₂ Impact',e:'Depends on grid',g:'High (direct burn)',s:'Near zero',best:'s'},
+    {l:'Price Stability',e:'Variable (utility)',g:'Variable (commodity)',s:'Fixed after install',best:'s'},
+    {l:'10-Year Cost',e:$k(window._el10||eA*10),g:$k(window._gasAnnual*10||gA*10),s:'See Solar tab',best:'s'},
+  ];
+  const cols='1.2fr 1fr 1fr 1fr';
+  ge('compare-rows').innerHTML=rows.map(r=>'<div class="ct-row" style="grid-template-columns:'+cols+'">'
+    +'<div class="ct-label">'+r.l+'</div>'
+    +'<div class="ct-electric">'+r.e+(r.best==='e'?'<span class="best-tag">BEST</span>':'')+'</div>'
+    +'<div class="ct-gas">'+r.g+(r.best==='g'?'<span class="best-tag">BEST</span>':'')+'</div>'
+    +'<div class="ct-solar">'+r.s+(r.best==='s'?'<span class="best-tag">BEST</span>':'')+'</div>'
+    +'</div>').join('');
+
+  // 10-year line chart
+  const r=mkC('cmp-chart'); if(r){
+    const {ctx,w,h}=r;
+    const pad={t:14,r:10,b:26,l:56};
+    const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+    const inc=(num('e-increase')||3)/100;
+    const gInc=(num('g-increase')||4)/100;
+    let cumE=0,cumG=0;
+    const eData=[],gData=[];
+    for(let y=1;y<=10;y++){
+      cumE+=eM*12*Math.pow(1+inc,y-1); eData.push(cumE);
+      cumG+=gM*12*Math.pow(1+gInc,y-1); gData.push(cumG);
+    }
+    const maxV=Math.max(...eData,...gData)||1;
+    const px=i=>pad.l+i/9*cw;
+    const py=v=>pad.t+ch-v/maxV*ch;
+
+    for(let i=0;i<=3;i++){
+      const y=pad.t+ch*i/3;
+      ctx.strokeStyle='#1a4028'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+      const v=maxV*(1-i/3);
+      ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='right';
+      ctx.fillText($k(v),pad.l-4,y+3);
+    }
+
+    [[eData,'#ffab40'],[gData,'#40c4ff']].forEach(([data,col])=>{
+      ctx.beginPath(); ctx.strokeStyle=col; ctx.lineWidth=2;
+      data.forEach((v,i)=>i===0?ctx.moveTo(px(i),py(v)):ctx.lineTo(px(i),py(v)));
+      ctx.stroke();
+      data.forEach((v,i)=>{
+        ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px(i),py(v),3,0,Math.PI*2); ctx.fill();
+      });
+    });
+    for(let i=0;i<10;i++){
+      ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='center';
+      ctx.fillText('Y'+(i+1),px(i),h-8);
+    }
+    ctx.fillStyle='#ffab40'; ctx.fillRect(pad.l,4,16,3);
+    ctx.fillStyle='#4a7a5a'; ctx.font='8px Space Mono'; ctx.textAlign='left'; ctx.fillText('Elec',pad.l+20,8);
+    ctx.fillStyle='#40c4ff'; ctx.fillRect(pad.l+55,4,16,3);
+    ctx.fillStyle='#4a7a5a'; ctx.fillText('Gas',pad.l+75,8);
+  }
+
+  // Monthly bar
+  const rb=mkC('cmp-bar'); if(rb){
+    const {ctx,w,h}=rb;
+    const data=[{l:'Electricity',v:eM,col:'#ffab40'},{l:'Gas',v:gM,col:'#40c4ff'},{l:'Combined',v:eM+gM,col:'#ff5252'}];
+    const maxV=Math.max(...data.map(d=>d.v))||1;
+    const pad={t:12,r:10,b:26,l:70};
+    const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+    const bh=(ch/data.length)*0.55, gap=ch/data.length;
+    data.forEach((d,i)=>{
+      const bw=d.v/maxV*cw;
+      const y=pad.t+i*gap+(gap-bh)/2;
+      ctx.fillStyle=d.col+'20'; ctx.fillRect(pad.l,y,cw,bh);
+      if(bw>0){ ctx.fillStyle=d.col+'80'; ctx.fillRect(pad.l,y,bw,bh); }
+      ctx.fillStyle=d.col; ctx.font='10px Space Mono'; ctx.textAlign='right';
+      ctx.fillText(d.l,pad.l-6,y+bh/2+4);
+      ctx.fillStyle='#8ab89a'; ctx.textAlign='left';
+      ctx.fillText('$'+d.v.toFixed(2)+'/mo',pad.l+bw+4,y+bh/2+4);
+    });
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────
+function closeModal(){ ge('modal-overlay').classList.remove('open'); }
+function overlayClick(e){ if(e.target===ge('modal-overlay')) closeModal(); }
+
+// ── INIT ──────────────────────────────────────────
+calcElectricity();
+calcGas();
+calcSolar();
+renderAppliances();
+</script>
+</body>
+</html>
