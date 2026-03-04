@@ -1434,6 +1434,93 @@
   .resize-hint::before { width: 8px; height: 1.5px; bottom: 4px; right: 0; }
   .resize-hint::after { width: 1.5px; height: 8px; bottom: 0; right: 4px; }
 
+
+  /* ── PURCHASE CARD ROWS (mobile + dashboard) ── */
+  .purchase-cards-list { padding: 0.5rem; }
+  .purchase-card-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+  .purchase-card-row:last-child { border-bottom: none; }
+  .purchase-card-row:hover { background: rgba(74,222,128,0.03); }
+  .pcr-left { flex: 1; min-width: 0; }
+  .pcr-right { flex-shrink: 0; text-align: right; }
+  .pcr-strain { font-size: 0.92rem; font-weight: 600; color: var(--green); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pcr-meta { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+  .pcr-note { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+  .pcr-grams { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; color: var(--text); }
+  .pcr-oz { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--text-muted); }
+  .pcr-price { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--gold); margin-top: 2px; }
+  .pcr-ppg { font-size: 0.65rem; color: var(--text-muted); }
+  .pcr-actions { display: flex; gap: 4px; justify-content: flex-end; margin-top: 6px; }
+
+  /* Desktop/mobile visibility toggles */
+  .purchases-desktop-only { display: block; }
+  .purchases-mobile-only { display: none; }
+
+  /* ── DASHBOARD MOBILE FIXES ── */
+  #dashboard-stats { align-items: stretch; }
+  .stat-card { display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
+
+  @media (max-width: 640px) {
+    /* Switch purchases to card mode */
+    .purchases-desktop-only { display: none; }
+    .purchases-mobile-only { display: block; }
+
+    /* Purchases layout: stack calendar below */
+    .purchases-layout {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    /* Calendar fits full width */
+    .calendar-card { width: 100%; }
+    .cal-body { padding: 0.75rem; }
+    .cal-day { font-size: 0.72rem; border-radius: 6px; }
+    .cal-weekday { font-size: 0.55rem; }
+    .cal-stats { gap: 0.5rem; }
+    .cal-stat-val { font-size: 1.1rem; }
+    .cal-stat-lbl { font-size: 0.55rem; }
+
+    /* Dashboard stats: 2-column on mobile */
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat-card { padding: 1rem; }
+
+    /* Dashboard recent: compact */
+    .purchase-card-row { padding: 0.75rem; gap: 0.75rem; }
+
+    /* Page header stacks on mobile */
+    .page-header { flex-wrap: wrap; gap: 0.5rem; }
+    .page-header .btn { font-size: 0.68rem; padding: 8px 14px; }
+
+    /* Nav: smaller text, more compact */
+    nav { gap: 2px; }
+    nav button { padding: 5px 7px; font-size: 0.6rem; letter-spacing: 0.5px; }
+
+    /* Strain cards: full width */
+    .strains-grid { grid-template-columns: 1fr; }
+
+    /* Modals: full screen */
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal { border-radius: 20px 20px 0 0; max-height: 92vh; width: 100%; }
+    .lineage-modal { border-radius: 20px 20px 0 0; max-height: 88vh; }
+    .lineage-modal-overlay { padding: 0; align-items: flex-end; }
+    .newlist-box { border-radius: 20px 20px 0 0; width: 100%; margin: 0; }
+    .newlist-modal { align-items: flex-end; padding: 0; }
+  }
+
+  @media (max-width: 400px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .stat-value { font-size: 1.3rem; }
+    nav button { padding: 4px 5px; font-size: 0.55rem; }
+    main { padding: 0.5rem; }
+  }
+
 </style>
 </head>
 <body>
@@ -1496,22 +1583,27 @@
     <div class="purchases-layout">
       <div>
         <div class="table-wrap">
-          <table class="purchases-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Strain</th>
-                <th>Amount</th>
-                <th>Price</th>
-                <th>$/g</th>
-                <th>Source</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="purchases-tbody"></tbody>
-          </table>
+          <!-- Desktop table (hidden on mobile via CSS) -->
+          <div class="purchases-desktop-only">
+            <table class="purchases-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Strain</th>
+                  <th>Amount</th>
+                  <th>Price</th>
+                  <th>$/g</th>
+                  <th>Source</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="purchases-tbody"></tbody>
+            </table>
+          </div>
+          <!-- Mobile card list (hidden on desktop via CSS) -->
+          <div class="purchases-mobile-only" id="purchases-mobile-list"></div>
           <div id="purchases-empty" class="empty-state" style="display:none;">
-            <div class="empty-icon">🛋️</div>
+            <div class="empty-icon">🛒</div>
             <div class="empty-title">No Purchases Yet</div>
             <div class="empty-sub">Log your first purchase to get started</div>
           </div>
@@ -1813,62 +1905,23 @@
 </div>
 
 <script>
+
 // =====================
-// DATA STORE
+// STORAGE HELPERS
 // =====================
-const TERPENES = [
-  { id: 'myrcene', name: 'Myrcene', color: '#3b82f6', desc: 'Earthy, musky' },
-  { id: 'limonene', name: 'Limonene', color: '#fbbf24', desc: 'Citrus' },
-  { id: 'caryophyllene', name: 'Caryophyllene', color: '#a855f7', desc: 'Spicy, woody' },
-  { id: 'pinene', name: 'Pinene', color: '#22c55e', desc: 'Pine, fresh' },
-  { id: 'terpinolene', name: 'Terpinolene', color: '#f97316', desc: 'Floral, herbal' },
-  { id: 'linalool', name: 'Linalool', color: '#ec4899', desc: 'Lavender, floral' },
-  { id: 'humulene', name: 'Humulene', color: '#14b8a6', desc: 'Hoppy, earthy' },
-  { id: 'ocimene', name: 'Ocimene', color: '#f59e0b', desc: 'Sweet, woody' },
-];
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
+function load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e) { return def; } }
 
-const EFFECTS_PRESETS = ['Relaxed','Happy','Euphoric','Creative','Focused','Sleepy','Uplifted','Energetic','Hungry','Giggly','Talkative','Aroused'];
-
-function load(key, def) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch { return def; }
-}
-function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
-
+// =====================
+// DATA
+// =====================
 let strains = load('cannabis_strains', [
-  { id: 's1', name: 'Blue Dream', type: 'hybrid', breeder: 'Classic', thc: 21, cbd: 0.1, lineage: 'Blueberry × Haze', terpenes: ['myrcene', 'pinene', 'caryophyllene'], effects: ['Relaxed','Happy','Creative'], stock: 7, rating: 4.5, notes: 'Classic daytime strain. Sweet berry aroma with earthy undertones.', createdAt: Date.now() },
-  { id: 's2', name: 'Gorilla Glue #4', type: 'hybrid', breeder: 'GG Strains', thc: 28, cbd: 0.05, lineage: 'Chem\'s Sister × Sour Dubb × Chocolate Diesel', terpenes: ['caryophyllene', 'limonene', 'myrcene'], effects: ['Relaxed','Euphoric','Sleepy'], stock: 3.5, rating: 5, notes: 'Heavy hitter. Earthy diesel with a pungent punch.', createdAt: Date.now() },
-  { id: 's3', name: 'Sour Diesel', type: 'sativa', breeder: 'Unknown', thc: 19, cbd: 0.2, lineage: 'Chemdawg × Super Skunk', terpenes: ['limonene', 'caryophyllene', 'myrcene'], effects: ['Energetic','Uplifted','Creative'], stock: 0, rating: 4, notes: 'Fast-acting cerebral high. Gassy, diesel fuel scent.', createdAt: Date.now() },
-  { id: 'banana-punch-001', name: 'Banana Punch', type: 'hybrid', breeder: 'Symbiotic Genetics', thc: 22, cbd: 0.5, lineage: 'Banana OG × Purple Punch', terpenes: ['limonene', 'caryophyllene', 'myrcene'], effects: ['Happy','Relaxed','Tingly','Euphoric','Giggly'], stock: 0, rating: 4.5, notes: 'Bred by Symbiotic Genetics (California). True creeper strain — effects build slowly into full-body sedating relaxation. Flavor: ripe banana, tropical pineapple, hazy berries, citrus. Aroma: sweet/sour citrus with rich banana and earthy spice. Dense buds covered in purple and orange trichomes. THC range: 18-26%, CBD up to 1%, CBG up to 1%. Medical: stress, anxiety, chronic pain, appetite loss, insomnia, depression. Caution: potential couch-lock at high doses; start low. Deep lineage: Banana OG (OG Kush × Banana Kush) × Purple Punch (Granddaddy Purple × Larry OG). Granddaddy Purple = Purple Urkle × Big Bud. OG Kush = Chemdawg × (Lemon Thai × Hindu Kush). Flowering: 8-10 weeks, yield up to 53 oz outdoors. 50% indica / 50% sativa.', createdAt: Date.now() },
-  {
-    id: 'blockberry-001',
-    name: 'Blockberry',
-    type: 'hybrid',
-    breeder: 'Blockhead Budz',
-    thc: 28,
-    cbd: 0.3,
-    lineage: 'Black Cherry Punch × Tropicana Cookies',
-    terpenes: ['myrcene', 'limonene', 'caryophyllene'],
-    effects: ['Euphoric', 'Creative', 'Focused', 'Giggly', 'Relaxed'],
-    stock: 0,
-    rating: 0,
-    notes: 'Also known as Super Boof / Superboof — Leafly Strain of the Year 2024. Bred by Blockhead Budz (California, 2019). True 50/50 hybrid. Dense olive-green buds with deep purple hues and thick silver trichomes. Flavor: sweet berry, creamy vanilla, citrus orange, subtle blue cheese and chocolate finish. Aroma: earthy cherry, sweet citrus, musky undertones. THC 28–30%, CBD <1%, CBG up to 1.2%. Fast euphoric onset → creative focus → gentle body relaxation, no heavy couch-lock. Medical: depression, fibromyalgia, GI disorders, stress, chronic pain, anxiety, inflammation. Flowering 8–10 weeks. Lineage: Black Cherry Punch (Purple Punch × Black Cherry Pie) × Tropicana Cookies (GSC-derived citrus hybrid, Bloom Seed Co).',
-    createdAt: Date.now(),
-  },
-  {
-    id: 'block-party-001',
-    name: 'Block Party',
-    type: 'hybrid',
-    breeder: 'Blockhead Budz / THC Design',
-    thc: 24,
-    cbd: 0.11,
-    lineage: 'Super Sherb × Blockberry',
-    terpenes: ['caryophyllene', 'limonene', 'humulene'],
-    effects: ['Relaxed', 'Euphoric', 'Creative', 'Happy', 'Uplifted'],
-    stock: 0,
-    rating: 0,
-    notes: 'Also known as BlockParty. Balanced 50/50 hybrid — child of Blockberry (Super Boof) × Super Sherb. Third-generation Blockhead Budz genetics, also featured by THC Design (California). Compact plant under 4ft; responds well to topping and LST. Flavor: sweet fruity berry, creamy lemony pine on exhale, candy-like with tropical fruit. Aroma: peppery clove, diesel backbone with woody echo — bold and gassy. Terpenes: β-Caryophyllene (spice/anti-inflammatory), D-Limonene (citrus/mood lift), α-Humulene (woody/dry). THC ~24.5%, CBD ~0.11%, plus minor CBG. Effects: tingly calming onset, lifted happy euphoria with creativity, settles into buzzy relaxation without couch-lock. Medical: chronic stress, PTSD, chronic pain, inflammation, depression, mood swings. Flowering 9–11 weeks; 510g/m2 indoors, up to 539g/plant outdoors. Lineage depth: Super Sherb (Sherbert family) × Blockberry (Black Cherry Punch × Tropicana Cookies).',
-    createdAt: Date.now(),
-  },
+  { id: 's1', name: 'Blue Dream', type: 'hybrid', breeder: 'DJ Short / Santa Cruz Seed Co', thc: 21, cbd: 0.1, lineage: 'Blueberry × Haze', terpenes: ['myrcene','caryophyllene','pinene'], effects: ['Creative','Euphoric','Uplifted','Relaxed','Focused'], stock: 10.5, rating: 4.5, notes: 'Classic sativa-dominant hybrid. Great for daytime.', createdAt: Date.now() },
+  { id: 's2', name: 'Gorilla Glue #4', type: 'hybrid', breeder: 'GG Strains', thc: 27, cbd: 0.1, lineage: "Chem's Sister × Sour Dubb × Chocolate Diesel", terpenes: ['myrcene','caryophyllene','limonene'], effects: ['Relaxed','Euphoric','Happy','Sleepy','Hungry'], stock: 3.5, rating: 4, notes: 'Heavy-hitting hybrid. Great for evenings.', createdAt: Date.now() },
+  { id: 's3', name: 'Sour Diesel', type: 'sativa', breeder: 'Unknown (NY Origin)', thc: 22, cbd: 0.2, lineage: 'Chemdawg × Super Skunk', terpenes: ['caryophyllene','myrcene','limonene'], effects: ['Energetic','Creative','Euphoric','Uplifted','Focused'], stock: 0, rating: 4, notes: 'Pungent diesel aroma. Classic wake-and-bake.', createdAt: Date.now() },
+  { id: 's4', name: 'Banana Punch', type: 'hybrid', breeder: 'Symbiotic Genetics', thc: 22, cbd: 0.5, lineage: 'Banana OG × Purple Punch', terpenes: ['limonene','caryophyllene','myrcene'], effects: ['Happy','Relaxed','Tingly','Euphoric','Giggly'], stock: 7, rating: 5, notes: 'Creeper strain. Sweet banana flavor. 50/50 hybrid. Bred by Symbiotic Genetics (California). Flowering: 8-10 weeks, yield up to 53 oz outdoors. 50% indica / 50% sativa.', createdAt: Date.now() },
+  { id: 'blockberry-001', name: 'Blockberry', type: 'hybrid', breeder: 'Blockhead Budz', thc: 28, cbd: 0.3, lineage: 'Black Cherry Punch × Tropicana Cookies', terpenes: ['myrcene','limonene','caryophyllene'], effects: ['Euphoric','Creative','Focused','Giggly','Relaxed'], stock: 0, rating: 0, notes: 'Also known as Super Boof / Superboof — Leafly Strain of the Year 2024. Bred by Blockhead Budz (California, 2019). True 50/50 hybrid. Dense olive-green buds with deep purple hues and thick silver trichomes. Flavor: sweet berry, creamy vanilla, citrus orange, subtle blue cheese and chocolate finish. Aroma: earthy cherry, sweet citrus, musky undertones. THC 28-30%, CBD <1%, CBG up to 1.2%. Fast euphoric onset to creative focus to gentle body relaxation, no heavy couch-lock. Medical: depression, fibromyalgia, GI disorders, stress, chronic pain, anxiety, inflammation. Flowering 8-10 weeks.', createdAt: Date.now() },
+  { id: 'block-party-001', name: 'Block Party', type: 'hybrid', breeder: 'Blockhead Budz / THC Design', thc: 24, cbd: 0.11, lineage: 'Super Sherb × Blockberry', terpenes: ['caryophyllene','limonene','humulene'], effects: ['Relaxed','Euphoric','Creative','Happy','Uplifted'], stock: 0, rating: 0, notes: 'Also known as BlockParty. Balanced 50/50 hybrid — child of Blockberry (Super Boof) × Super Sherb. Third-generation Blockhead Budz genetics, also featured by THC Design (California). Compact plant under 4ft. Flavor: sweet fruity berry, creamy lemony pine on exhale, candy-like with tropical fruit. Aroma: peppery clove, diesel backbone with woody echo. Terpenes: caryophyllene (spice/anti-inflammatory), limonene (citrus/mood lift), humulene (woody/dry). THC ~24.5%, CBD ~0.11%. Effects: tingly calming onset, lifted happy euphoria with creativity, settles into buzzy relaxation without couch-lock. Medical: chronic stress, PTSD, chronic pain, inflammation, depression. Flowering 9-11 weeks; 510g/m2 indoors.', createdAt: Date.now() },
 ]);
 
 let purchases = load('cannabis_purchases', [
@@ -1878,168 +1931,147 @@ let purchases = load('cannabis_purchases', [
 ]);
 
 let editingStrainId = null;
+let editingPurchaseId = null;
 let selectedEffects = [];
 let selectedTerpenes = [];
 let selectedPurchaseStrainId = null;
-
-// Calendar state
 let calDate = new Date();
+let sessionNotes = load('cannabis_session_notes', {});
+let favLists = load('cannabis_fav_lists', [
+  { id: 'fl_default', name: 'All-Time Faves', icon: '🌟', desc: 'My personal favourites', strainIds: [] },
+  { id: 'fl_topshelf', name: 'Top Shelf', icon: '👑', desc: 'Premium picks only', strainIds: [] },
+  { id: 'fl_chill', name: 'Chill & Relax', icon: '🛋️', desc: 'Evening wind-down strains', strainIds: [] },
+]);
+let activeListId = favLists.length ? favLists[0].id : null;
+let editingListId = null;
+let selectedListEmoji = '🌟';
+let freeformActive = false;
+
+const EMOJI_OPTIONS = ['🌟','👑','🔥','💚','🌿','🍃','🛋️','🎯','⚡','🌈','🎵','🧘','🍀','🌙','☀️','💎','🏆','🎪','🧪','💫'];
+
+const TERPENES = [
+  { id: 'myrcene', name: 'Myrcene', color: '#3b82f6' },
+  { id: 'limonene', name: 'Limonene', color: '#fbbf24' },
+  { id: 'caryophyllene', name: 'Caryophyllene', color: '#a855f7' },
+  { id: 'pinene', name: 'Pinene', color: '#22c55e' },
+  { id: 'terpinolene', name: 'Terpinolene', color: '#f97316' },
+  { id: 'linalool', name: 'Linalool', color: '#ec4899' },
+  { id: 'humulene', name: 'Humulene', color: '#14b8a6' },
+  { id: 'ocimene', name: 'Ocimene', color: '#f59e0b' },
+];
+
+const EFFECTS_LIST = ['Relaxed','Happy','Euphoric','Creative','Uplifted','Energetic','Focused','Sleepy','Hungry','Tingly','Giggly','Aroused','Talkative','Calm','Motivated'];
+
+const CARD_DEFAULTS = [
+  { left: 0, top: 0, w: 320, h: 320 },
+  { left: 340, top: 0, w: 380, h: 320 },
+  { left: 0, top: 340, w: 320, h: 280 },
+  { left: 340, top: 340, w: 380, h: 300 },
+];
 
 // =====================
-// TAB ROUTING
+// NAVIGATION
 // =====================
 function showTab(tab) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  const btns = document.querySelectorAll('nav button');
   const tabMap = { dashboard: 0, strains: 1, purchases: 2, converter: 3, favorites: 4 };
-  btns[tabMap[tab]].classList.add('active');
-
+  if (tabMap[tab] !== undefined) document.querySelectorAll('nav button')[tabMap[tab]].classList.add('active');
   if (tab === 'dashboard') renderDashboard();
-// Pre-render notes after strains are rendered
-setTimeout(renderAllNotes, 100);
-
-// Safe DOM event bindings (elements rendered after script tag)
-(function attachModalOverlayListeners() {
-  const lineageMod = document.getElementById('lineage-modal');
-  if (lineageMod) lineageMod.addEventListener('click', function(e) { if (e.target === this) closeLineageModal(); });
-
-  const newlistMod = document.getElementById('newlist-modal');
-  if (newlistMod) newlistMod.addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
-})();
   if (tab === 'strains') renderStrains();
   if (tab === 'purchases') { renderPurchases(); renderCalendar(); }
   if (tab === 'favorites') renderFavorites();
-  if (tab === 'strains') renderStrains();
 }
 
 // =====================
-// TERPENE FLOWER SVG
+// DASHBOARD
 // =====================
-function renderFlower(terpenes, thc, cbd) {
-  const size = 56;
-  const cx = size / 2;
-  const cy = size / 2;
-  const terps = (terpenes || []).slice(0, 3);
-  const rings = [18, 13, 9];
-  let circles = '';
-
-  terps.forEach((tid, i) => {
-    const t = TERPENES.find(t => t.id === tid);
-    if (!t) return;
-    const r = rings[i];
-    const angle = (i * 120 - 90) * Math.PI / 180;
-    const dist = [10, 8, 6][i];
-    const px = cx + Math.cos(angle) * dist;
-    const py = cy + Math.sin(angle) * dist;
-    circles += `<circle cx="${px}" cy="${py}" r="${r}" fill="${t.color}" opacity="${0.35 - i*0.08}"/>`;
+function renderDashboard() {
+  const totalStrains = strains.length;
+  const totalStock = strains.reduce((a, s) => a + (s.stock || 0), 0);
+  const totalSpent = purchases.reduce((a, p) => a + (p.price || 0), 0);
+  const totalGramsBought = purchases.reduce((a, p) => a + (p.grams || 0), 0);
+  const now = new Date();
+  const monthPurchases = purchases.filter(p => {
+    const pd = new Date(p.date + 'T00:00:00');
+    return pd.getMonth() === now.getMonth() && pd.getFullYear() === now.getFullYear();
   });
+  const monthGrams = monthPurchases.reduce((a, p) => a + (p.grams || 0), 0);
+  const gpd = now.getDate() > 0 ? (monthGrams / now.getDate()) : 0;
 
-  // Center: THC diamond or CBD circle
-  const thcPct = thc || 0;
-  const cbdPct = cbd || 0;
-  const dominant = thcPct >= cbdPct ? 'thc' : 'cbd';
-  const size1 = Math.min(10, 5 + (Math.max(thcPct, cbdPct) / 40) * 6);
+  document.getElementById('dashboard-stats').innerHTML =
+    `<div class="stat-card"><div class="stat-label">Strains Tracked</div><div class="stat-value">${totalStrains}</div></div>` +
+    `<div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-value">${totalStock.toFixed(1)}<span style="font-size:1rem;font-family:'DM Mono',monospace">g</span></div><div class="stat-sub">${(totalStock/28.3495).toFixed(2)} oz</div></div>` +
+    `<div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">${monthGrams.toFixed(1)}<span style="font-size:1rem;font-family:'DM Mono',monospace">g</span></div><div class="stat-sub">${gpd.toFixed(2)} g/day avg</div></div>` +
+    `<div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" style="color:var(--gold)">$${totalSpent.toFixed(0)}</div><div class="stat-sub">${totalGramsBought > 0 ? '$'+(totalSpent/totalGramsBought).toFixed(2)+'/g avg' : ''}</div></div>`;
 
-  let center = '';
-  if (dominant === 'thc') {
-    const d = size1;
-    center = `<polygon points="${cx},${cy-d} ${cx+d},${cy} ${cx},${cy+d} ${cx-d},${cy}" fill="#4ade80" opacity="0.9"/>`;
+  const recent = [...purchases].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,5);
+  const recentEl = document.getElementById('dashboard-recent');
+  if (recent.length) {
+    recentEl.innerHTML = `<div class="purchase-cards-list">${recent.map(p => {
+      const ppg = p.price && p.grams ? '$'+(p.price/p.grams).toFixed(2)+'/g' : '';
+      return `<div class="purchase-card-row">
+        <div class="pcr-left">
+          <div class="pcr-strain">${p.strainName}</div>
+          <div class="pcr-meta">${p.date}${p.source ? ' · '+p.source : ''}</div>
+        </div>
+        <div class="pcr-right">
+          <div class="pcr-grams">${p.grams}g</div>
+          <div class="pcr-price">${p.price ? '$'+p.price.toFixed(2) : '—'}${ppg ? ' <span class="pcr-ppg">'+ppg+'</span>' : ''}</div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
   } else {
-    center = `<circle cx="${cx}" cy="${cy}" r="${size1}" fill="#60a5fa" opacity="0.9"/>`;
+    recentEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Purchases</div></div>`;
   }
 
-  return `<svg class="terpene-flower" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="${cx}" cy="${cy}" r="${size/2-1}" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
-    ${circles}
-    ${center}
-  </svg>`;
+  const inStock = strains.filter(s => s.stock > 0);
+  const invEl = document.getElementById('dashboard-inventory');
+  if (inStock.length) {
+    invEl.innerHTML = inStock.map(s => strainCard(s)).join('');
+    setTimeout(renderAllNotes, 0);
+  } else {
+    invEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📦</div><div class="empty-title">Nothing in Stock</div><div class="empty-sub">Log a purchase to add to your inventory</div></div>`;
+  }
 }
 
 // =====================
 // STRAINS
 // =====================
-function renderStrains() {
-  const container = document.getElementById('strains-container');
-  const search = (document.getElementById('strain-search')?.value || '').toLowerCase();
-  const filter = document.getElementById('strain-filter')?.value || 'all';
-
-  let filtered = strains.filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(search) || (s.lineage||'').toLowerCase().includes(search);
-    const matchType = filter === 'all' || s.type === filter;
-    return matchSearch && matchType;
-  });
-
-  if (!filtered.length) {
-    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-icon">🌿</div>
-      <div class="empty-title">No Strains Found</div>
-      <div class="empty-sub">Add your first strain or adjust filters</div>
-    </div>`;
-    return;
-  }
-
-  container.innerHTML = filtered.map(s => strainCard(s)).join('');
-  setTimeout(renderAllNotes, 0);
-}
-
 function strainCard(s) {
-  const thcPct = s.thc || 0;
-  const cbdPct = s.cbd || 0;
-  const terpsHtml = (s.terpenes || []).slice(0, 3).map(tid => {
+  const typeColors = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
+  const tc = typeColors[s.type] || '#22c55e';
+  const stockClass = s.stock > 7 ? 'stock-high' : s.stock > 0 ? 'stock-low' : 'stock-none';
+  const terpsHtml = (s.terpenes || []).slice(0,3).map(tid => {
     const t = TERPENES.find(t => t.id === tid);
-    if (!t) return '';
-    return `<div class="terpene-badge"><div class="terpene-dot" style="background:${t.color}"></div>${t.name}</div>`;
+    return t ? `<div class="terpene-badge"><div class="terpene-dot" style="background:${t.color}"></div>${t.name}</div>` : '';
   }).join('');
-
-  const effectsHtml = (s.effects || []).slice(0, 4).map(e => `<span class="effect-tag">${e}</span>`).join('');
-  const stockClass = s.stock > 7 ? 'high' : s.stock > 2 ? 'medium' : s.stock > 0 ? 'low' : 'low';
-  const stars = '★'.repeat(Math.floor(s.rating||0)) + (((s.rating||0)%1)>=0.5?'½':'') + '☆'.repeat(5-Math.ceil(s.rating||0));
-  const typeIcon = { indica: '🔵', sativa: '🔴', hybrid: '🟢' }[s.type] || '🟢';
+  const effectsHtml = (s.effects || []).slice(0,4).map(e => `<div class="effect-tag">${e}</div>`).join('');
+  const stars = s.rating ? '★'.repeat(Math.floor(s.rating)) + (s.rating%1>=0.5?'½':'') : '';
 
   return `<div class="strain-card">
     <div class="card-header">
-      <div class="strain-icon">${renderFlower(s.terpenes, s.thc, s.cbd)}</div>
+      <div class="strain-type-badge" style="background:${tc}20;color:${tc};border:1px solid ${tc}40">${s.type}</div>
       <div class="strain-meta">
-        <div class="strain-name" title="${s.name}">${s.name}</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-          <div class="strain-type ${s.type}">${typeIcon} ${s.type}</div>
-          ${s.rating ? `<div class="stars" style="font-size:0.7rem;">${'★'.repeat(Math.floor(s.rating))}${(s.rating%1)>=0.5?'½':''}${'☆'.repeat(5-Math.ceil(s.rating))}</div>` : ''}
-        </div>
-        ${s.breeder ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;font-family:'DM Mono',monospace;">${s.breeder}</div>` : ''}
+        <div class="strain-name">${s.name}</div>
+        ${s.breeder ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">${s.breeder}</div>` : ''}
+        ${stars ? `<div style="color:var(--gold);font-size:0.82rem;margin-top:2px;">${stars}</div>` : ''}
+      </div>
+      <div class="stock-badge ${stockClass}">
+        <div class="stock-val ${stockClass}">${(s.stock||0).toFixed(1)}<span style="font-size:0.6rem;font-family:'DM Mono',monospace">g</span></div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text-muted);">${(s.stock||0).toFixed(2)}g = ${((s.stock||0)/28.3495).toFixed(3)}oz</div>
+        ${s.stock > 0 ? `<div style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--text-muted);">${((s.stock||0)/28.3495*16).toFixed(2)} eighths</div>` : ''}
       </div>
     </div>
-
     <div class="card-cannabinoids">
-      <div class="cannabinoid">
-        <div class="cannabinoid-label">THC ${thcPct}%</div>
-        <div class="cannabinoid-bar-wrap"><div class="cannabinoid-bar thc-bar" style="width:${Math.min(100,(thcPct/35)*100)}%"></div></div>
-      </div>
-      <div class="cannabinoid">
-        <div class="cannabinoid-label">CBD ${cbdPct}%</div>
-        <div class="cannabinoid-bar-wrap"><div class="cannabinoid-bar cbd-bar" style="width:${Math.min(100,(cbdPct/20)*100)}%"></div></div>
-      </div>
+      <div class="cannabinoid thc"><div class="cb-label">THC</div><div class="cb-val">${s.thc}%</div></div>
+      <div class="cannabinoid cbd"><div class="cb-label">CBD</div><div class="cb-val">${s.cbd||0}%</div></div>
+      ${s.lineage ? `<div style="flex:1;min-width:0;font-size:0.68rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:center;">${s.lineage}</div>` : ''}
     </div>
-
     ${terpsHtml ? `<div class="card-terpenes">${terpsHtml}</div>` : ''}
-    ${s.lineage ? `<div class="card-lineage"><div class="lineage-label">Lineage</div><div style="margin-top:4px;font-size:0.82rem;">${s.lineage}</div></div>` : ''}
     ${effectsHtml ? `<div class="card-effects">${effectsHtml}</div>` : ''}
-    ${s.notes ? `<div class="card-notes">"${s.notes}"</div>` : ''}
-
-    <div class="card-stock">
-      <div class="stock-display">
-        <div>
-          <div class="stock-val ${stockClass}">${(s.stock||0).toFixed(1)}<span style="font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0;"> g</span></div>
-          <div class="stock-label">In Stock</div>
-        </div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text-muted);">${(s.stock||0).toFixed(2)}g = ${((s.stock||0)/28.3495).toFixed(3)} oz</div>
-        ${s.stock > 0 ? `<div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);">${((s.stock||0)/3.5435).toFixed(1)} eighths</div>` : ''}
-      </div>
-    </div>
-
+    ${s.notes ? `<div class="card-notes">${s.notes.substring(0,120)}${s.notes.length>120?'…':''}</div>` : ''}
     <div class="session-notes-section">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <span style="font-family:'DM Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);">Session Notes</span>
@@ -2047,7 +2079,7 @@ function strainCard(s) {
       </div>
       <div class="session-notes-list" id="notes-list-${s.id}"></div>
       <div id="note-add-form-${s.id}" style="display:none;margin-top:8px;">
-        <textarea id="note-text-${s.id}" placeholder="Session notes, flavor, effects, vibes..." style="width:100%;min-height:60px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:8px 10px;outline:none;resize:vertical;margin-bottom:6px;"></textarea>
+        <textarea id="note-text-${s.id}" placeholder="Session notes, flavor, effects, vibes..." style="width:100%;min-height:60px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:8px 10px;outline:none;resize:vertical;margin-bottom:6px;box-sizing:border-box;"></textarea>
         <div style="display:flex;gap:8px;align-items:center;">
           <select id="note-rating-${s.id}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.78rem;padding:6px 10px;outline:none;">
             <option value="">No rating</option>
@@ -2076,134 +2108,22 @@ function strainCard(s) {
   </div>`;
 }
 
-function adjustStock(id) {
-  const s = strains.find(s => s.id === id);
-  if (!s) return;
-  const val = prompt(`Update stock for ${s.name}.\nCurrent: ${s.stock}g\nEnter new amount in grams:`, s.stock);
-  if (val === null) return;
-  const num = parseFloat(val);
-  if (isNaN(num) || num < 0) { alert('Invalid amount'); return; }
-  s.stock = num;
-  save('cannabis_strains', strains);
-  renderStrains();
-}
-
-// =====================
-// STRAIN MODAL
-// =====================
-function buildTerpeneChecks() {
-  const container = document.getElementById('terpene-checks');
-  container.innerHTML = TERPENES.map(t => `
-    <label class="terpene-check ${selectedTerpenes.includes(t.id) ? 'selected' : ''}" onclick="toggleTerpene('${t.id}', this)">
-      <input type="checkbox" ${selectedTerpenes.includes(t.id) ? 'checked' : ''}>
-      <div class="dot" style="background:${t.color}"></div>
-      <span>${t.name}</span>
-    </label>
-  `).join('');
-}
-
-function toggleTerpene(id, el) {
-  if (selectedTerpenes.includes(id)) {
-    selectedTerpenes = selectedTerpenes.filter(t => t !== id);
-    el.classList.remove('selected');
+function renderStrains() {
+  const search = (document.getElementById('strain-search')?.value || '').toLowerCase();
+  const filter = document.getElementById('strain-filter')?.value || 'all';
+  const container = document.getElementById('strains-grid');
+  if (!container) return;
+  let filtered = strains.filter(s => {
+    const matchSearch = !search || s.name.toLowerCase().includes(search) || (s.breeder||'').toLowerCase().includes(search);
+    const matchFilter = filter === 'all' || s.type === filter;
+    return matchSearch && matchFilter;
+  });
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🌿</div><div class="empty-title">No Strains Found</div></div>`;
   } else {
-    if (selectedTerpenes.length < 3) {
-      selectedTerpenes.push(id);
-      el.classList.add('selected');
-    } else {
-      alert('Max 3 terpenes (primary, secondary, tertiary)');
-    }
+    container.innerHTML = filtered.map(s => strainCard(s)).join('');
   }
-}
-
-function openStrainModal(id = null) {
-  editingStrainId = id;
-  selectedEffects = [];
-  selectedTerpenes = [];
-
-  if (id) {
-    const s = strains.find(s => s.id === id);
-    if (!s) return;
-    document.getElementById('strain-modal-title').textContent = 'Edit Strain';
-    document.getElementById('f-name').value = s.name || '';
-    document.getElementById('f-type').value = s.type || 'hybrid';
-    document.getElementById('f-breeder').value = s.breeder || '';
-    document.getElementById('f-thc').value = s.thc || '';
-    document.getElementById('f-cbd').value = s.cbd || '';
-    document.getElementById('f-lineage').value = s.lineage || '';
-    document.getElementById('f-stock').value = s.stock || '';
-    document.getElementById('f-rating').value = s.rating || '';
-    document.getElementById('f-notes').value = s.notes || '';
-    selectedEffects = [...(s.effects || [])];
-    selectedTerpenes = [...(s.terpenes || [])];
-  } else {
-    document.getElementById('strain-modal-title').textContent = 'Add Strain';
-    ['f-name','f-type','f-breeder','f-thc','f-cbd','f-lineage','f-stock','f-rating','f-notes','f-effects-input'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el.tagName === 'SELECT') el.value = 'hybrid'; else el.value = '';
-    });
-  }
-
-  buildTerpeneChecks();
-  renderEffectChips();
-  document.getElementById('strain-modal').classList.add('open');
-}
-
-function closeStrainModal() { document.getElementById('strain-modal').classList.remove('open'); }
-
-function addEffect(e) {
-  if (e.key !== 'Enter') return;
-  const input = document.getElementById('f-effects-input');
-  const val = input.value.trim();
-  if (val && !selectedEffects.includes(val)) {
-    selectedEffects.push(val);
-    renderEffectChips();
-  }
-  input.value = '';
-}
-
-function renderEffectChips() {
-  const container = document.getElementById('f-effects-chips');
-  container.innerHTML = selectedEffects.map(e => `
-    <div class="effect-chip">
-      ${e} <span class="rm" onclick="removeEffect('${e}')">×</span>
-    </div>
-  `).join('');
-}
-
-function removeEffect(e) {
-  selectedEffects = selectedEffects.filter(x => x !== e);
-  renderEffectChips();
-}
-
-function saveStrain() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { alert('Strain name is required'); return; }
-
-  const data = {
-    name,
-    type: document.getElementById('f-type').value,
-    breeder: document.getElementById('f-breeder').value.trim(),
-    thc: parseFloat(document.getElementById('f-thc').value) || 0,
-    cbd: parseFloat(document.getElementById('f-cbd').value) || 0,
-    lineage: document.getElementById('f-lineage').value.trim(),
-    terpenes: [...selectedTerpenes],
-    effects: [...selectedEffects],
-    stock: parseFloat(document.getElementById('f-stock').value) || 0,
-    rating: parseFloat(document.getElementById('f-rating').value) || 0,
-    notes: document.getElementById('f-notes').value.trim(),
-  };
-
-  if (editingStrainId) {
-    const idx = strains.findIndex(s => s.id === editingStrainId);
-    if (idx !== -1) strains[idx] = { ...strains[idx], ...data };
-  } else {
-    strains.push({ id: 'str_' + Date.now(), createdAt: Date.now(), ...data });
-  }
-
-  save('cannabis_strains', strains);
-  closeStrainModal();
-  renderStrains();
+  setTimeout(renderAllNotes, 0);
 }
 
 function deleteStrain(id) {
@@ -2211,6 +2131,119 @@ function deleteStrain(id) {
   strains = strains.filter(s => s.id !== id);
   save('cannabis_strains', strains);
   renderStrains();
+  renderDashboard();
+}
+
+function adjustStock(id) {
+  const s = strains.find(s => s.id === id);
+  if (!s) return;
+  const amt = parseFloat(prompt(`Adjust stock for ${s.name}.\nCurrent: ${s.stock||0}g\nEnter amount (+/- grams):`));
+  if (isNaN(amt)) return;
+  s.stock = Math.max(0, (s.stock||0) + amt);
+  save('cannabis_strains', strains);
+  renderStrains();
+}
+
+// =====================
+// STRAIN MODAL
+// =====================
+function openStrainModal(id = null) {
+  editingStrainId = id;
+  selectedEffects = [];
+  selectedTerpenes = [];
+  const modal = document.getElementById('strain-modal');
+  const title = document.querySelector('#strain-modal .modal-title');
+  if (!modal) return;
+
+  if (id) {
+    const s = strains.find(s => s.id === id);
+    if (!s) return;
+    if (title) title.textContent = 'Edit Strain';
+    document.getElementById('s-name').value = s.name || '';
+    document.getElementById('s-type').value = s.type || 'hybrid';
+    document.getElementById('s-breeder').value = s.breeder || '';
+    document.getElementById('s-thc').value = s.thc || '';
+    document.getElementById('s-cbd').value = s.cbd || '';
+    document.getElementById('s-lineage').value = s.lineage || '';
+    document.getElementById('s-stock').value = s.stock || '';
+    document.getElementById('s-rating').value = s.rating || '';
+    document.getElementById('s-notes').value = s.notes || '';
+    selectedEffects = [...(s.effects || [])];
+    selectedTerpenes = [...(s.terpenes || [])];
+  } else {
+    if (title) title.textContent = 'Add Strain';
+    ['s-name','s-breeder','s-lineage','s-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    document.getElementById('s-type').value = 'hybrid';
+    document.getElementById('s-thc').value = '';
+    document.getElementById('s-cbd').value = '';
+    document.getElementById('s-stock').value = '';
+    document.getElementById('s-rating').value = '';
+  }
+  renderEffectsPicker();
+  renderTerpenesPicker();
+  modal.classList.add('open');
+}
+
+function closeStrainModal() { document.getElementById('strain-modal').classList.remove('open'); }
+
+function renderEffectsPicker() {
+  const container = document.getElementById('effects-picker');
+  if (!container) return;
+  container.innerHTML = EFFECTS_LIST.map(e =>
+    `<div class="effect-pick${selectedEffects.includes(e) ? ' selected' : ''}" onclick="toggleEffect('${e}')">${e}</div>`
+  ).join('');
+}
+
+function renderTerpenesPicker() {
+  const container = document.getElementById('terpenes-picker');
+  if (!container) return;
+  container.innerHTML = TERPENES.map(t =>
+    `<div class="terpene-pick${selectedTerpenes.includes(t.id) ? ' selected' : ''}" onclick="toggleTerpene('${t.id}')" style="border-color:${selectedTerpenes.includes(t.id) ? t.color : 'var(--border)'}">
+      <div class="terpene-dot" style="background:${t.color}"></div>${t.name}
+    </div>`
+  ).join('');
+}
+
+function toggleEffect(e) {
+  if (selectedEffects.includes(e)) selectedEffects = selectedEffects.filter(x => x !== e);
+  else if (selectedEffects.length < 6) selectedEffects.push(e);
+  renderEffectsPicker();
+}
+
+function toggleTerpene(id) {
+  if (selectedTerpenes.includes(id)) selectedTerpenes = selectedTerpenes.filter(x => x !== id);
+  else if (selectedTerpenes.length < 3) selectedTerpenes.push(id);
+  renderTerpenesPicker();
+}
+
+function saveStrain() {
+  const name = document.getElementById('s-name').value.trim();
+  if (!name) { alert('Strain name is required'); return; }
+  const strain = {
+    id: editingStrainId || ('s_' + Date.now()),
+    name,
+    type: document.getElementById('s-type').value,
+    breeder: document.getElementById('s-breeder').value.trim(),
+    thc: parseFloat(document.getElementById('s-thc').value) || 0,
+    cbd: parseFloat(document.getElementById('s-cbd').value) || 0,
+    lineage: document.getElementById('s-lineage').value.trim(),
+    stock: parseFloat(document.getElementById('s-stock').value) || 0,
+    rating: parseFloat(document.getElementById('s-rating').value) || 0,
+    notes: document.getElementById('s-notes').value.trim(),
+    effects: selectedEffects,
+    terpenes: selectedTerpenes,
+    createdAt: editingStrainId ? (strains.find(s=>s.id===editingStrainId)?.createdAt || Date.now()) : Date.now(),
+  };
+  if (editingStrainId) {
+    const idx = strains.findIndex(s => s.id === editingStrainId);
+    if (idx !== -1) strains[idx] = strain;
+  } else {
+    strains.push(strain);
+  }
+  save('cannabis_strains', strains);
+  closeStrainModal();
+  renderStrains();
+  renderDashboard();
 }
 
 // =====================
@@ -2218,59 +2251,96 @@ function deleteStrain(id) {
 // =====================
 function renderPurchases() {
   const tbody = document.getElementById('purchases-tbody');
+  const mobileList = document.getElementById('purchases-mobile-list');
   const empty = document.getElementById('purchases-empty');
-
   if (!purchases.length) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
+    if (tbody) tbody.innerHTML = '';
+    if (mobileList) mobileList.innerHTML = '';
+    if (empty) empty.style.display = 'block';
     return;
   }
-  empty.style.display = 'none';
+  if (empty) empty.style.display = 'none';
+  const sorted = [...purchases].sort((a,b) => new Date(b.date)-new Date(a.date));
 
-  const sorted = [...purchases].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (tbody) {
+    tbody.innerHTML = sorted.map(p => {
+      const ppg = p.price && p.grams ? (p.price/p.grams).toFixed(2) : '—';
+      return `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim)">${p.date}</td>
+        <td><span style="color:var(--green);font-weight:500">${p.strainName}</span></td>
+        <td style="font-family:'DM Mono',monospace">${p.grams}g <span style="color:var(--text-muted);font-size:0.72rem">(${(p.grams/28.3495).toFixed(3)}oz)</span></td>
+        <td style="font-family:'DM Mono',monospace;color:var(--gold)">${p.price ? '$'+p.price.toFixed(2) : '—'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim)">${ppg !== '—' ? '$'+ppg : '—'}</td>
+        <td style="font-size:0.8rem;color:var(--text-dim)">${p.source || '—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" onclick="editPurchase('${p.id}')" style="padding:4px 8px">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')" style="padding:4px 8px">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
 
-  tbody.innerHTML = sorted.map(p => {
-    const ppg = p.price && p.grams ? (p.price / p.grams).toFixed(2) : '—';
-    return `<tr>
-      <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim);">${p.date}</td>
-      <td><span style="color:var(--green);font-weight:500;">${p.strainName}</span></td>
-      <td style="font-family:'DM Mono',monospace;">${p.grams}g<span style="color:var(--text-muted);font-size:0.72rem;"> (${(p.grams/28.3495).toFixed(3)}oz)</span></td>
-      <td style="font-family:'DM Mono',monospace;color:var(--gold);">${p.price ? '$'+p.price.toFixed(2) : '—'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim);">${ppg !== '—' ? '$'+ppg : '—'}</td>
-      <td style="font-size:0.8rem;color:var(--text-dim);">${p.source || '—'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">✕</button></td>
-    </tr>`;
-  }).join('');
+  if (mobileList) {
+    mobileList.innerHTML = sorted.map(p => {
+      const ppg = p.price && p.grams ? '$'+(p.price/p.grams).toFixed(2)+'/g' : '';
+      const oz = (p.grams/28.3495).toFixed(3);
+      return `<div class="purchase-card-row">
+        <div class="pcr-left">
+          <div class="pcr-strain">${p.strainName}</div>
+          <div class="pcr-meta">${p.date}${p.source ? ' · '+p.source : ''}</div>
+          ${p.notes ? `<div class="pcr-note">${p.notes}</div>` : ''}
+        </div>
+        <div class="pcr-right">
+          <div class="pcr-grams">${p.grams}g <span class="pcr-oz">${oz}oz</span></div>
+          <div class="pcr-price">${p.price ? '$'+p.price.toFixed(2) : '—'}${ppg ? ' <span class="pcr-ppg">'+ppg+'</span>' : ''}</div>
+          <div class="pcr-actions">
+            <button class="btn btn-ghost btn-sm" onclick="editPurchase('${p.id}')" style="padding:3px 8px;font-size:0.65rem">✏ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')" style="padding:3px 8px;font-size:0.65rem">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
-function openPurchaseModal() {
+function openPurchaseModal(editId = null) {
+  editingPurchaseId = editId;
   selectedPurchaseStrainId = null;
   const list = document.getElementById('purchase-strain-list');
+  const modalTitle = document.querySelector('#purchase-modal .modal-title');
+  if (!strains.length) { alert('Add at least one strain first'); showTab('strains'); openStrainModal(); return; }
 
-  if (!strains.length) {
-    alert('Add at least one strain first');
-    showTab('strains');
-    openStrainModal();
-    return;
+  list.innerHTML = strains.map(s =>
+    `<div class="strain-select-item" id="psi-${s.id}" onclick="selectPurchaseStrain('${s.id}')">
+      <div style="font-weight:500">${s.name}</div>
+      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px">${s.type} · ${s.thc}% THC</div>
+    </div>`
+  ).join('');
+
+  if (editId) {
+    const p = purchases.find(x => x.id === editId);
+    if (!p) return;
+    if (modalTitle) modalTitle.textContent = 'Edit Purchase';
+    document.getElementById('p-date').value = p.date || '';
+    document.getElementById('p-grams').value = p.grams || '';
+    document.getElementById('p-price').value = p.price || '';
+    document.getElementById('p-source').value = p.source || '';
+    document.getElementById('p-notes').value = p.notes || '';
+    selectedPurchaseStrainId = p.strainId;
+    setTimeout(() => {
+      document.querySelectorAll('.strain-select-item').forEach(el => el.classList.remove('selected'));
+      document.getElementById('psi-' + p.strainId)?.classList.add('selected');
+    }, 0);
+  } else {
+    if (modalTitle) modalTitle.textContent = 'Log Purchase';
+    document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
+    ['p-grams','p-price','p-source','p-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   }
-
-  list.innerHTML = strains.map(s => `
-    <div class="strain-select-item" id="psi-${s.id}" onclick="selectPurchaseStrain('${s.id}')">
-      <div style="font-weight:500;">${s.name}</div>
-      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">${s.type} · ${s.thc}% THC</div>
-    </div>
-  `).join('');
-
-  document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('p-grams').value = '';
-  document.getElementById('p-price').value = '';
-  document.getElementById('p-source').value = '';
-  document.getElementById('p-notes').value = '';
-  document.getElementById('p-ppg-display').textContent = '—';
-  document.getElementById('p-oz-display').textContent = '—';
-
+  calcPurchaseTotal();
   document.getElementById('purchase-modal').classList.add('open');
 }
+
+function editPurchase(id) { openPurchaseModal(id); }
 
 function selectPurchaseStrain(id) {
   selectedPurchaseStrainId = id;
@@ -2278,672 +2348,340 @@ function selectPurchaseStrain(id) {
   document.getElementById('psi-' + id)?.classList.add('selected');
 }
 
-function closePurchaseModal() { document.getElementById('purchase-modal').classList.remove('open'); }
-
 function calcPurchaseTotal() {
-  const g = parseFloat(document.getElementById('p-grams').value);
-  const p = parseFloat(document.getElementById('p-price').value);
-  if (g && p) {
-    document.getElementById('p-ppg-display').textContent = '$' + (p/g).toFixed(2) + '/g';
-  }
-  if (g) {
-    document.getElementById('p-oz-display').textContent = (g/28.3495).toFixed(3) + ' oz';
-  }
+  const g = parseFloat(document.getElementById('p-grams')?.value) || 0;
+  const price = parseFloat(document.getElementById('p-price')?.value) || 0;
+  const ppg = g > 0 && price > 0 ? (price/g).toFixed(2) : '—';
+  const ozEl = document.getElementById('p-oz-display');
+  const ppgEl = document.getElementById('p-ppg-display');
+  if (ozEl) ozEl.textContent = g > 0 ? (g/28.3495).toFixed(3)+'oz' : '—';
+  if (ppgEl) ppgEl.textContent = ppg !== '—' ? '$'+ppg+'/g' : '—';
 }
 
 function savePurchase() {
   if (!selectedPurchaseStrainId) { alert('Please select a strain'); return; }
   const strain = strains.find(s => s.id === selectedPurchaseStrainId);
   if (!strain) return;
-
   const grams = parseFloat(document.getElementById('p-grams').value);
   if (!grams || grams <= 0) { alert('Enter a valid amount'); return; }
-
   const dateVal = document.getElementById('p-date').value;
   if (!dateVal) { alert('Enter a date'); return; }
-
   const price = parseFloat(document.getElementById('p-price').value) || 0;
+  const source = document.getElementById('p-source').value.trim();
+  const notes = document.getElementById('p-notes').value.trim();
 
-  const purchase = {
-    id: 'p_' + Date.now(),
-    strainId: selectedPurchaseStrainId,
-    strainName: strain.name,
-    date: dateVal,
-    source: document.getElementById('p-source').value.trim(),
-    grams,
-    price,
-    notes: document.getElementById('p-notes').value.trim(),
-  };
-
-  purchases.push(purchase);
-
-  // Update stock
-  strain.stock = (strain.stock || 0) + grams;
+  if (editingPurchaseId) {
+    const idx = purchases.findIndex(p => p.id === editingPurchaseId);
+    if (idx !== -1) {
+      const old = purchases[idx];
+      const oldStrain = strains.find(s => s.id === old.strainId);
+      if (oldStrain) oldStrain.stock = Math.max(0, (oldStrain.stock||0) - old.grams);
+      strain.stock = (strain.stock||0) + grams;
+      purchases[idx] = { ...old, strainId: selectedPurchaseStrainId, strainName: strain.name, date: dateVal, source, grams, price, notes };
+    }
+  } else {
+    purchases.push({ id: 'p_'+Date.now(), strainId: selectedPurchaseStrainId, strainName: strain.name, date: dateVal, source, grams, price, notes });
+    strain.stock = (strain.stock||0) + grams;
+  }
   save('cannabis_strains', strains);
   save('cannabis_purchases', purchases);
+  editingPurchaseId = null;
   closePurchaseModal();
   renderPurchases();
   renderCalendar();
 }
 
 function deletePurchase(id) {
-  if (!confirm('Remove this purchase?')) return;
+  if (!confirm('Delete this purchase?')) return;
   purchases = purchases.filter(p => p.id !== id);
   save('cannabis_purchases', purchases);
   renderPurchases();
   renderCalendar();
 }
 
+function closePurchaseModal() { document.getElementById('purchase-modal').classList.remove('open'); editingPurchaseId = null; }
+
 // =====================
 // CALENDAR
 // =====================
 function renderCalendar() {
-  const now = calDate;
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const year = calDate.getFullYear(), month = calDate.getMonth();
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  document.getElementById('cal-month-title').textContent = `${months[month]} ${year}`;
-
+  document.getElementById('cal-month-title').textContent = months[month] + ' ' + year;
   const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  // Build day → purchases map
+  const daysInMonth = new Date(year, month+1, 0).getDate();
   const dayMap = {};
   purchases.forEach(p => {
-    const pd = new Date(p.date + 'T00:00:00');
-    if (pd.getFullYear() === year && pd.getMonth() === month) {
+    const pd = new Date(p.date+'T00:00:00');
+    if (pd.getFullYear()===year && pd.getMonth()===month) {
       const d = pd.getDate();
-      if (!dayMap[d]) dayMap[d] = { grams: 0, price: 0 };
-      dayMap[d].grams += p.grams || 0;
-      dayMap[d].price += p.price || 0;
+      if (!dayMap[d]) dayMap[d] = { grams:0, price:0 };
+      dayMap[d].grams += p.grams||0;
+      dayMap[d].price += p.price||0;
     }
   });
-
   const today = new Date();
-  const grid = document.getElementById('cal-grid');
   let html = '';
-
-  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
-    const hasPurchase = !!dayMap[d];
-    const cls = ['cal-day', isToday ? 'today' : '', hasPurchase ? 'has-purchase' : ''].filter(Boolean).join(' ');
-    const tip = hasPurchase ? ` title="${dayMap[d].grams.toFixed(1)}g purchased"` : '';
-    html += `<div class="${cls}"${tip}>${d}${hasPurchase ? '<div class="day-dot"></div>' : ''}</div>`;
+  for (let i=0; i<firstDay; i++) html += '<div class="cal-day empty"></div>';
+  for (let d=1; d<=daysInMonth; d++) {
+    const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+    const has = !!dayMap[d];
+    html += `<div class="cal-day${isToday?' today':''}${has?' has-purchase':''}"${has ? ` title="${dayMap[d].grams.toFixed(1)}g"` : ''}>${d}${has?'<div class="day-dot"></div>':''}</div>`;
   }
-
-  grid.innerHTML = html;
-
-  // Stats
-  let monthGrams = 0, monthSpend = 0;
-  Object.values(dayMap).forEach(v => { monthGrams += v.grams; monthSpend += v.price; });
-  const daysWithPurchase = Object.keys(dayMap).length;
-  const dayAvg = daysWithPurchase > 0 ? (monthGrams / daysInMonth) : 0;
-
-  document.getElementById('cal-month-grams').textContent = monthGrams.toFixed(1) + 'g';
-  document.getElementById('cal-day-avg').textContent = dayAvg.toFixed(2) + 'g';
-  document.getElementById('cal-month-spend').textContent = '$' + monthSpend.toFixed(0);
+  document.getElementById('cal-grid').innerHTML = html;
+  let mg=0, ms=0;
+  Object.values(dayMap).forEach(v => { mg+=v.grams; ms+=v.price; });
+  document.getElementById('cal-month-grams').textContent = mg.toFixed(1)+'g';
+  document.getElementById('cal-day-avg').textContent = (mg/daysInMonth).toFixed(2)+'g';
+  document.getElementById('cal-month-spend').textContent = '$'+ms.toFixed(0);
 }
 
-function calPrev() { calDate = new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1); renderCalendar(); }
-function calNext() { calDate = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 1); renderCalendar(); }
-
-// =====================
-// DASHBOARD
-// =====================
-function renderDashboard() {
-  // Stats
-  const totalStrains = strains.length;
-  const totalStock = strains.reduce((a, s) => a + (s.stock || 0), 0);
-  const totalSpent = purchases.reduce((a, p) => a + (p.price || 0), 0);
-  const totalGramsBought = purchases.reduce((a, p) => a + (p.grams || 0), 0);
-
-  // This month
-  const now = new Date();
-  const monthPurchases = purchases.filter(p => {
-    const pd = new Date(p.date + 'T00:00:00');
-    return pd.getMonth() === now.getMonth() && pd.getFullYear() === now.getFullYear();
-  });
-  const monthGrams = monthPurchases.reduce((a, p) => a + (p.grams || 0), 0);
-  const daysThisMonth = now.getDate();
-  const gpd = daysThisMonth > 0 ? (monthGrams / daysThisMonth) : 0;
-
-  document.getElementById('dashboard-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Strains Tracked</div><div class="stat-value">${totalStrains}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-value">${totalStock.toFixed(1)}<span style="font-family:'DM Mono',monospace;font-size:1rem;">g</span></div><div class="stat-sub">${(totalStock/28.3495).toFixed(2)} oz</div></div>
-    <div class="stat-card"><div class="stat-label">This Month (g)</div><div class="stat-value">${monthGrams.toFixed(1)}<span style="font-family:'DM Mono',monospace;font-size:1rem;">g</span></div><div class="stat-sub">${gpd.toFixed(2)} g/day avg</div></div>
-    <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" style="color:var(--gold)">$${totalSpent.toFixed(0)}</div><div class="stat-sub">${totalGramsBought > 0 ? '$'+(totalSpent/totalGramsBought).toFixed(2)+'/g avg' : ''}</div></div>
-  `;
-
-  // Recent purchases
-  const recent = [...purchases].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,5);
-  if (recent.length) {
-    document.getElementById('dashboard-recent').innerHTML = `<table class="purchases-table"><thead><tr><th>Date</th><th>Strain</th><th>Amount</th><th>Price</th><th>Source</th></tr></thead><tbody>
-      ${recent.map(p => `<tr>
-        <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim);">${p.date}</td>
-        <td style="color:var(--green)">${p.strainName}</td>
-        <td style="font-family:'DM Mono',monospace;">${p.grams}g</td>
-        <td style="font-family:'DM Mono',monospace;color:var(--gold);">${p.price ? '$'+p.price.toFixed(2) : '—'}</td>
-        <td style="font-size:0.8rem;color:var(--text-dim);">${p.source || '—'}</td>
-      </tr>`).join('')}
-    </tbody></table>`;
-  } else {
-    document.getElementById('dashboard-recent').innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Purchases</div></div>`;
-  }
-
-  // Inventory with stock > 0
-  const inStock = strains.filter(s => s.stock > 0);
-  if (inStock.length) {
-    document.getElementById('dashboard-inventory').innerHTML = inStock.map(s => strainCard(s)).join('');
-  } else {
-    document.getElementById('dashboard-inventory').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📦</div><div class="empty-title">Nothing in Stock</div><div class="empty-sub">Log a purchase to add to your inventory</div></div>`;
-  }
-}
+function calPrev() { calDate = new Date(calDate.getFullYear(), calDate.getMonth()-1, 1); renderCalendar(); }
+function calNext() { calDate = new Date(calDate.getFullYear(), calDate.getMonth()+1, 1); renderCalendar(); }
 
 // =====================
 // CONVERTER
 // =====================
 function convertFrom(unit) {
-  const g = document.getElementById('conv-g');
-  const oz = document.getElementById('conv-oz');
-  const lb = document.getElementById('conv-lb');
-
+  const g = document.getElementById('conv-g'), oz = document.getElementById('conv-oz'), lb = document.getElementById('conv-lb');
   let grams = 0;
-  if (unit === 'g') grams = parseFloat(g.value) || 0;
-  else if (unit === 'oz') grams = (parseFloat(oz.value) || 0) * 28.3495;
-  else if (unit === 'lb') grams = (parseFloat(lb.value) || 0) * 453.592;
-
-  if (unit !== 'g') g.value = grams ? grams.toFixed(3) : '';
-  if (unit !== 'oz') oz.value = grams ? (grams / 28.3495).toFixed(4) : '';
-  if (unit !== 'lb') lb.value = grams ? (grams / 453.592).toFixed(5) : '';
+  if (unit==='g') grams = parseFloat(g.value)||0;
+  else if (unit==='oz') grams = (parseFloat(oz.value)||0)*28.3495;
+  else if (unit==='lb') grams = (parseFloat(lb.value)||0)*453.592;
+  if (unit!=='g') g.value = grams ? grams.toFixed(3) : '';
+  if (unit!=='oz') oz.value = grams ? (grams/28.3495).toFixed(4) : '';
+  if (unit!=='lb') lb.value = grams ? (grams/453.592).toFixed(5) : '';
 }
 
 function calcPPG() {
-  const p = parseFloat(document.getElementById('ppg-price').value) || 0;
-  const g = parseFloat(document.getElementById('ppg-grams').value) || 0;
-  const ppg = g > 0 ? p / g : 0;
-  document.getElementById('ppg-result').textContent = ppg > 0 ? '$' + ppg.toFixed(2) + '/g' : '$—/g';
-
-  if (ppg > 0) {
-    document.getElementById('ppa-1g').textContent = '$' + (ppg * 1).toFixed(2);
-    document.getElementById('ppa-eighth').textContent = '$' + (ppg * 3.5435).toFixed(2);
-    document.getElementById('ppa-quarter').textContent = '$' + (ppg * 7.0874).toFixed(2);
-    document.getElementById('ppa-half').textContent = '$' + (ppg * 14.1748).toFixed(2);
-    document.getElementById('ppa-oz').textContent = '$' + (ppg * 28.3495).toFixed(2);
+  const p = parseFloat(document.getElementById('ppg-price').value)||0;
+  const g = parseFloat(document.getElementById('ppg-grams').value)||0;
+  const ppg = g>0 ? p/g : 0;
+  document.getElementById('ppg-result').textContent = ppg>0 ? '$'+ppg.toFixed(2)+'/g' : '$—/g';
+  if (ppg>0) {
+    document.getElementById('ppa-1g').textContent = '$'+(ppg*1).toFixed(2);
+    document.getElementById('ppa-eighth').textContent = '$'+(ppg*3.5435).toFixed(2);
+    document.getElementById('ppa-quarter').textContent = '$'+(ppg*7.0874).toFixed(2);
+    document.getElementById('ppa-half').textContent = '$'+(ppg*14.1748).toFixed(2);
+    document.getElementById('ppa-oz').textContent = '$'+(ppg*28.3495).toFixed(2);
   }
 }
 
 function calcUsage() {
-  const g = parseFloat(document.getElementById('usage-grams').value) || 0;
-  const gpd = parseFloat(document.getElementById('usage-gpd').value) || 0;
+  const g = parseFloat(document.getElementById('usage-grams').value)||0;
+  const gpd = parseFloat(document.getElementById('usage-gpd').value)||0;
   const result = document.getElementById('usage-result');
-
-  if (!g || !gpd) { result.textContent = 'Enter values above to calculate'; return; }
-
-  const days = g / gpd;
-  const weeks = days / 7;
-  const months = days / 30;
-
-  result.innerHTML = `
-    <div>📅 <strong style="color:var(--green)">${days.toFixed(1)} days</strong></div>
-    <div>📅 ${weeks.toFixed(1)} weeks</div>
-    <div>📅 ${months.toFixed(2)} months</div>
-    <hr style="border-color:var(--border);margin:8px 0;">
-    <div style="font-size:0.75rem;color:var(--text-muted);">At ${gpd}g/day with ${g}g total</div>
-  `;
+  if (!g||!gpd) { result.textContent='Enter values above to calculate'; return; }
+  const days = g/gpd;
+  result.innerHTML = `<div>📅 <strong style="color:var(--green)">${days.toFixed(1)} days</strong></div><div>${(days/7).toFixed(1)} weeks / ${(days/30).toFixed(2)} months</div><div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">At ${gpd}g/day with ${g}g total</div>`;
 }
 
 function calcTHC() {
-  const g = parseFloat(document.getElementById('thc-amount').value) || 0;
-  const pct = parseFloat(document.getElementById('thc-pct').value) || 0;
+  const g = parseFloat(document.getElementById('thc-amount').value)||0;
+  const pct = parseFloat(document.getElementById('thc-pct').value)||0;
   const result = document.getElementById('thc-result');
-
-  if (!g || !pct) { result.textContent = 'Enter values above to estimate'; return; }
-
-  const totalMg = g * 1000 * (pct / 100);
-  const absorbed = totalMg * 0.30; // ~30% bioavailability smoked
-
-  result.innerHTML = `
-    <div>Total THC: <strong style="color:var(--text)">${totalMg.toFixed(0)} mg</strong></div>
-    <div>Est. absorbed (~30%): <strong style="color:var(--green)">${absorbed.toFixed(0)} mg</strong></div>
-    <hr style="border-color:var(--border);margin:8px 0;">
-    <div style="font-size:0.72rem;color:var(--text-muted);">Beginner: 2-5mg active | Moderate: 5-15mg | High: 15mg+</div>
-  `;
+  if (!g||!pct) { result.textContent='Enter values above to estimate'; return; }
+  const total = g*1000*(pct/100), absorbed = total*0.30;
+  result.innerHTML = `<div>Total THC: <strong style="color:var(--text)">${total.toFixed(0)}mg</strong></div><div>Est. absorbed (~30%): <strong style="color:var(--green)">${absorbed.toFixed(0)}mg</strong></div><div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px">Beginner: 2-5mg | Moderate: 5-15mg | High: 15mg+</div>`;
 }
-
-
 
 // =====================
 // SESSION NOTES
 // =====================
-let sessionNotes = load('cannabis_session_notes', {});
-// sessionNotes = { strainId: [ { id, date, text, rating, timestamp } ] }
-
 function toggleAddNote(strainId) {
-  const form = document.getElementById('note-add-form-' + strainId);
-  if (!form) return;
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  const form = document.getElementById('note-add-form-'+strainId);
+  if (form) form.style.display = form.style.display==='none' ? 'block' : 'none';
 }
 
 function saveNote(strainId) {
-  const textEl = document.getElementById('note-text-' + strainId);
-  const ratingEl = document.getElementById('note-rating-' + strainId);
+  const textEl = document.getElementById('note-text-'+strainId);
+  const ratingEl = document.getElementById('note-rating-'+strainId);
   const text = textEl ? textEl.value.trim() : '';
   if (!text) { alert('Write something first!'); return; }
-
-  const note = {
-    id: 'n_' + Date.now(),
-    date: new Date().toISOString().split('T')[0],
-    timestamp: Date.now(),
-    text,
-    rating: ratingEl ? parseFloat(ratingEl.value) || 0 : 0,
-  };
-
-  if (!sessionNotes[strainId]) sessionNotes[strainId] = [];
-  sessionNotes[strainId].unshift(note);
+  const editId = textEl.dataset.editId;
+  if (editId) {
+    const notes = sessionNotes[strainId]||[];
+    const idx = notes.findIndex(n => n.id===editId);
+    if (idx!==-1) { notes[idx].text=text; notes[idx].rating=ratingEl?parseFloat(ratingEl.value)||0:0; notes[idx].edited=true; }
+    delete textEl.dataset.editId;
+  } else {
+    if (!sessionNotes[strainId]) sessionNotes[strainId]=[];
+    sessionNotes[strainId].unshift({ id:'n_'+Date.now(), date:new Date().toISOString().split('T')[0], timestamp:Date.now(), text, rating:ratingEl?parseFloat(ratingEl.value)||0:0 });
+  }
   save('cannabis_session_notes', sessionNotes);
-
-  // Reset form
-  if (textEl) textEl.value = '';
-  if (ratingEl) ratingEl.value = '';
-  const form = document.getElementById('note-add-form-' + strainId);
-  if (form) form.style.display = 'none';
-
+  if (textEl) textEl.value='';
+  if (ratingEl) ratingEl.value='';
+  const form = document.getElementById('note-add-form-'+strainId);
+  if (form) form.style.display='none';
   renderNotesForStrain(strainId);
+}
+
+function editNote(strainId, noteId) {
+  const note = (sessionNotes[strainId]||[]).find(n=>n.id===noteId);
+  if (!note) return;
+  const textEl = document.getElementById('note-text-'+strainId);
+  const ratingEl = document.getElementById('note-rating-'+strainId);
+  const form = document.getElementById('note-add-form-'+strainId);
+  if (textEl) { textEl.value=note.text; textEl.dataset.editId=noteId; }
+  if (ratingEl) ratingEl.value = note.rating||'';
+  if (form) form.style.display='block';
+  textEl?.focus();
 }
 
 function deleteNote(strainId, noteId) {
   if (!sessionNotes[strainId]) return;
-  sessionNotes[strainId] = sessionNotes[strainId].filter(n => n.id !== noteId);
+  sessionNotes[strainId] = sessionNotes[strainId].filter(n=>n.id!==noteId);
   save('cannabis_session_notes', sessionNotes);
   renderNotesForStrain(strainId);
 }
 
 function renderNotesForStrain(strainId) {
-  const container = document.getElementById('notes-list-' + strainId);
+  const container = document.getElementById('notes-list-'+strainId);
   if (!container) return;
-  const notes = sessionNotes[strainId] || [];
+  const notes = sessionNotes[strainId]||[];
   if (!notes.length) {
-    container.innerHTML = '<div style="font-size:0.75rem;color:var(--text-muted);font-style:italic;padding:4px 0;">No notes yet. Add your first session note!</div>';
+    container.innerHTML = '<div style="font-size:0.75rem;color:var(--text-muted);font-style:italic;padding:4px 0">No notes yet. Add your first session note!</div>';
     return;
   }
   container.innerHTML = notes.map(n => {
-    const stars = n.rating ? (' · ' + '★'.repeat(Math.floor(n.rating)) + (n.rating % 1 >= 0.5 ? '½' : '') + '☆'.repeat(5 - Math.ceil(n.rating))) : '';
+    const stars = n.rating ? (' · '+'★'.repeat(Math.floor(n.rating))+(n.rating%1>=0.5?'½':'')+'☆'.repeat(5-Math.ceil(n.rating))) : '';
     return `<div class="session-note-item">
       <div class="note-meta">
-        <span>${n.date}${stars ? '<span style="color:var(--gold);">' + stars + '</span>' : ''}</span>
-        <span class="note-del" onclick="deleteNote('${strainId}','${n.id}')">✕</span>
+        <span>${n.date}${stars ? `<span style="color:var(--gold)">${stars}</span>` : ''}${n.edited ? ' <span style="font-size:0.58rem;opacity:0.5">(edited)</span>' : ''}</span>
+        <div style="display:flex;gap:4px">
+          <span style="cursor:pointer;opacity:0.5;font-size:0.7rem;padding:2px 4px;border-radius:4px" onclick="editNote('${strainId}','${n.id}')" title="Edit">✏</span>
+          <span class="note-del" onclick="deleteNote('${strainId}','${n.id}')">✕</span>
+        </div>
       </div>
       <div>${n.text}</div>
     </div>`;
   }).join('');
 }
 
-// Render notes for all visible strain cards
-function renderAllNotes() {
-  strains.forEach(s => renderNotesForStrain(s.id));
-}
+function renderAllNotes() { strains.forEach(s => renderNotesForStrain(s.id)); }
 
 // =====================
 // LINEAGE TREE
 // =====================
-
-// Parse lineage string into a tree structure
-// Format: "Parent A × Parent B" or deeper "Child (P1 × P2) × (P3 × P4)"
 function parseLineageTree(strain) {
-  // Build a nested tree from what we know
-  // For known strains we'll provide deep lineage
-  const deepLineages = {
-    'Banana Punch': {
-      name: 'Banana Punch',
-      type: strain.type,
-      children: [
-        {
-          name: 'Banana OG',
-          type: 'hybrid',
-          children: [
-            { name: 'OG Kush', type: 'hybrid', children: [
-              { name: 'Chemdawg', type: 'hybrid', children: [] },
-              { name: 'Lemon Thai × Hindu Kush', type: 'hybrid', children: [] },
-            ]},
-            { name: 'Banana Kush', type: 'indica', children: [] },
-          ]
-        },
-        {
-          name: 'Purple Punch',
-          type: 'indica',
-          children: [
-            { name: 'Granddaddy Purple', type: 'indica', children: [
-              { name: 'Purple Urkle', type: 'indica', children: [] },
-              { name: 'Big Bud', type: 'indica', children: [] },
-            ]},
-            { name: 'Larry OG', type: 'hybrid', children: [] },
-          ]
-        }
-      ]
-    },
-    'Blue Dream': {
-      name: 'Blue Dream',
-      type: strain.type,
-      children: [
-        { name: 'Blueberry', type: 'indica', children: [
-          { name: 'Purple Thai', type: 'sativa', children: [] },
-          { name: 'Afghani', type: 'indica', children: [] },
+  const DL = {
+    'Blue Dream': { name:'Blue Dream', type:strain.type, children:[
+      { name:'Blueberry', type:'indica', children:[{ name:'Purple Thai', type:'sativa', children:[] },{ name:'Afghani', type:'indica', children:[] }]},
+      { name:'Haze', type:'sativa', children:[{ name:'Colombian', type:'sativa', children:[] },{ name:'Mexican × Thai', type:'sativa', children:[] }]},
+    ]},
+    'Gorilla Glue #4': { name:'Gorilla Glue #4', type:strain.type, children:[
+      { name:"Chem's Sister", type:'hybrid', children:[{ name:'Chemdawg', type:'hybrid', children:[] }]},
+      { name:'Sour Dubb', type:'hybrid', children:[] },
+      { name:'Chocolate Diesel', type:'hybrid', children:[] },
+    ]},
+    'Sour Diesel': { name:'Sour Diesel', type:strain.type, children:[
+      { name:'Chemdawg', type:'hybrid', children:[{ name:'Thai × Nepalese', type:'sativa', children:[] }]},
+      { name:'Super Skunk', type:'indica', children:[{ name:'Skunk #1', type:'hybrid', children:[] },{ name:'Afghani', type:'indica', children:[] }]},
+    ]},
+    'Banana Punch': { name:'Banana Punch', type:strain.type, children:[
+      { name:'Banana OG', type:'hybrid', children:[
+        { name:'OG Kush', type:'hybrid', children:[{ name:'Chemdawg', type:'hybrid', children:[] },{ name:'Lemon Thai × Hindu Kush', type:'hybrid', children:[] }]},
+        { name:'Banana Kush', type:'indica', children:[] },
+      ]},
+      { name:'Purple Punch', type:'indica', children:[
+        { name:'Granddaddy Purple', type:'indica', children:[{ name:'Purple Urkle', type:'indica', children:[] },{ name:'Big Bud', type:'indica', children:[] }]},
+        { name:'Larry OG', type:'hybrid', children:[] },
+      ]},
+    ]},
+    'Blockberry': { name:'Blockberry', type:strain.type, children:[
+      { name:'Black Cherry Punch', type:'indica', children:[
+        { name:'Purple Punch', type:'indica', children:[
+          { name:'Granddaddy Purple', type:'indica', children:[{ name:'Purple Urkle', type:'indica', children:[] },{ name:'Big Bud', type:'indica', children:[] }]},
+          { name:'Larry OG', type:'hybrid', children:[] },
         ]},
-        { name: 'Haze', type: 'sativa', children: [
-          { name: 'Colombian', type: 'sativa', children: [] },
-          { name: 'Mexican × Thai', type: 'sativa', children: [] },
-        ]},
-      ]
-    },
-    'Gorilla Glue #4': {
-      name: 'Gorilla Glue #4',
-      type: strain.type,
-      children: [
-        { name: "Chem's Sister", type: 'hybrid', children: [
-          { name: 'Chemdawg', type: 'hybrid', children: [] },
-        ]},
-        { name: 'Sour Dubb', type: 'hybrid', children: [] },
-        { name: 'Chocolate Diesel', type: 'hybrid', children: [] },
-      ]
-    },
-    'Sour Diesel': {
-      name: 'Sour Diesel',
-      type: strain.type,
-      children: [
-        { name: 'Chemdawg', type: 'hybrid', children: [
-          { name: 'Thai × Nepalese', type: 'sativa', children: [] },
-        ]},
-        { name: 'Super Skunk', type: 'indica', children: [
-          { name: 'Skunk #1', type: 'hybrid', children: [] },
-          { name: 'Afghani', type: 'indica', children: [] },
-        ]},
-      ]
-    },
-    'Blockberry': {
-      name: 'Blockberry',
-      type: strain.type,
-      children: [
-        {
-          name: 'Black Cherry Punch',
-          type: 'indica',
-          children: [
-            { name: 'Purple Punch', type: 'indica', children: [
-              { name: 'Granddaddy Purple', type: 'indica', children: [
-                { name: 'Purple Urkle', type: 'indica', children: [] },
-                { name: 'Big Bud', type: 'indica', children: [] },
-              ]},
-              { name: 'Larry OG', type: 'hybrid', children: [] },
-            ]},
-            { name: 'Black Cherry Pie', type: 'indica', children: [
-              { name: 'Cherry Pie', type: 'hybrid', children: [] },
-              { name: 'Blackberry Kush', type: 'indica', children: [] },
-            ]},
-          ]
-        },
-        {
-          name: 'Tropicana Cookies',
-          type: 'sativa',
-          children: [
-            { name: 'GSC (Girl Scout Cookies)', type: 'hybrid', children: [
-              { name: 'OG Kush', type: 'hybrid', children: [] },
-              { name: 'Durban Poison', type: 'sativa', children: [] },
-            ]},
-            { name: 'Tangie', type: 'sativa', children: [
-              { name: 'California Orange', type: 'hybrid', children: [] },
-              { name: 'Skunk #1', type: 'hybrid', children: [] },
-            ]},
-          ]
-        },
-      ]
-    },
-    'Block Party': {
-      name: 'Block Party',
-      type: strain.type,
-      children: [
-        {
-          name: 'Super Sherb',
-          type: 'hybrid',
-          children: [
-            { name: 'Sunset Sherbet', type: 'indica', children: [
-              { name: 'GSC (Girl Scout Cookies)', type: 'hybrid', children: [] },
-              { name: 'Pink Panties', type: 'indica', children: [] },
-            ]},
-            { name: 'Super Skunk', type: 'indica', children: [
-              { name: 'Skunk #1', type: 'hybrid', children: [] },
-              { name: 'Afghani', type: 'indica', children: [] },
-            ]},
-          ]
-        },
-        {
-          name: 'Blockberry',
-          type: 'hybrid',
-          children: [
-            { name: 'Black Cherry Punch', type: 'indica', children: [
-              { name: 'Purple Punch', type: 'indica', children: [] },
-              { name: 'Black Cherry Pie', type: 'indica', children: [] },
-            ]},
-            { name: 'Tropicana Cookies', type: 'sativa', children: [
-              { name: 'GSC (Girl Scout Cookies)', type: 'hybrid', children: [] },
-              { name: 'Tangie', type: 'sativa', children: [] },
-            ]},
-          ]
-        },
-      ]
-    }
+        { name:'Black Cherry Pie', type:'indica', children:[{ name:'Cherry Pie', type:'hybrid', children:[] },{ name:'Blackberry Kush', type:'indica', children:[] }]},
+      ]},
+      { name:'Tropicana Cookies', type:'sativa', children:[
+        { name:'GSC', type:'hybrid', children:[{ name:'OG Kush', type:'hybrid', children:[] },{ name:'Durban Poison', type:'sativa', children:[] }]},
+        { name:'Tangie', type:'sativa', children:[{ name:'California Orange', type:'hybrid', children:[] },{ name:'Skunk #1', type:'hybrid', children:[] }]},
+      ]},
+    ]},
+    'Block Party': { name:'Block Party', type:strain.type, children:[
+      { name:'Super Sherb', type:'hybrid', children:[
+        { name:'Sunset Sherbet', type:'indica', children:[{ name:'GSC', type:'hybrid', children:[] },{ name:'Pink Panties', type:'indica', children:[] }]},
+        { name:'Super Skunk', type:'indica', children:[{ name:'Skunk #1', type:'hybrid', children:[] },{ name:'Afghani', type:'indica', children:[] }]},
+      ]},
+      { name:'Blockberry', type:'hybrid', children:[
+        { name:'Black Cherry Punch', type:'indica', children:[{ name:'Purple Punch', type:'indica', children:[] },{ name:'Black Cherry Pie', type:'indica', children:[] }]},
+        { name:'Tropicana Cookies', type:'sativa', children:[{ name:'GSC', type:'hybrid', children:[] },{ name:'Tangie', type:'sativa', children:[] }]},
+      ]},
+    ]},
   };
-
-  if (deepLineages[strain.name]) return deepLineages[strain.name];
-
-  // Generic parse from lineage string
-  const lineageStr = strain.lineage || '';
-  if (!lineageStr) return { name: strain.name, type: strain.type, children: [] };
-
-  const parts = lineageStr.split('×').map(p => p.trim()).filter(Boolean);
-  return {
-    name: strain.name,
-    type: strain.type,
-    children: parts.map(p => ({ name: p, type: 'hybrid', children: [] }))
-  };
+  if (DL[strain.name]) return DL[strain.name];
+  const parts = (strain.lineage||'').split('×').map(p=>p.trim()).filter(Boolean);
+  return { name:strain.name, type:strain.type, children:parts.map(p=>({ name:p, type:'hybrid', children:[] })) };
 }
 
-function typeColor(type) {
-  const map = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
-  return map[type] || '#4ade80';
-}
+function typeColor(t) { return { indica:'#8b5cf6', sativa:'#ef4444', hybrid:'#22c55e' }[t]||'#4ade80'; }
 
 function buildLineageSVG(tree) {
-  // Layout tree with proper spacing
-  const NODE_W = 140;
-  const NODE_H = 44;
-  const V_GAP = 70;
-  const H_GAP = 16;
-
-  // Assign positions level by level
-  let nodes = [];
-  let edges = [];
-
-  function assignPositions(node, depth, index, parentX, parentY) {
-    // Count leaves to determine width
-    function countLeaves(n) {
-      if (!n.children || !n.children.length) return 1;
-      return n.children.reduce((s, c) => s + countLeaves(c), 0);
-    }
-    const leaves = countLeaves(node);
-    const totalWidth = leaves * (NODE_W + H_GAP) - H_GAP;
-    
-    return totalWidth;
-  }
-
-  // Simpler: compute x positions bottom-up
-  let nodeList = [];
-  let edgeList = [];
-  let depthMap = {};
-
+  const NW=140, NH=44, VG=70, HG=16;
+  const nodes=[], edges=[];
   function layout(node, depth) {
-    if (!depthMap[depth]) depthMap[depth] = [];
-    const nodeObj = { ...node, depth, id: nodeList.length, children_ids: [] };
-    const myIdx = nodeList.length;
-    nodeList.push(nodeObj);
-    depthMap[depth].push(myIdx);
-
-    (node.children || []).forEach(child => {
-      const childIdx = layout(child, depth + 1);
-      nodeObj.children_ids.push(childIdx);
-      edgeList.push({ from: myIdx, to: childIdx });
-    });
-
+    const obj = {...node, depth, id:nodes.length, cids:[]};
+    const myIdx = nodes.length;
+    nodes.push(obj);
+    (node.children||[]).forEach(c => { const ci=layout(c,depth+1); obj.cids.push(ci); edges.push({f:myIdx,t:ci}); });
     return myIdx;
   }
-
-  layout(tree, 0);
-
-  // Position: assign x based on subtree widths, top-down
-  const maxDepth = Math.max(...nodeList.map(n => n.depth));
-
-  function subtreeWidth(nodeIdx) {
-    const node = nodeList[nodeIdx];
-    if (!node.children_ids.length) return NODE_W;
-    const childWidths = node.children_ids.map(subtreeWidth);
-    return childWidths.reduce((s, w) => s + w + H_GAP, 0) - H_GAP;
-  }
-
-  function assignX(nodeIdx, left) {
-    const node = nodeList[nodeIdx];
-    const w = subtreeWidth(nodeIdx);
-    node.x = left + (w - NODE_W) / 2;
-    let childLeft = left;
-    (node.children_ids || []).forEach(cid => {
-      const cw = subtreeWidth(cid);
-      assignX(cid, childLeft);
-      childLeft += cw + H_GAP;
-    });
-  }
-
-  assignX(0, 0);
-
-  const SVG_PADDING = 30;
-  nodeList.forEach(n => {
-    n.y = n.depth * (NODE_H + V_GAP) + SVG_PADDING;
-    n.cx = n.x + SVG_PADDING;
+  layout(tree,0);
+  function sw(i) { const n=nodes[i]; return n.cids.length ? n.cids.reduce((s,c)=>s+sw(c)+HG,0)-HG : NW; }
+  function ax(i,left) { const n=nodes[i],w=sw(i); n.x=left+(w-NW)/2; let cl=left; n.cids.forEach(c=>{ax(c,cl);cl+=sw(c)+HG;}); }
+  ax(0,0);
+  const PAD=30;
+  nodes.forEach(n=>{ n.y=n.depth*(NH+VG)+PAD; n.cx=n.x+PAD; });
+  const W=sw(0)+PAD*2, H=(Math.max(...nodes.map(n=>n.depth))+1)*(NH+VG)+PAD*2;
+  const parts=[];
+  edges.forEach(e=>{
+    const f=nodes[e.f],t=nodes[e.t];
+    const x1=f.cx+NW/2,y1=f.y+NH,x2=t.cx+NW/2,y2=t.y,my=(y1+y2)/2;
+    parts.push(`<path d="M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}" fill="none" stroke="rgba(74,222,128,0.25)" stroke-width="1.5" stroke-dasharray="${e.f===0?'none':'4,3'}"/>`);
   });
-
-  const totalWidth = subtreeWidth(0) + SVG_PADDING * 2;
-  const totalHeight = (maxDepth + 1) * (NODE_H + V_GAP) + SVG_PADDING * 2;
-
-  // Build SVG
-  let svgParts = [];
-
-  // Edges first
-  edgeList.forEach(e => {
-    const from = nodeList[e.from];
-    const to = nodeList[e.to];
-    const x1 = from.cx + NODE_W / 2;
-    const y1 = from.y + NODE_H;
-    const x2 = to.cx + NODE_W / 2;
-    const y2 = to.y;
-    const midY = (y1 + y2) / 2;
-    svgParts.push(
-      `<path d="M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}" fill="none" stroke="rgba(74,222,128,0.25)" stroke-width="1.5" stroke-dasharray="${e.from === 0 ? 'none' : '4,3'}"/>`
-    );
+  nodes.forEach(n=>{
+    const root=n.depth===0, c=typeColor(n.type);
+    const dn=n.name.length>18?n.name.slice(0,16)+'…':n.name;
+    const tl=n.type?n.type[0].toUpperCase()+n.type.slice(1):'';
+    parts.push(`<g opacity="${Math.max(0.5,1-n.depth*0.1)}"><rect x="${n.cx}" y="${n.y}" width="${NW}" height="${NH}" rx="8" fill="${root?'#4ade80':'#1c281c'}" stroke="${c}" stroke-width="${root?2:1.5}"/><text x="${n.cx+NW/2}" y="${n.y+16}" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="13" fill="${root?'#0a0f0a':'#e8f5e9'}">${dn}</text><text x="${n.cx+NW/2}" y="${n.y+31}" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="${c}" opacity="0.8">${tl}</text></g>`);
   });
-
-  // Nodes
-  nodeList.forEach(n => {
-    const isRoot = n.depth === 0;
-    const c = typeColor(n.type);
-    const rx = n.cx;
-    const ry = n.y;
-    const textColor = isRoot ? '#0a0f0a' : '#e8f5e9';
-    const fill = isRoot ? '#4ade80' : '#1c281c';
-    const stroke = isRoot ? '#4ade80' : c;
-    const sw = isRoot ? 2 : 1.5;
-    const opacity = isRoot ? 1 : (1 - n.depth * 0.1);
-
-    // Truncate name if too long
-    const displayName = n.name.length > 18 ? n.name.substring(0, 16) + '…' : n.name;
-    const typeLabel = n.type ? n.type.charAt(0).toUpperCase() + n.type.slice(1) : '';
-
-    svgParts.push(`
-      <g class="lineage-node${isRoot ? ' root' : ''}" opacity="${opacity}">
-        <rect x="${rx}" y="${ry}" width="${NODE_W}" height="${NODE_H}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>
-        <text x="${rx + NODE_W/2}" y="${ry + 16}" text-anchor="middle" font-family="'Bebas Neue', sans-serif" font-size="13" letter-spacing="0.5" fill="${textColor}">${displayName}</text>
-        <text x="${rx + NODE_W/2}" y="${ry + 31}" text-anchor="middle" font-family="'DM Mono', monospace" font-size="9" letter-spacing="0.5" fill="${c}" opacity="0.8">${typeLabel}</text>
-      </g>
-    `);
-  });
-
-  return `<svg viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:400px;overflow:visible;">${svgParts.join('')}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:400px;overflow:visible">${parts.join('')}</svg>`;
 }
 
 function openLineageModal(strainId) {
-  const s = strains.find(s => s.id === strainId);
+  const s = strains.find(s=>s.id===strainId);
   if (!s) return;
-
-  document.getElementById('lineage-modal-title').textContent = s.name + ' — Lineage Tree';
-
-  const tree = parseLineageTree(s);
-  const svg = buildLineageSVG(tree);
-  document.getElementById('lineage-svg-container').innerHTML = svg;
-
-  // Legend
-  const types = ['indica','sativa','hybrid'];
-  const typeColors = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
-  document.getElementById('lineage-legend').innerHTML = types.map(t =>
-    `<div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim);">
-      <div style="width:10px;height:10px;border-radius:3px;background:${typeColors[t]};opacity:0.8;"></div>${t}
-    </div>`
-  ).join('') + `<div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim);">
-    <div style="width:10px;height:10px;border-radius:3px;background:#4ade80;"></div>subject strain
-  </div>`;
-
+  document.getElementById('lineage-modal-title').textContent = s.name+' — Lineage Tree';
+  document.getElementById('lineage-svg-container').innerHTML = buildLineageSVG(parseLineageTree(s));
+  const tColors = { indica:'#8b5cf6', sativa:'#ef4444', hybrid:'#22c55e' };
+  document.getElementById('lineage-legend').innerHTML =
+    ['indica','sativa','hybrid'].map(t =>
+      `<div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim)"><div style="width:10px;height:10px;border-radius:3px;background:${tColors[t]};opacity:0.8"></div>${t}</div>`
+    ).join('') +
+    `<div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim)"><div style="width:10px;height:10px;border-radius:3px;background:#4ade80"></div>subject strain</div>`;
   document.getElementById('lineage-modal').classList.add('open');
 }
 
-function closeLineageModal() {
-  document.getElementById('lineage-modal').classList.remove('open');
-}
-
-// Close lineage modal on overlay click
-// lineage-modal overlay click — attached after DOM ready (see INIT)
+function closeLineageModal() { document.getElementById('lineage-modal').classList.remove('open'); }
 
 // =====================
-// FAVORITES / LISTS
+// FAVORITES
 // =====================
-let favLists = load('cannabis_fav_lists', [
-  { id: 'fl_default', name: 'All-Time Faves', icon: '🌟', desc: 'My personal favourites', strainIds: [] },
-  { id: 'fl_topshelf', name: 'Top Shelf', icon: '👑', desc: 'Premium picks only', strainIds: [] },
-  { id: 'fl_chill', name: 'Chill & Relax', icon: '🛋️', desc: 'Evening wind-down strains', strainIds: [] },
-]);
-let activeListId = favLists.length ? favLists[0].id : null;
-let editingListId = null;
-let selectedListEmoji = '🌟';
-
-const EMOJI_OPTIONS = ['🌟','👑','🔥','💚','🌿','🍃','🛋️','🎯','⚡','🌈','🎵','🧘','🍀','🌙','☀️','💎','🏆','🎪','🧪','💫'];
-
-function renderFavorites() {
-  renderFavSidebar();
-  renderFavContent();
-}
+function renderFavorites() { renderFavSidebar(); renderFavContent(); }
 
 function renderFavSidebar() {
   const container = document.getElementById('fav-sidebar-lists');
   const countEl = document.getElementById('fav-list-count');
-  if (countEl) countEl.textContent = favLists.length + ' list' + (favLists.length !== 1 ? 's' : '');
-
+  if (countEl) countEl.textContent = favLists.length+' list'+(favLists.length!==1?'s':'');
   if (!container) return;
-  if (!favLists.length) {
-    container.innerHTML = '<div style="padding:1rem;font-size:0.8rem;color:var(--text-muted);text-align:center;">No lists yet</div>';
-    return;
-  }
-
+  if (!favLists.length) { container.innerHTML = '<div style="padding:1rem;font-size:0.8rem;color:var(--text-muted);text-align:center">No lists yet</div>'; return; }
   container.innerHTML = favLists.map(list => {
-    const count = (list.strainIds || []).length;
-    const isActive = list.id === activeListId;
-    return `<div class="list-item-row${isActive ? ' active' : ''}" onclick="setActiveList('${list.id}')">
-      <div class="list-item-icon" style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.15);">${list.icon || '📋'}</div>
+    const count = (list.strainIds||[]).length, isActive = list.id===activeListId;
+    return `<div class="list-item-row${isActive?' active':''}" onclick="setActiveList('${list.id}')">
+      <div class="list-item-icon" style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.15)">${list.icon||'📋'}</div>
       <div class="list-item-name">${list.name}</div>
       <div class="list-item-count">${count}</div>
       <div class="list-item-actions">
@@ -2954,353 +2692,171 @@ function renderFavSidebar() {
   }).join('');
 }
 
-function setActiveList(id) {
-  activeListId = id;
-  renderFavSidebar();
-  renderFavContent();
-}
+function setActiveList(id) { activeListId=id; renderFavSidebar(); renderFavContent(); }
 
 function renderFavContent() {
-  const titleEl = document.getElementById('fav-active-title');
-  const iconEl = document.getElementById('fav-active-icon');
-  const bodyEl = document.getElementById('fav-content-body');
-  const editBtn = document.getElementById('fav-edit-btn');
-  const delBtn = document.getElementById('fav-del-btn');
-
-  if (!activeListId || !favLists.length) {
-    if (titleEl) titleEl.textContent = 'Select a List';
-    if (iconEl) iconEl.textContent = '📋';
-    if (bodyEl) bodyEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No List Selected</div><div class="empty-sub">Create or select a list from the sidebar</div></div>';
-    if (editBtn) editBtn.style.display = 'none';
-    if (delBtn) delBtn.style.display = 'none';
+  const titleEl=document.getElementById('fav-active-title'), iconEl=document.getElementById('fav-active-icon');
+  const bodyEl=document.getElementById('fav-content-body'), editBtn=document.getElementById('fav-edit-btn'), delBtn=document.getElementById('fav-del-btn');
+  if (!activeListId||!favLists.length) {
+    if (titleEl) titleEl.textContent='Select a List'; if (iconEl) iconEl.textContent='📋';
+    if (bodyEl) bodyEl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No List Selected</div></div>';
+    if (editBtn) editBtn.style.display='none'; if (delBtn) delBtn.style.display='none';
     return;
   }
-
-  const list = favLists.find(l => l.id === activeListId);
+  const list = favLists.find(l=>l.id===activeListId);
   if (!list) return;
-
-  if (titleEl) titleEl.textContent = list.name;
-  if (iconEl) iconEl.textContent = list.icon || '📋';
-  if (editBtn) editBtn.style.display = 'flex';
-  if (delBtn) delBtn.style.display = 'flex';
-
-  const listStrains = (list.strainIds || []).map(id => strains.find(s => s.id === id)).filter(Boolean);
-
+  if (titleEl) titleEl.textContent=list.name; if (iconEl) iconEl.textContent=list.icon||'📋';
+  if (editBtn) editBtn.style.display='flex'; if (delBtn) delBtn.style.display='flex';
   if (!bodyEl) return;
-
-  const descHtml = list.desc ? `<div style="padding:0 1.5rem 0.75rem;font-size:0.82rem;color:var(--text-muted);font-style:italic;">${list.desc}</div>` : '';
-
+  const listStrains = (list.strainIds||[]).map(id=>strains.find(s=>s.id===id)).filter(Boolean);
+  const tc = { indica:'#8b5cf6', sativa:'#ef4444', hybrid:'#22c55e' };
+  const descHtml = list.desc ? `<div style="padding:0 1.5rem 0.75rem;font-size:0.82rem;color:var(--text-muted);font-style:italic">${list.desc}</div>` : '';
   if (!listStrains.length) {
-    bodyEl.innerHTML = descHtml + `<div class="empty-state">
-      <div class="empty-icon">${list.icon || '📋'}</div>
-      <div class="empty-title">Empty List</div>
-      <div class="empty-sub">Add strains using the "♥ List" button on any strain card</div>
-    </div>`;
+    bodyEl.innerHTML = descHtml+`<div class="empty-state"><div class="empty-icon">${list.icon||'📋'}</div><div class="empty-title">Empty List</div><div class="empty-sub">Add strains using the "+ List" button on any strain card</div></div>`;
     return;
   }
-
-  bodyEl.innerHTML = descHtml + `<div class="fav-strains-grid">${listStrains.map(s => {
-    const typeColors = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
-    const tc = typeColors[s.type] || '#22c55e';
-    const stars = s.rating ? '★'.repeat(Math.floor(s.rating)) + (s.rating%1>=0.5?'½':'') : '';
-    const noteCount = (sessionNotes[s.id] || []).length;
+  bodyEl.innerHTML = descHtml+`<div class="fav-strains-grid">${listStrains.map(s => {
+    const stars = s.rating ? '★'.repeat(Math.floor(s.rating))+(s.rating%1>=0.5?'½':'') : '';
+    const nc = (sessionNotes[s.id]||[]).length;
     return `<div class="fav-strain-card" onclick="showTab('strains')">
       <button class="fav-remove-btn" onclick="event.stopPropagation();removeFromList('${activeListId}','${s.id}')">✕</button>
-      <div style="font-size:1.6rem;margin-bottom:6px;">${list.icon || '📋'}</div>
+      <div style="font-size:1.6rem;margin-bottom:6px">${list.icon||'📋'}</div>
       <div class="fav-strain-name">${s.name}</div>
-      <div class="fav-strain-type" style="color:${tc};">${s.type}</div>
-      ${s.breeder ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:3px;">${s.breeder}</div>` : ''}
-      <div class="fav-strain-thc">${s.thc}% THC${s.cbd ? ' · ' + s.cbd + '% CBD' : ''}</div>
-      ${stars ? `<div style="color:var(--gold);font-size:0.78rem;margin-top:4px;">${stars}</div>` : ''}
-      ${noteCount ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:4px;">${noteCount} note${noteCount!==1?'s':''}</div>` : ''}
+      <div class="fav-strain-type" style="color:${tc[s.type]||'#22c55e'}">${s.type}</div>
+      ${s.breeder ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:3px">${s.breeder}</div>` : ''}
+      <div class="fav-strain-thc">${s.thc}% THC${s.cbd?' · '+s.cbd+'% CBD':''}</div>
+      ${stars ? `<div style="color:var(--gold);font-size:0.78rem;margin-top:4px">${stars}</div>` : ''}
+      ${nc ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:4px">${nc} note${nc!==1?'s':''}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
 
 function removeFromList(listId, strainId) {
-  const list = favLists.find(l => l.id === listId);
-  if (!list) return;
-  list.strainIds = list.strainIds.filter(id => id !== strainId);
+  const list = favLists.find(l=>l.id===listId);
+  if (list) list.strainIds = list.strainIds.filter(id=>id!==strainId);
   save('cannabis_fav_lists', favLists);
-  renderFavContent();
-  renderFavSidebar();
+  renderFavContent(); renderFavSidebar();
 }
 
 function addToList(listId, strainId) {
-  const list = favLists.find(l => l.id === listId);
-  if (!list) return;
-  if (!list.strainIds.includes(strainId)) list.strainIds.push(strainId);
+  const list = favLists.find(l=>l.id===listId);
+  if (list && !list.strainIds.includes(strainId)) list.strainIds.push(strainId);
   save('cannabis_fav_lists', favLists);
-  // Update fav sidebar if open
-  if (activeListId === listId) renderFavContent();
+  if (activeListId===listId) renderFavContent();
   renderFavSidebar();
 }
 
-function editActiveList() {
-  if (activeListId) openNewListModal(activeListId);
-}
-
-function deleteActiveList() {
-  if (activeListId) deleteList(activeListId);
-}
+function editActiveList() { if (activeListId) openNewListModal(activeListId); }
+function deleteActiveList() { if (activeListId) deleteList(activeListId); }
 
 function deleteList(id) {
-  if (!confirm('Delete this list? Strains will not be removed.')) return;
-  favLists = favLists.filter(l => l.id !== id);
-  if (activeListId === id) activeListId = favLists.length ? favLists[0].id : null;
+  if (!confirm('Delete this list?')) return;
+  favLists = favLists.filter(l=>l.id!==id);
+  if (activeListId===id) activeListId = favLists.length ? favLists[0].id : null;
   save('cannabis_fav_lists', favLists);
   renderFavorites();
 }
 
-// ATL dropdown (Add To List)
 function toggleAtlMenu(event, strainId) {
   event.stopPropagation();
-  // Close all other menus
-  document.querySelectorAll('.atl-menu.open').forEach(m => {
-    if (m.id !== 'atl-' + strainId) m.classList.remove('open');
-  });
-
-  const menu = document.getElementById('atl-' + strainId);
+  document.querySelectorAll('.atl-menu.open').forEach(m=>{ if (m.id!=='atl-'+strainId) m.classList.remove('open'); });
+  const menu = document.getElementById('atl-'+strainId);
   if (!menu) return;
-
-  const isOpen = menu.classList.contains('open');
-
-  if (!isOpen) {
-    // Populate menu
-    if (!favLists.length) {
-      menu.innerHTML = '<div class="atl-menu-item" onclick="openNewListModal()">+ Create First List</div>';
-    } else {
-      menu.innerHTML = favLists.map(list => {
+  if (menu.classList.contains('open')) { menu.classList.remove('open'); return; }
+  menu.innerHTML = favLists.length
+    ? favLists.map(list => {
         const inList = list.strainIds.includes(strainId);
-        return `<div class="atl-menu-item${inList ? ' already-in' : ''}" onclick="${inList ? '' : "addToList('" + list.id + "','" + strainId + "');closeAllAtlMenus();"}">
-          ${list.icon} ${list.name} ${inList ? '<span style="float:right;color:var(--green);">✓</span>' : ''}
-        </div>`;
-      }).join('') + '<div style="border-top:1px solid var(--border);margin:4px 0;"></div><div class="atl-menu-item" onclick="openNewListModal();closeAllAtlMenus();">+ New List</div>';
-    }
-    menu.classList.add('open');
-  } else {
-    menu.classList.remove('open');
-  }
+        return `<div class="atl-menu-item${inList?' already-in':''}" onclick="${inList?'':
+          `addToList('${list.id}','${strainId}');closeAllAtlMenus();`}">${list.icon} ${list.name}${inList?' <span style="float:right;color:var(--green)">✓</span>':''}</div>`;
+      }).join('') + '<div style="border-top:1px solid var(--border);margin:4px 0"></div><div class="atl-menu-item" onclick="openNewListModal();closeAllAtlMenus()">+ New List</div>'
+    : '<div class="atl-menu-item" onclick="openNewListModal()">+ Create First List</div>';
+  menu.classList.add('open');
 }
 
-function closeAllAtlMenus() {
-  document.querySelectorAll('.atl-menu.open').forEach(m => m.classList.remove('open'));
-}
+function closeAllAtlMenus() { document.querySelectorAll('.atl-menu.open').forEach(m=>m.classList.remove('open')); }
+document.addEventListener('click', closeAllAtlMenus);
 
-document.addEventListener('click', () => closeAllAtlMenus());
-
-// =====================
-// NEW LIST MODAL
-// =====================
-function openNewListModal(editId = null) {
-  editingListId = editId;
-  selectedListEmoji = '🌟';
-
-  const titleEl = document.getElementById('newlist-modal-title');
-  const nameEl = document.getElementById('nl-name');
-  const descEl = document.getElementById('nl-desc');
-
+function openNewListModal(editId=null) {
+  editingListId=editId; selectedListEmoji='🌟';
+  const nameEl=document.getElementById('nl-name'), descEl=document.getElementById('nl-desc');
+  const titleEl=document.getElementById('newlist-modal-title');
   if (editId) {
-    const list = favLists.find(l => l.id === editId);
-    if (list) {
-      if (titleEl) titleEl.textContent = 'Edit List';
-      if (nameEl) nameEl.value = list.name || '';
-      if (descEl) descEl.value = list.desc || '';
-      selectedListEmoji = list.icon || '🌟';
-    }
+    const list=favLists.find(l=>l.id===editId);
+    if (list) { if(titleEl)titleEl.textContent='Edit List'; if(nameEl)nameEl.value=list.name||''; if(descEl)descEl.value=list.desc||''; selectedListEmoji=list.icon||'🌟'; }
   } else {
-    if (titleEl) titleEl.textContent = 'New List';
-    if (nameEl) nameEl.value = '';
-    if (descEl) descEl.value = '';
-    selectedListEmoji = '🌟';
+    if(titleEl)titleEl.textContent='New List'; if(nameEl)nameEl.value=''; if(descEl)descEl.value=''; selectedListEmoji='🌟';
   }
-
-  // Render emoji picker
-  const picker = document.getElementById('nl-emoji-picker');
-  if (picker) {
-    picker.innerHTML = EMOJI_OPTIONS.map(e =>
-      `<div class="emoji-opt${e === selectedListEmoji ? ' selected' : ''}" onclick="selectEmoji('${e}', this)">${e}</div>`
-    ).join('');
-  }
-
+  const picker=document.getElementById('nl-emoji-picker');
+  if (picker) picker.innerHTML = EMOJI_OPTIONS.map(e => `<div class="emoji-opt${e===selectedListEmoji?' selected':''}" onclick="selectEmoji('${e}',this)">${e}</div>`).join('');
   document.getElementById('newlist-modal').classList.add('open');
 }
 
 function selectEmoji(emoji, el) {
-  selectedListEmoji = emoji;
-  document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
+  selectedListEmoji=emoji;
+  document.querySelectorAll('.emoji-opt').forEach(e=>e.classList.remove('selected'));
   el.classList.add('selected');
 }
 
-function closeNewListModal() {
-  document.getElementById('newlist-modal').classList.remove('open');
-}
+function closeNewListModal() { document.getElementById('newlist-modal').classList.remove('open'); }
 
 function saveList() {
-  const name = (document.getElementById('nl-name')?.value || '').trim();
+  const name=(document.getElementById('nl-name')?.value||'').trim();
   if (!name) { alert('List name is required'); return; }
-  const desc = (document.getElementById('nl-desc')?.value || '').trim();
-
+  const desc=(document.getElementById('nl-desc')?.value||'').trim();
   if (editingListId) {
-    const list = favLists.find(l => l.id === editingListId);
-    if (list) { list.name = name; list.icon = selectedListEmoji; list.desc = desc; }
+    const list=favLists.find(l=>l.id===editingListId);
+    if (list) { list.name=name; list.icon=selectedListEmoji; list.desc=desc; }
   } else {
-    const newList = { id: 'fl_' + Date.now(), name, icon: selectedListEmoji, desc, strainIds: [] };
-    favLists.push(newList);
-    activeListId = newList.id;
+    const nl={id:'fl_'+Date.now(), name, icon:selectedListEmoji, desc, strainIds:[]};
+    favLists.push(nl); activeListId=nl.id;
   }
-
   save('cannabis_fav_lists', favLists);
-  closeNewListModal();
-  renderFavorites();
-
-  // Switch to favorites tab
-  showTab('favorites');
+  closeNewListModal(); renderFavorites(); showTab('favorites');
 }
 
-// newlist-modal overlay click — attached after DOM ready (see INIT)
-
-
-
 // =====================
-// DRAG & RESIZE (Converter cards)
+// DRAG & RESIZE
 // =====================
-let freeformActive = false;
-
-const CARD_DEFAULTS = [
-  { left: 0,   top: 0,   w: 320, h: 320 },
-  { left: 340, top: 0,   w: 380, h: 320 },
-  { left: 0,   top: 340, w: 320, h: 280 },
-  { left: 340, top: 340, w: 380, h: 300 },
-];
-
 function toggleFreeform() {
-  freeformActive = !freeformActive;
-  const btn = document.getElementById('freeform-toggle-btn');
-  const grid = document.getElementById('converter-freeform');
-  if (!btn || !grid) return;
-
+  freeformActive=!freeformActive;
+  const btn=document.getElementById('freeform-toggle-btn'), grid=document.getElementById('converter-freeform');
+  if (!btn||!grid) return;
   if (freeformActive) {
-    btn.classList.add('active');
-    grid.classList.remove('converter-grid');
-    grid.classList.add('freeform-active');
-    const cards = grid.querySelectorAll('.converter-card');
-    cards.forEach((card, i) => {
-      const d = CARD_DEFAULTS[i] || { left: i*30, top: i*30, w: 320, h: 280 };
-      card.style.left = d.left + 'px';
-      card.style.top  = d.top  + 'px';
-      card.style.width  = d.w + 'px';
-      card.style.height = d.h + 'px';
+    btn.classList.add('active'); grid.classList.remove('converter-grid'); grid.classList.add('freeform-active');
+    grid.querySelectorAll('.converter-card').forEach((card,i) => {
+      const d=CARD_DEFAULTS[i]||{left:i*30,top:i*30,w:320,h:280};
+      card.style.cssText += `;left:${d.left}px;top:${d.top}px;width:${d.w}px;height:${d.h}px`;
       makeDraggable(card);
     });
-    // Update container height
     updateFreeformHeight(grid);
   } else {
-    btn.classList.remove('active');
-    grid.classList.add('converter-grid');
-    grid.classList.remove('freeform-active');
-    const cards = grid.querySelectorAll('.converter-card');
-    cards.forEach(card => {
-      card.style.position = '';
-      card.style.left = '';
-      card.style.top  = '';
-      card.style.width  = '';
-      card.style.height = '';
-      const handle = card.querySelector('.drag-handle');
-      if (handle) handle.remove();
+    btn.classList.remove('active'); grid.classList.add('converter-grid'); grid.classList.remove('freeform-active');
+    grid.querySelectorAll('.converter-card').forEach(card => {
+      card.style.position=''; card.style.left=''; card.style.top=''; card.style.width=''; card.style.height='';
+      card.querySelector('.drag-handle')?.remove();
     });
-    grid.style.height = '';
+    grid.style.height='';
   }
 }
 
 function updateFreeformHeight(grid) {
-  const cards = grid.querySelectorAll('.converter-card');
-  let maxBottom = 400;
-  cards.forEach(card => {
-    const b = parseInt(card.style.top || 0) + card.offsetHeight;
-    if (b > maxBottom) maxBottom = b;
-  });
-  grid.style.height = (maxBottom + 40) + 'px';
+  let max=400;
+  grid.querySelectorAll('.converter-card').forEach(c=>{ const b=parseInt(c.style.top||0)+c.offsetHeight; if(b>max)max=b; });
+  grid.style.height=(max+40)+'px';
 }
 
 function makeDraggable(card) {
-  // Remove existing handle
-  const existing = card.querySelector('.drag-handle');
-  if (existing) existing.remove();
-
-  // Add drag handle + resize hint
-  const handle = document.createElement('div');
-  handle.className = 'drag-handle';
-  handle.innerHTML = '<div class="drag-handle-dots"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
-  card.insertBefore(handle, card.firstChild);
-
-  const hint = document.createElement('div');
-  hint.className = 'resize-hint';
-  card.appendChild(hint);
-
-  let startX, startY, startLeft, startTop;
-  let isDragging = false;
-
-  handle.addEventListener('mousedown', e => {
-    e.preventDefault();
-    isDragging = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = parseInt(card.style.left) || 0;
-    startTop  = parseInt(card.style.top)  || 0;
-    card.classList.add('dragging');
-    card.style.zIndex = 100;
-
-    function onMove(e) {
-      if (!isDragging) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const newLeft = Math.max(0, startLeft + dx);
-      const newTop  = Math.max(0, startTop  + dy);
-      card.style.left = newLeft + 'px';
-      card.style.top  = newTop  + 'px';
-    }
-
-    function onUp() {
-      isDragging = false;
-      card.classList.remove('dragging');
-      card.style.zIndex = '';
-      updateFreeformHeight(card.parentElement);
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    }
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-
-  // Touch support
-  handle.addEventListener('touchstart', e => {
-    const touch = e.touches[0];
-    startX = touch.clientX;
-    startY = touch.clientY;
-    startLeft = parseInt(card.style.left) || 0;
-    startTop  = parseInt(card.style.top)  || 0;
-    card.classList.add('dragging');
-
-    function onTouchMove(e) {
-      const t = e.touches[0];
-      const dx = t.clientX - startX;
-      const dy = t.clientY - startY;
-      card.style.left = Math.max(0, startLeft + dx) + 'px';
-      card.style.top  = Math.max(0, startTop  + dy) + 'px';
-      e.preventDefault();
-    }
-
-    function onTouchEnd() {
-      card.classList.remove('dragging');
-      updateFreeformHeight(card.parentElement);
-      handle.removeEventListener('touchmove', onTouchMove);
-      handle.removeEventListener('touchend', onTouchEnd);
-    }
-
-    handle.addEventListener('touchmove', onTouchMove, { passive: false });
-    handle.addEventListener('touchend', onTouchEnd);
+  card.querySelector('.drag-handle')?.remove();
+  const h=document.createElement('div'); h.className='drag-handle';
+  h.innerHTML='<div class="drag-handle-dots"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
+  card.insertBefore(h,card.firstChild);
+  let sx,sy,sl,st,drag=false;
+  h.addEventListener('mousedown',e=>{
+    e.preventDefault(); drag=true; sx=e.clientX; sy=e.clientY; sl=parseInt(card.style.left)||0; st=parseInt(card.style.top)||0;
+    card.classList.add('dragging'); card.style.zIndex=100;
+    const mv=e=>{if(!drag)return;card.style.left=Math.max(0,sl+e.clientX-sx)+'px';card.style.top=Math.max(0,st+e.clientY-sy)+'px';};
+    const up=()=>{drag=false;card.classList.remove('dragging');card.style.zIndex='';updateFreeformHeight(card.parentElement);document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
   });
 }
 
@@ -3308,57 +2864,12 @@ function makeDraggable(card) {
 // INIT
 // =====================
 renderDashboard();
-// Pre-render notes after strains are rendered
 setTimeout(renderAllNotes, 100);
-
-// Safe DOM event bindings (elements rendered after script tag)
-(function attachModalOverlayListeners() {
-  const lineageMod = document.getElementById('lineage-modal');
-  if (lineageMod) lineageMod.addEventListener('click', function(e) { if (e.target === this) closeLineageModal(); });
-
-  const newlistMod = document.getElementById('newlist-modal');
-  if (newlistMod) newlistMod.addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
+(function() {
+  document.getElementById('lineage-modal')?.addEventListener('click', function(e){ if(e.target===this)closeLineageModal(); });
+  document.getElementById('newlist-modal')?.addEventListener('click', function(e){ if(e.target===this)closeNewListModal(); });
 })();
+
 </script>
-
-<!-- LINEAGE TREE MODAL -->
-<div class="lineage-modal-overlay" id="lineage-modal">
-  <div class="lineage-modal">
-    <div class="lineage-modal-header">
-      <span class="modal-title" id="lineage-modal-title">Lineage</span>
-      <button class="modal-close" onclick="closeLineageModal()">✕</button>
-    </div>
-    <div class="lineage-modal-body">
-      <div class="lineage-tree-wrap">
-        <div class="lineage-canvas-wrap" id="lineage-svg-container"></div>
-      </div>
-      <div id="lineage-legend" style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- NEW LIST MODAL -->
-<div class="newlist-modal" id="newlist-modal">
-  <div class="newlist-box">
-    <div class="newlist-title" id="newlist-modal-title">New List</div>
-    <div class="form-group" style="margin-bottom:0.75rem;">
-      <label>List Name *</label>
-      <input type="text" id="nl-name" placeholder="e.g. My All-Time Faves">
-    </div>
-    <div class="form-group">
-      <label>Icon</label>
-      <div class="emoji-picker" id="nl-emoji-picker"></div>
-    </div>
-    <div class="form-group">
-      <label>Description (optional)</label>
-      <input type="text" id="nl-desc" placeholder="e.g. Strains I'd buy again">
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="closeNewListModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveList()">Save List</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
