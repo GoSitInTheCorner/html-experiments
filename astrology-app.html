@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Astrology</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#080808; --dark:#141414; --mid:#242424; --muted:#4a4a4a;
+  --gray:#7a7a7a; --light:#c8c4be; --white:#eeeae4;
+  --gold:#c9a96e; --gdim:#7a6035; --amber:#e0b86a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{background:var(--black);overscroll-behavior:none;}
+body{font-family:'Jost',sans-serif;background:var(--black);color:var(--white);
+  min-height:100dvh;max-width:430px;margin:0 auto;overflow-x:hidden;}
+
+/* TOP BAR */
+.top-bar{display:flex;justify-content:space-between;align-items:center;
+  padding:18px 22px 12px;position:sticky;top:0;background:var(--black);
+  z-index:200;border-bottom:1px solid #181818;}
+.wordmark{font-size:10px;font-weight:300;letter-spacing:0.5em;color:var(--gray);text-transform:uppercase;}
+.top-date{font-size:10px;font-weight:300;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;}
+
+/* PAGES */
+.page{display:none;padding-bottom:90px;animation:fadeIn 0.3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* SECTIONS */
+.sec{padding:28px 22px;border-bottom:1px solid #161616;}
+.sec-lbl{font-size:9px;font-weight:300;letter-spacing:0.45em;color:var(--gdim);text-transform:uppercase;margin-bottom:14px;}
+
+/* HERO */
+.hero-eye{font-size:9px;letter-spacing:0.45em;color:var(--gdim);text-transform:uppercase;margin-bottom:10px;}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:50px;font-weight:300;line-height:1.05;margin-bottom:18px;}
+.hero-title em{font-style:italic;color:var(--gold);}
+.hero-body{font-size:14px;font-weight:300;line-height:1.85;color:#999;margin-bottom:26px;}
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.dd-lbl{font-size:9px;letter-spacing:0.35em;color:var(--muted);text-transform:uppercase;margin-bottom:9px;}
+.dd-items{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;color:var(--light);line-height:1.65;}
+
+/* LUMINARIES */
+.luminaries{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#181818;border:1px solid #1e1e1e;margin-bottom:22px;}
+.luminary{background:var(--black);padding:18px;text-align:center;}
+.lum-icon{font-size:24px;margin-bottom:7px;}
+.lum-lbl{font-size:9px;letter-spacing:0.35em;color:var(--muted);margin-bottom:5px;}
+.lum-sign{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300;}
+.lum-deg{font-size:10px;color:var(--gray);margin-top:1px;}
+
+/* MOON */
+.moon-row{display:flex;align-items:center;gap:18px;}
+.moon-vis{width:60px;height:60px;border-radius:50%;background:var(--dark);position:relative;overflow:hidden;flex-shrink:0;border:1px solid var(--mid);}
+.moon-vis canvas{position:absolute;top:0;left:0;}
+.moon-info h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;margin-bottom:4px;}
+.moon-info p{font-size:11px;color:var(--gray);line-height:1.6;}
+
+/* PLANET GRID */
+.planet-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.pcard{background:#0f0f0f;border:1px solid #1c1c1c;border-radius:1px;padding:13px 15px;transition:border-color .2s;}
+.pcard:hover{border-color:var(--gdim);}
+.p-sym{font-size:16px;margin-bottom:5px;color:var(--gold);}
+.p-name{font-size:8px;letter-spacing:0.32em;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+.p-sign{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;}
+.p-deg{font-size:10px;color:var(--gray);margin-top:1px;}
+.rx{color:var(--gold);font-size:9px;}
+
+/* ASPECTS */
+.asp-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #161616;}
+.asp-row:last-child{border:none;}
+.asp-pl{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--light);}
+.asp-type{font-size:8px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;}
+.asp-orb{font-size:11px;color:var(--gray);}
+
+/* EVENTS */
+.dh-banner{background:linear-gradient(135deg,#181000,#0c0800);border:1px solid #2e2000;border-radius:1px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.dh-banner::after{content:'馬';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:48px;opacity:0.07;}
+.dh-lbl{font-size:9px;letter-spacing:0.4em;color:var(--gdim);margin-bottom:5px;}
+.dh-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--amber);margin-bottom:5px;}
+.dh-desc{font-size:11px;color:#8a7050;line-height:1.65;}
+.ev-item{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid #161616;}
+.ev-item:last-child{border:none;}
+.ev-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);margin-top:7px;flex-shrink:0;}
+.ev-dot.dim{background:var(--muted);}
+.ev-title{font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:3px;}
+.ev-desc{font-size:11px;color:var(--gray);line-height:1.6;}
+.ev-date{font-size:10px;color:var(--gdim);letter-spacing:0.1em;margin-top:3px;}
+
+/* FORMS */
+.form-group{margin-bottom:18px;}
+.form-label{font-size:9px;letter-spacing:0.4em;color:var(--gdim);text-transform:uppercase;margin-bottom:8px;display:block;}
+.form-input{width:100%;background:var(--dark);border:1px solid var(--mid);color:var(--white);
+  padding:11px 14px;font-family:'Jost',sans-serif;font-size:13px;outline:none;appearance:none;border-radius:0;}
+.form-input:focus{border-color:var(--gold);}
+.form-input::placeholder{color:var(--muted);}
+.time-row{display:flex;gap:8px;}
+.tz-select{width:160px;background:var(--dark);border:1px solid var(--mid);color:var(--white);
+  padding:11px 10px;font-family:'Jost',sans-serif;font-size:11px;outline:none;appearance:none;cursor:pointer;flex-shrink:0;}
+.tz-select:focus{border-color:var(--gold);}
+
+/* BUTTONS */
+.btn-primary{width:100%;background:var(--white);color:var(--black);border:none;padding:13px;
+  font-family:'Jost',sans-serif;font-size:10px;font-weight:400;letter-spacing:0.35em;text-transform:uppercase;
+  cursor:pointer;transition:background .2s;margin-top:6px;}
+.btn-primary:hover{background:var(--gold);}
+.btn-primary:disabled{background:var(--muted);cursor:not-allowed;}
+.btn-sm{background:transparent;border:1px solid var(--mid);color:var(--light);padding:8px 14px;
+  font-family:'Jost',sans-serif;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s;}
+.btn-sm:hover{border-color:var(--gold);color:var(--gold);}
+
+/* API KEY NOTICE */
+.api-notice{background:#0d0d00;border:1px solid #2a2000;border-radius:1px;padding:18px;margin-bottom:20px;}
+.api-notice-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--amber);margin-bottom:8px;}
+.api-notice p{font-size:12px;color:#9a8060;line-height:1.7;margin-bottom:10px;}
+.api-notice a{color:var(--gold);text-decoration:none;}
+.api-notice a:hover{text-decoration:underline;}
+.api-key-status{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:0.1em;margin-top:8px;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);}
+.status-dot.active{background:#6dba6d;}
+.status-dot.error{background:#ba6d6d;}
+
+/* NATAL */
+.natal-big3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#1e1e1e;border:1px solid #1e1e1e;margin-bottom:20px;}
+.big3-item{background:var(--black);padding:14px 10px;text-align:center;}
+.b3-lbl{font-size:8px;letter-spacing:0.3em;color:var(--muted);margin-bottom:5px;}
+.b3-sign{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;}
+.b3-deg{font-size:10px;color:var(--gray);margin-top:1px;}
+.chart-svg-wrap{width:100%;border:1px solid #1a1a1a;border-radius:1px;overflow:hidden;background:#0a0a0a;margin:16px 0;}
+.chart-svg-wrap svg{width:100%;height:auto;display:block;}
+
+/* TRANSITS */
+.transit-row{padding:14px 0;border-bottom:1px solid #161616;display:flex;gap:14px;align-items:flex-start;}
+.transit-row:last-child{border:none;}
+.transit-icon{font-size:18px;color:var(--gold);flex-shrink:0;width:24px;text-align:center;margin-top:1px;}
+.transit-title{font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:3px;}
+.transit-desc{font-size:11px;color:var(--gray);line-height:1.6;}
+.transit-meta{font-size:10px;color:var(--gdim);letter-spacing:0.1em;margin-top:3px;}
+
+/* CYCLES */
+.cycle-item{padding:16px 0;border-bottom:1px solid #161616;}
+.cycle-item:last-child{border:none;}
+.cycle-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.cycle-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;}
+.cycle-phase{font-size:9px;letter-spacing:0.2em;color:var(--gold);text-transform:uppercase;}
+.cycle-bar-wrap{height:2px;background:#1e1e1e;border-radius:1px;margin-bottom:8px;overflow:hidden;}
+.cycle-bar{height:100%;background:linear-gradient(90deg,var(--gdim),var(--gold));transition:width .5s ease;}
+.cycle-desc{font-size:11px;color:var(--gray);line-height:1.6;}
+.cycle-dates{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* AI */
+.reading-type-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.rtype-btn{background:transparent;border:1px solid var(--mid);color:var(--muted);padding:6px 12px;
+  font-family:'Jost',sans-serif;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.rtype-btn.active{border-color:var(--gold);color:var(--gold);}
+.rtype-btn:hover{border-color:var(--gray);color:var(--light);}
+.ai-card{background:#0c0c0c;border:1px solid #1e1e1e;border-radius:1px;padding:20px;min-height:80px;}
+.ai-hint{font-size:13px;color:var(--muted);font-style:italic;line-height:1.65;}
+.ai-loading{display:flex;align-items:center;gap:8px;color:var(--gray);font-size:11px;letter-spacing:0.1em;}
+.dot{width:4px;height:4px;border-radius:50%;background:var(--gold);animation:pulse 1.2s ease infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes pulse{0%,100%{opacity:.2;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}}
+.ai-result-lbl{font-size:9px;letter-spacing:0.35em;color:var(--gdim);text-transform:uppercase;margin-bottom:12px;}
+.ai-result-text{font-size:14px;font-weight:300;line-height:1.85;color:#bbb;}
+
+/* PROFILE */
+.profile-card{background:var(--dark);border:1px solid #222;border-radius:1px;padding:20px;margin-bottom:20px;}
+.profile-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.profile-name{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;}
+.profile-edit{font-size:9px;letter-spacing:0.25em;color:var(--gdim);cursor:pointer;text-transform:uppercase;padding:4px;}
+.profile-edit:hover{color:var(--gold);}
+.profile-detail{font-size:11px;color:var(--gray);line-height:1.8;}
+
+/* LOADING STATE */
+.skeleton{background:linear-gradient(90deg,#111 25%,#1a1a1a 50%,#111 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:2px;height:14px;margin-bottom:8px;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;justify-content:space-around;padding:14px 0 calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid #181818;position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;background:var(--black);z-index:200;}
+.nav-item{font-size:8px;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;cursor:pointer;
+  padding:6px 8px;transition:color .2s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.nav-item .nav-icon{font-size:14px;}
+.nav-item.active{color:var(--gold);}
+.nav-item:hover{color:var(--light);}
+
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-thumb{background:var(--mid);}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="wordmark" id="topWordmark">—</div>
+  <div class="top-date" id="topDate"></div>
+</div>
+
+<!-- ══ TODAY ══ -->
+<div class="page active" id="page-today">
+  <div class="sec">
+    <div class="hero-eye">Your Day at a Glance</div>
+    <h1 class="hero-title" id="heroTitle">—</h1>
+    <p class="hero-body" id="heroBody"></p>
+    <div class="do-dont">
+      <div><div class="dd-lbl">Do</div><div class="dd-items" id="doEl"></div></div>
+      <div><div class="dd-lbl">Don't</div><div class="dd-items" id="dontEl"></div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl">Sun &amp; Moon — Live Sky</div>
+    <div class="luminaries">
+      <div class="luminary">
+        <div class="lum-icon">☀️</div><div class="lum-lbl">Sun</div>
+        <div class="lum-sign" id="sunSign">—</div><div class="lum-deg" id="sunDeg"></div>
+      </div>
+      <div class="luminary">
+        <div class="lum-icon">🌙</div><div class="lum-lbl">Moon</div>
+        <div class="lum-sign" id="moonSign">—</div><div class="lum-deg" id="moonDeg"></div>
+      </div>
+    </div>
+    <div class="moon-row">
+      <div class="moon-vis"><canvas id="moonCvs" width="60" height="60"></canvas></div>
+      <div class="moon-info"><h3 id="phaseName">—</h3><p id="phaseDesc"></p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl">Planetary Positions — Live Sky</div>
+    <div id="todayPlanetsWrap">
+      <div class="planet-grid" id="planetGrid"></div>
+      <div id="planetLoadMsg" style="font-size:12px;color:var(--muted);margin-top:10px;display:none;"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl">Active Aspects</div>
+    <div id="aspectList"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl">Cosmic Calendar</div>
+    <div class="dh-banner">
+      <div class="dh-lbl">2026 Chinese Zodiac</div>
+      <div class="dh-title">Year of the Horse</div>
+      <div class="dh-desc">Fire energy through collective action. Ambition without ego. Speed, freedom, raw momentum define the year's arc.</div>
+    </div>
+    <div id="eventList"></div>
+  </div>
+</div>
+
+<!-- ══ CHART ══ -->
+<div class="page" id="page-chart">
+  <div class="sec">
+    <div class="sec-lbl">Natal Chart</div>
+    <div id="natalContent"><p style="font-size:13px;color:var(--gray);line-height:1.75;">Enter your birth details in <em style="color:var(--gold);font-style:normal;">You</em> to generate your natal chart.</p></div>
+  </div>
+</div>
+
+<!-- ══ TRANSITS ══ -->
+<div class="page" id="page-transits">
+  <div class="sec">
+    <div class="sec-lbl">Transits to Natal</div>
+    <div id="transitContent"><p style="font-size:13px;color:var(--gray);line-height:1.75;">Enter your birth details in <em style="color:var(--gold);font-style:normal;">You</em> to see personal transits.</p></div>
+  </div>
+</div>
+
+<!-- ══ CYCLES ══ -->
+<div class="page" id="page-cycles">
+  <div class="sec">
+    <div class="sec-lbl">Planetary Cycles</div>
+    <div id="cyclesContent"><p style="font-size:13px;color:var(--gray);line-height:1.75;">Enter your birth details in <em style="color:var(--gold);font-style:normal;">You</em> to see your personal cycles.</p></div>
+  </div>
+</div>
+
+<!-- ══ YOU ══ -->
+<div class="page" id="page-you">
+
+  <!-- API KEY SETUP -->
+  <div class="sec" id="apiKeySection">
+    <div class="sec-lbl">Astrology Data Source</div>
+    <div class="api-notice">
+      <div class="api-notice-title">Swiss Ephemeris API Key</div>
+      <p>This app uses <a href="https://freeastrologyapi.com" target="_blank">Free Astrology API</a> for professional-grade planetary positions (same engine as Astro.com). Sign up free for 80 requests/day — no credit card required.</p>
+      <p style="margin-bottom:0;">Paste your API key below to unlock accurate chart data that matches professional software.</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Free Astrology API Key</label>
+      <input class="form-input" id="apiKeyInput" type="password" placeholder="Paste your API key here" autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="saveApiKey()">Save API Key</button>
+    <div class="api-key-status" id="apiKeyStatus" style="margin-top:12px;display:none;">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText"></span>
+    </div>
+  </div>
+
+  <!-- PROFILE DISPLAY (shown after birth data saved) -->
+  <div class="sec" id="profileDisplay" style="display:none;">
+    <div class="profile-card">
+      <div class="profile-top">
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-edit" onclick="editProfile()">Edit</div>
+      </div>
+      <div class="profile-detail" id="profileDetail"></div>
+    </div>
+    <div class="natal-big3" id="big3"></div>
+  </div>
+
+  <!-- BIRTH FORM -->
+  <div class="sec" id="birthFormWrap">
+    <div class="sec-lbl">Your Birth Details</div>
+    <p style="font-size:13px;font-weight:300;color:var(--gray);line-height:1.75;margin-bottom:24px;">Your natal chart is calculated from exact birth data using Swiss Ephemeris — the same engine as Astro.com, Co-Star, and professional chart software.</p>
+
+    <div class="form-group">
+      <label class="form-label">Name (optional)</label>
+      <input class="form-input" id="bName" type="text" placeholder="Your name" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date of Birth</label>
+      <input class="form-input" id="bDate" type="date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Time of Birth</label>
+      <div class="time-row">
+        <input class="form-input" id="bTime" type="time" style="flex:1;">
+        <select class="tz-select" id="bTZ">
+          <option value="-12">UTC−12 (Baker Is.)</option>
+          <option value="-11">UTC−11 (Samoa)</option>
+          <option value="-10">UTC−10 (Hawaii)</option>
+          <option value="-9.5">UTC−9:30 (Marquesas)</option>
+          <option value="-9">UTC−9 (Alaska)</option>
+          <option value="-8">UTC−8 (Pacific US)</option>
+          <option value="-7">UTC−7 (Mountain US)</option>
+          <option value="-6">UTC−6 (Central US)</option>
+          <option value="-5" selected>UTC−5 (Eastern US)</option>
+          <option value="-4">UTC−4 (Atlantic)</option>
+          <option value="-3.5">UTC−3:30 (Newfoundland)</option>
+          <option value="-3">UTC−3 (Brasília)</option>
+          <option value="-2">UTC−2 (S. Georgia)</option>
+          <option value="-1">UTC−1 (Azores)</option>
+          <option value="0">UTC+0 (London/UTC)</option>
+          <option value="1">UTC+1 (Paris/Berlin)</option>
+          <option value="2">UTC+2 (Cairo/Athens)</option>
+          <option value="3">UTC+3 (Moscow/Istanbul)</option>
+          <option value="3.5">UTC+3:30 (Tehran)</option>
+          <option value="4">UTC+4 (Dubai)</option>
+          <option value="4.5">UTC+4:30 (Kabul)</option>
+          <option value="5">UTC+5 (Karachi)</option>
+          <option value="5.5">UTC+5:30 (Mumbai/Delhi)</option>
+          <option value="5.75">UTC+5:45 (Kathmandu)</option>
+          <option value="6">UTC+6 (Dhaka)</option>
+          <option value="6.5">UTC+6:30 (Yangon)</option>
+          <option value="7">UTC+7 (Bangkok/Jakarta)</option>
+          <option value="8">UTC+8 (Beijing/Singapore)</option>
+          <option value="8.75">UTC+8:45 (Eucla)</option>
+          <option value="9">UTC+9 (Tokyo/Seoul)</option>
+          <option value="9.5">UTC+9:30 (Adelaide)</option>
+          <option value="10">UTC+10 (Sydney)</option>
+          <option value="10.5">UTC+10:30 (Lord Howe)</option>
+          <option value="11">UTC+11 (Noumea)</option>
+          <option value="12">UTC+12 (Auckland)</option>
+          <option value="12.75">UTC+12:45 (Chatham)</option>
+          <option value="13">UTC+13 (Tonga)</option>
+          <option value="14">UTC+14 (Line Is.)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Place of Birth (City, Country)</label>
+      <input class="form-input" id="bPlace" type="text" placeholder="e.g. New York, USA" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Latitude</label>
+      <input class="form-input" id="bLat" type="number" step="0.0001" placeholder="e.g. 40.7128">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Longitude</label>
+      <input class="form-input" id="bLon" type="number" step="0.0001" placeholder="e.g. -74.0060">
+    </div>
+    <p style="font-size:10px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Need coordinates? Search "<em>your city latitude longitude</em>" on Google. Accuracy matters — especially for your Ascendant, which shifts ~1° every 4 minutes.</p>
+    <button class="btn-primary" id="calcBtn" onclick="saveBirthData()">Calculate My Chart</button>
+    <div id="calcStatus" style="font-size:11px;color:var(--gray);margin-top:12px;line-height:1.6;"></div>
+  </div>
+
+  <!-- AI READING -->
+  <div class="sec" id="aiReadingWrap" style="display:none;">
+    <div class="sec-lbl">AI Daily Reading</div>
+    <p style="font-size:12px;color:var(--gray);line-height:1.65;margin-bottom:16px;">Your personalized reading uses your natal chart + today's real planetary weather.</p>
+    <div class="reading-type-row">
+      <button class="rtype-btn active" onclick="setReadingType(this,'general')">General</button>
+      <button class="rtype-btn" onclick="setReadingType(this,'love')">Love</button>
+      <button class="rtype-btn" onclick="setReadingType(this,'career')">Career</button>
+      <button class="rtype-btn" onclick="setReadingType(this,'spiritual')">Spiritual</button>
+    </div>
+    <div class="ai-card" id="aiCard"><div class="ai-hint">Tap Generate for your reading.</div></div>
+    <button class="btn-primary" onclick="generateReading()" style="margin-top:12px;">Generate Reading</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="showPage('today',this)"><span class="nav-icon">◯</span>Today</div>
+  <div class="nav-item" onclick="showPage('chart',this)"><span class="nav-icon">⬡</span>Chart</div>
+  <div class="nav-item" onclick="showPage('transits',this)"><span class="nav-icon">↯</span>Transits</div>
+  <div class="nav-item" onclick="showPage('cycles',this)"><span class="nav-icon">∿</span>Cycles</div>
+  <div class="nav-item" onclick="showPage('you',this)"><span class="nav-icon">◈</span>You</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ══════════════════════════════════════════
+// FREE ASTROLOGY API  (Swiss Ephemeris)
+// Base: https://json.freeastrologyapi.com
+// Endpoints used:
+//   POST /western/planets  — natal + today's sky
+//   POST /western/houses   — house cusps + ASC/MC
+//   POST /western/aspects  — natal aspects
+//   POST /western/natal-wheel-chart — SVG chart
+// ══════════════════════════════════════════
+
+var API_BASE = 'https://json.freeastrologyapi.com';
+
+function getApiKey(){ try{ return localStorage.getItem('faa_key')||''; }catch(e){return '';} }
+function setApiKey(k){ try{ localStorage.setItem('faa_key',k); }catch(e){} }
+
+function apiPost(endpoint, body){
+  var key = getApiKey();
+  if(!key) return Promise.reject(new Error('NO_KEY'));
+  return fetch(API_BASE + endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key
+    },
+    body: JSON.stringify(body)
+  }).then(function(r){
+    if(!r.ok) return r.json().then(function(e){ throw new Error(e.message||('HTTP '+r.status)); });
+    return r.json();
+  });
+}
+
+// Build the body object the API expects
+function buildBody(year, month, day, hours, minutes, lat, lon, tz){
+  return {
+    year: parseInt(year),
+    month: parseInt(month),
+    date: parseInt(day),
+    hours: parseInt(hours),
+    minutes: parseInt(minutes),
+    seconds: 0,
+    latitude: parseFloat(lat),
+    longitude: parseFloat(lon),
+    timezone: parseFloat(tz),
+    config: { observation_point: 'topocentric', ayanamsha: 'tropical' }
+  };
+}
+
+// ══════════════════════════════════════════
+// LOCAL FALLBACK ASTRONOMY (Moon phase + basic today calc)
+// Used when no API key yet, so today page still works
+// ══════════════════════════════════════════
+
+function toR(d){return d*Math.PI/180;}
+function toD(r){return r*180/Math.PI;}
+function nm(a){return((a%360)+360)%360;}
+
+function jday(date){
+  var Y=date.getUTCFullYear(),M=date.getUTCMonth()+1,D=date.getUTCDate();
+  var h=date.getUTCHours()+date.getUTCMinutes()/60+date.getUTCSeconds()/3600;
+  var y2,m2;
+  if(M<=2){y2=Y-1;m2=M+12;}else{y2=Y;m2=M;}
+  var A=Math.floor(y2/100),B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y2+4716))+Math.floor(30.6001*(m2+1))+D+h/24+B-1524.5;
+}
+function sunLon(jd){
+  var T=(jd-2451545)/36525,L0=nm(280.46646+36000.76983*T),M=nm(357.52911+35999.05029*T-0.0001537*T*T),Mr=toR(M);
+  var C=(1.914602-0.004817*T-0.000014*T*T)*Math.sin(Mr)+(0.019993-0.000101*T)*Math.sin(2*Mr)+0.000289*Math.sin(3*Mr);
+  return nm(L0+C);
+}
+function moonLon(jd){
+  var T=(jd-2451545)/36525,L0=nm(218.3165+481267.8813*T),M=nm(357.5291+35999.0503*T);
+  var Mp=nm(134.9634+477198.8676*T),F=nm(93.2721+483202.0175*T),D=nm(297.8502+445267.1115*T);
+  return nm(L0+6.289*Math.sin(toR(Mp))-1.274*Math.sin(toR(2*D-Mp))+0.658*Math.sin(toR(2*D))
+    -0.186*Math.sin(toR(M))-0.114*Math.sin(toR(2*F))+0.059*Math.sin(toR(2*D-2*Mp))
+    -0.057*Math.sin(toR(2*D-M-Mp))+0.053*Math.sin(toR(2*D+Mp))+0.046*Math.sin(toR(2*D-M))+0.041*Math.sin(toR(Mp-M)));
+}
+var PE={Mercury:{L0:252.2503,dL:149472.6741,e:0.20563,P:77.4561},Venus:{L0:181.9798,dL:58517.8156,e:0.00677,P:131.5637},
+  Mars:{L0:355.4330,dL:19140.2993,e:0.09341,P:336.0600},Jupiter:{L0:34.3515,dL:3034.9057,e:0.04839,P:14.3312},
+  Saturn:{L0:50.0775,dL:1222.1138,e:0.05415,P:93.0572},Uranus:{L0:314.0550,dL:428.4882,e:0.04717,P:173.0050},
+  Neptune:{L0:304.3487,dL:218.4862,e:0.00859,P:48.1202},Pluto:{L0:238.9290,dL:145.2078,e:0.24883,P:224.0690}};
+function pLon(p,jd){
+  if(p==='Sun')return sunLon(jd); if(p==='Moon')return moonLon(jd);
+  var el=PE[p];if(!el)return 0;
+  var T=(jd-2451545)/36525,L=nm(el.L0+el.dL*T*0.01),M=nm(L-el.P),Mr=toR(M);
+  var C=(2*el.e-el.e*el.e*el.e/4)*Math.sin(Mr)+(5/4*el.e*el.e)*Math.sin(2*Mr)+(13/12*el.e*el.e*el.e)*Math.sin(3*Mr);
+  return nm(L+toD(C));
+}
+function isRx(p,jd){
+  if(p==='Sun'||p==='Moon')return false;
+  var d=pLon(p,jd+1)-pLon(p,jd-1); if(d>180)d-=360; if(d<-180)d+=360; return d<0;
+}
+var SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+function l2s(lon){var i=Math.floor(lon/30)%12;return{sign:SIGNS[i],deg:(lon-i*30).toFixed(1)};}
+var PHASE_NAMES=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+var PHASE_DESCS={'New Moon':'Plant seeds of intention. What you begin now carries forward.','Waxing Crescent':'Build momentum on what you initiated.','First Quarter':'Push through resistance. Decisions crystallize.','Waxing Gibbous':'Refine and perfect. The harvest is near.','Full Moon':'Peak illumination. Release what no longer serves.','Waning Gibbous':'Share wisdom. Distribute what you have gathered.','Last Quarter':'Let go. Clear the path for the new cycle.','Waning Crescent':'Rest. Integrate. Prepare for the void.'};
+function getPhase(jd){var a=nm(moonLon(jd)-sunLon(jd));return{angle:a,name:PHASE_NAMES[Math.floor(a/45)%8]};}
+
+var ADEFS=[{n:'Conjunction',a:0,o:8,g:'☌'},{n:'Opposition',a:180,o:8,g:'☍'},{n:'Trine',a:120,o:6,g:'△'},{n:'Square',a:90,o:6,g:'□'},{n:'Sextile',a:60,o:4,g:'⚹'}];
+function getAspects(jd,ps){
+  var pos={};ps.forEach(function(p){pos[p]=pLon(p,jd);});var res=[];
+  for(var i=0;i<ps.length;i++)for(var j=i+1;j<ps.length;j++){
+    var diff=Math.abs(pos[ps[i]]-pos[ps[j]]);if(diff>180)diff=360-diff;
+    for(var k=0;k<ADEFS.length;k++){var orb=Math.abs(diff-ADEFS[k].a);if(orb<=ADEFS[k].o){res.push({p1:ps[i],p2:ps[j],name:ADEFS[k].n,gl:ADEFS[k].g,orb:orb.toFixed(1)});break;}}
+  }
+  return res;
+}
+
+var PSYM={Sun:'☉',Moon:'☽',Mercury:'☿',Venus:'♀',Mars:'♂',Jupiter:'♃',Saturn:'♄',Uranus:'⛢',Neptune:'♆',Pluto:'♇',Ascendant:'↑',MC:'⊕'};
+
+// ══════════════════════════════════════════
+// MOON CANVAS
+// ══════════════════════════════════════════
+function drawMoon(canvas,phase){
+  var ctx=canvas.getContext('2d'),cx=30,cy=30,r=26;
+  ctx.clearRect(0,0,60,60);
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle='#1a1a1a';ctx.fill();
+  var a=phase.angle,wax=(a<=180);
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+  ctx.beginPath();
+  if(wax){ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2);var ex1=Math.max(1,r*Math.abs(Math.cos(toR(a))));ctx.ellipse(cx,cy,ex1,r,0,Math.PI/2,-Math.PI/2,a<90);}
+  else{ctx.arc(cx,cy,r,Math.PI/2,-Math.PI/2);var ex2=Math.max(1,r*Math.abs(Math.cos(toR(a))));ctx.ellipse(cx,cy,ex2,r,0,-Math.PI/2,Math.PI/2,a<=270);}
+  ctx.closePath();ctx.fillStyle='#d8d2c6';ctx.fill();ctx.restore();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#2e2e2e';ctx.lineWidth=1;ctx.stroke();
+}
+
+// ══════════════════════════════════════════
+// DAILY CONTENT
+// ══════════════════════════════════════════
+var THEMES=[{t:'Your move.',b:"You've been standing at the edge too long, calculating risks that don't exist. The first step breaks the spell. By the third, you'll wonder why you hesitated. Motion creates its own momentum."},{t:'Sit with it.',b:"The moon asks you to feel before you fix. Clarity doesn't come from thinking harder — it rises when you stop demanding answers and simply let yourself be."},{t:'Speak first.',b:"The words you've been swallowing are taking up space meant for something better. Say the true thing. Not the soft version. The actual one."},{t:'The long view.',b:"Today's frustrations are tomorrow's context. Nothing being built right now will be understood until later. That's not a reason to stop — it's the whole point."},{t:'Nothing to prove.',b:"The compulsion to demonstrate your worth is worth examining. What belief is underneath it? That one's been waiting a long time to be looked at."},{t:'Let it land.',b:"Someone is trying to reach you. Not through words — through presence, through small gestures, through what they keep returning to. Notice it."},{t:'Radical clarity.',b:"There's a pull toward performance today — showing what you want others to see. Show what's real instead. The authentic version is always more powerful."}];
+var DOS=[['Trust instinct','Gut health','Begin anyway'],['Slow down','Reach out','Create space'],['Make demands','Set limits','Write it out']];
+var DONTS=[['Vigilante','Low blows','Low standards'],['Overthink','Force it','Perform'],['Self-betray','Compare','Catastrophize']];
+function getDailyContent(jd){var d=Math.abs(Math.floor(jd));return{theme:THEMES[d%THEMES.length],dos:DOS[d%3],donts:DONTS[d%3]};}
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+var APP={jd:null,now:null,todayPlanets:null,profile:null,natal:null,readingType:'general'};
+
+function loadState(){
+  try{var s=localStorage.getItem('astro_profile');if(s)APP.profile=JSON.parse(s);}catch(e){}
+  try{var n=localStorage.getItem('astro_natal');if(n)APP.natal=JSON.parse(n);}catch(e){}
+}
+function saveNatal(n){APP.natal=n;try{localStorage.setItem('astro_natal',JSON.stringify(n));}catch(e){}}
+function saveProfile(p){APP.profile=p;try{localStorage.setItem('astro_profile',JSON.stringify(p));}catch(e){}}
+
+// ══════════════════════════════════════════
+// RENDER TODAY (local calc for moon/phase, API for planets if key present)
+// ══════════════════════════════════════════
+function renderToday(){
+  var now=new Date(); APP.now=now; APP.jd=jday(now);
+  var jd=APP.jd;
+
+  document.getElementById('topDate').textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric'}).toUpperCase();
+
+  // Moon phase (local calc is fine for phase)
+  var phase=getPhase(jd);
+  document.getElementById('phaseName').textContent=phase.name;
+  document.getElementById('phaseDesc').textContent=PHASE_DESCS[phase.name]||'';
+  drawMoon(document.getElementById('moonCvs'),phase);
+
+  // Hero
+  var dc=getDailyContent(jd);
+  var parts=dc.theme.t.split(' ');
+  document.getElementById('heroTitle').innerHTML='<em>'+parts[0]+'</em> '+parts.slice(1).join(' ');
+  document.getElementById('heroBody').textContent=dc.theme.b;
+  document.getElementById('doEl').innerHTML=dc.dos.join('<br>');
+  document.getElementById('dontEl').innerHTML=dc.donts.join('<br>');
+
+  // Events
+  renderEvents();
+
+  // Try to load today's planets from API
+  var key=getApiKey();
+  if(key){
+    renderTodayPlanetsFromAPI(now);
+  } else {
+    renderTodayPlanetsLocal(jd);
+  }
+}
+
+function renderTodayPlanetsLocal(jd){
+  // Fallback: local math (approximate)
+  var sunS=l2s(sunLon(jd)), moonS=l2s(moonLon(jd));
+  document.getElementById('sunSign').textContent=sunS.sign;
+  document.getElementById('sunDeg').textContent=sunS.deg+'° '+sunS.sign;
+  document.getElementById('moonSign').textContent=moonS.sign;
+  document.getElementById('moonDeg').textContent=moonS.deg+'° '+moonS.sign;
+
+  var PLANETS=['Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+  var grid=document.getElementById('planetGrid'); grid.innerHTML='';
+  PLANETS.forEach(function(p){
+    var s=l2s(pLon(p,jd)), rx=isRx(p,jd);
+    var c=document.createElement('div'); c.className='pcard';
+    c.innerHTML='<div class="p-sym">'+(PSYM[p]||'·')+'</div><div class="p-name">'+p+'</div><div class="p-sign">'+s.sign+'</div><div class="p-deg">'+s.deg+'°'+(rx?' <span class="rx">Rx</span>':'')+'</div>';
+    grid.appendChild(c);
+  });
+
+  document.getElementById('planetLoadMsg').style.display='block';
+  document.getElementById('planetLoadMsg').textContent='⚠ Approximate positions. Add your API key in You for Swiss Ephemeris accuracy.';
+
+  // Aspects
+  var asp=getAspects(jd,['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']);
+  renderAspects(asp);
+}
+
+function renderTodayPlanetsFromAPI(now){
+  // We need lat/lon for topocentric — use profile coords or default to 0,0
+  var lat=APP.profile?APP.profile.lat:0;
+  var lon=APP.profile?APP.profile.lon:0;
+  var tz=APP.profile?APP.profile.tz:0;
+  var body=buildBody(now.getFullYear(),now.getMonth()+1,now.getDate(),now.getHours(),now.getMinutes(),lat,lon,tz);
+
+  apiPost('/western/planets', body).then(function(data){
+    var planets=data.output||data;
+    if(!Array.isArray(planets)) throw new Error('bad response');
+    APP.todayPlanets=planets;
+
+    // Build lookup
+    var byName={};
+    planets.forEach(function(p){byName[(p.name||p.full_name||'').toLowerCase()]=p;});
+
+    var sun=byName['sun']||byName['☉'];
+    var moon=byName['moon']||byName['☽'];
+    if(sun){document.getElementById('sunSign').textContent=sun.sign;document.getElementById('sunDeg').textContent=sun.normDegree+'° '+sun.sign;}
+    if(moon){document.getElementById('moonSign').textContent=moon.sign;document.getElementById('moonDeg').textContent=moon.normDegree+'° '+moon.sign;}
+
+    var ORDER=['Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
+    var grid=document.getElementById('planetGrid'); grid.innerHTML='';
+    ORDER.forEach(function(pn){
+      var p=byName[pn.toLowerCase()]; if(!p) return;
+      var c=document.createElement('div'); c.className='pcard';
+      c.innerHTML='<div class="p-sym">'+(PSYM[pn]||'·')+'</div><div class="p-name">'+pn+'</div>'+
+        '<div class="p-sign">'+(p.sign||'—')+'</div>'+
+        '<div class="p-deg">'+(p.normDegree||p.fullDegree||'')+'°'+(p.isRetro==='true'||p.isRetro===true?' <span class="rx">Rx</span>':'')+'</div>';
+      grid.appendChild(c);
+    });
+
+    document.getElementById('planetLoadMsg').style.display='block';
+    document.getElementById('planetLoadMsg').innerHTML='<span style="color:var(--gdim)">✓ Swiss Ephemeris · Accurate to arcminutes</span>';
+
+    // Aspects
+    apiPost('/western/aspects', body).then(function(aspData){
+      var aspArr=aspData.output||aspData||[];
+      renderAspectsFromAPI(Array.isArray(aspArr)?aspArr:[]);
+    }).catch(function(){
+      var asp=getAspects(APP.jd,['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']);
+      renderAspects(asp);
+    });
+
+  }).catch(function(err){
+    console.warn('API planet fetch failed:', err.message);
+    renderTodayPlanetsLocal(APP.jd);
+  });
+}
+
+function renderAspects(arr){
+  var el=document.getElementById('aspectList'); el.innerHTML='';
+  var shown=arr.slice(0,8);
+  if(!shown.length){el.innerHTML='<p style="font-size:12px;color:var(--muted)">No major aspects in tight orb.</p>';return;}
+  shown.forEach(function(a){
+    var row=document.createElement('div'); row.className='asp-row';
+    row.innerHTML='<span class="asp-pl">'+a.p1+' '+a.gl+' '+a.p2+'</span><span class="asp-type">'+a.name+'</span><span class="asp-orb">'+a.orb+'°</span>';
+    el.appendChild(row);
+  });
+}
+
+function renderAspectsFromAPI(arr){
+  var el=document.getElementById('aspectList'); el.innerHTML='';
+  var GLYPH={Conjunction:'☌',Opposition:'☍',Trine:'△',Square:'□',Sextile:'⚹',Quincunx:'⚻',Semisextile:'⚺'};
+  var shown=arr.slice(0,8);
+  if(!shown.length){el.innerHTML='<p style="font-size:12px;color:var(--muted)">No major aspects in tight orb.</p>';return;}
+  shown.forEach(function(a){
+    var row=document.createElement('div'); row.className='asp-row';
+    var gl=GLYPH[a.type]||GLYPH[a.aspType]||'·';
+    var orb=a.orb||a.orbDeg||'';
+    var p1=a.planet1||a.aspecting_planet||a.p1||'';
+    var p2=a.planet2||a.aspected_planet||a.p2||'';
+    var type=a.type||a.aspType||a.aspect||'';
+    row.innerHTML='<span class="asp-pl">'+p1+' '+gl+' '+p2+'</span><span class="asp-type">'+type+'</span><span class="asp-orb">'+(orb?orb+'°':'')+'</span>';
+    el.appendChild(row);
+  });
+}
+
+function renderEvents(){
+  var events=[
+    {t:'Mercury Enters Aries',d:'Mar 15',desc:'Direct, unfiltered communication. Say what you mean without the coating.',hot:true},
+    {t:'Venus Retrograde Ends',d:'Apr 2',desc:'Clarity returns to love and finances. What survived the review is stronger.',hot:false},
+    {t:'Jupiter Conjunct Uranus',d:'Apr 20',desc:'Rare breakthrough energy. Sudden expansion in what you have been building.',hot:false},
+    {t:'Scorpio Full Moon',d:'May 12',desc:'Deep emotional reckoning. What is hidden surfaces for integration.',hot:false},
+    {t:'Saturn Square Pluto',d:'Jun 5',desc:'Structural transformation under pressure. Systems that cannot evolve will not survive.',hot:false}
+  ];
+  var el=document.getElementById('eventList'); el.innerHTML='';
+  events.forEach(function(ev){
+    var d=document.createElement('div'); d.className='ev-item';
+    d.innerHTML='<div class="ev-dot'+(ev.hot?'':' dim')+'"></div><div><div class="ev-title">'+ev.t+'</div><div class="ev-desc">'+ev.desc+'</div><div class="ev-date">'+ev.d+'</div></div>';
+    el.appendChild(d);
+  });
+}
+
+// ══════════════════════════════════════════
+// NATAL CHART FROM API
+// ══════════════════════════════════════════
+function fetchNatalFromAPI(prof, onSuccess, onError){
+  var timeParts=(prof.time||'12:00').split(':');
+  var body=buildBody(
+    prof.year, prof.month, prof.day,
+    timeParts[0], timeParts[1]||0,
+    prof.lat, prof.lon, prof.tz
+  );
+
+  setCalcStatus('Fetching planets from Swiss Ephemeris…');
+
+  // Fetch planets + houses + aspects in parallel
+  Promise.all([
+    apiPost('/western/planets', body),
+    apiPost('/western/houses', body),
+    apiPost('/western/aspects', body),
+    apiPost('/western/natal-wheel-chart', body)
+  ]).then(function(results){
+    var planetsData=results[0];
+    var housesData=results[1];
+    var aspectsData=results[2];
+    var chartData=results[3];
+
+    var natal={
+      planets: planetsData.output||planetsData,
+      houses:  housesData.output||housesData,
+      aspects: aspectsData.output||aspectsData,
+      chartSvg: chartData.svg||chartData.output||null,
+      source:'api'
+    };
+    saveNatal(natal);
+    onSuccess(natal);
+  }).catch(function(err){
+    onError(err);
+  });
+}
+
+function renderNatalFromData(natal){
+  var planets=natal.planets||[];
+  var houses=natal.houses||[];
+  var aspects=natal.aspects||[];
+
+  // Build lookup by name
+  var byName={};
+  planets.forEach(function(p){
+    var k=(p.name||p.full_name||'').toLowerCase().replace(/[^a-z]/g,'');
+    byName[k]=p;
+  });
+
+  var sun=byName['sun']||{};
+  var moon=byName['moon']||{};
+  var asc=byName['ascendant']||byName['asc']||{};
+
+  // Big 3
+  var big3El=document.getElementById('big3');
+  big3El.innerHTML=
+    '<div class="big3-item"><div class="b3-lbl">☉ Sun</div><div class="b3-sign">'+(sun.sign||'—')+'</div><div class="b3-deg">'+(sun.normDegree||'')+'°</div></div>'+
+    '<div class="big3-item"><div class="b3-lbl">☽ Moon</div><div class="b3-sign">'+(moon.sign||'—')+'</div><div class="b3-deg">'+(moon.normDegree||'')+'°</div></div>'+
+    '<div class="big3-item"><div class="b3-lbl">↑ Rising</div><div class="b3-sign">'+(asc.sign||'—')+'</div><div class="b3-deg">'+(asc.normDegree||asc.degree||'')+'°</div></div>';
+
+  var html='';
+
+  // SVG Chart Wheel
+  if(natal.chartSvg){
+    html+='<div class="chart-svg-wrap">'+natal.chartSvg+'</div>';
+  }
+
+  // All planets table
+  html+='<div class="sec-lbl" style="margin-top:20px;margin-bottom:12px;">All Placements</div>';
+  html+='<div class="planet-grid">';
+  var ORDER=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Ascendant','MC'];
+  ORDER.forEach(function(pn){
+    var key=pn.toLowerCase().replace(/[^a-z]/g,'');
+    var p=byName[key]||byName[pn.toLowerCase()];
+    if(!p) return;
+    html+='<div class="pcard"><div class="p-sym">'+(PSYM[pn]||'·')+'</div>'+
+      '<div class="p-name">'+pn+'</div>'+
+      '<div class="p-sign">'+(p.sign||'—')+'</div>'+
+      '<div class="p-deg">'+(p.normDegree||p.degree||p.fullDegree||'')+'°'+(p.isRetro==='true'||p.isRetro===true?' <span class="rx">Rx</span>':'')+'</div></div>';
+  });
+  html+='</div>';
+
+  // Houses
+  if(houses.length){
+    html+='<div class="sec-lbl" style="margin-top:24px;margin-bottom:12px;">House Cusps</div>';
+    html+='<div class="planet-grid">';
+    houses.slice(0,12).forEach(function(h,i){
+      var sign=h.sign||'—', deg=h.normDegree||h.degree||'';
+      html+='<div class="pcard"><div class="p-sym" style="font-size:12px;font-family:serif;">H'+(i+1)+'</div>'+
+        '<div class="p-name">House '+(i+1)+'</div>'+
+        '<div class="p-sign">'+sign+'</div>'+
+        '<div class="p-deg">'+deg+'°</div></div>';
+    });
+    html+='</div>';
+  }
+
+  // Aspects
+  if(aspects.length){
+    html+='<div class="sec-lbl" style="margin-top:24px;margin-bottom:12px;">Natal Aspects</div>';
+    var GLYPH={Conjunction:'☌',Opposition:'☍',Trine:'△',Square:'□',Sextile:'⚹',Quincunx:'⚻'};
+    aspects.slice(0,12).forEach(function(a){
+      var gl=GLYPH[a.type]||GLYPH[a.aspType]||'·';
+      var p1=a.planet1||a.aspecting_planet||a.p1||'';
+      var p2=a.planet2||a.aspected_planet||a.p2||'';
+      var type=a.type||a.aspType||a.aspect||'';
+      var orb=a.orb||a.orbDeg||'';
+      html+='<div class="asp-row"><span class="asp-pl">'+p1+' '+gl+' '+p2+'</span><span class="asp-type">'+type+'</span><span class="asp-orb">'+(orb?orb+'°':'')+'</span></div>';
+    });
+  }
+
+  document.getElementById('natalContent').innerHTML=html;
+}
+
+function renderTransitsFromData(natal){
+  var nPlanets=natal.planets||[];
+  var byName={};
+  nPlanets.forEach(function(p){var k=(p.name||'').toLowerCase();byName[k]=p;});
+
+  // Compare today's sky (local approx) vs natal
+  var jd=APP.jd;
+  var tPlanets=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn'];
+  var nPlanetNames=Object.keys(byName);
+  var TRANSIT_MEANINGS={Conjunction:'Fusion of energies. Direct activation.',Opposition:'Awareness and tension. The mirror.',Trine:'Flowing ease. The current runs in your favor.',Square:'Productive friction. Growth through resistance.',Sextile:'Opportunity that requires action to manifest.'};
+  var GLYPH={Conjunction:'☌',Opposition:'☍',Trine:'△',Square:'□',Sextile:'⚹'};
+
+  var results=[];
+  tPlanets.forEach(function(tp){
+    var tLon=pLon(tp,jd);
+    nPlanetNames.forEach(function(np){
+      var nEntry=byName[np];
+      var nLon=parseFloat(nEntry.fullDegree||nEntry.degree||0);
+      if(!nLon) return;
+      var diff=Math.abs(tLon-nLon); if(diff>180)diff=360-diff;
+      ADEFS.forEach(function(asp){
+        var orb=Math.abs(diff-asp.a);
+        if(orb<=asp.o) results.push({tp:tp,np:np,name:asp.n,gl:asp.g,orb:orb.toFixed(1),tSign:l2s(tLon).sign});
+      });
+    });
+  });
+  results.sort(function(a,b){return parseFloat(a.orb)-parseFloat(b.orb);});
+
+  var html='';
+  if(!results.length){html='<p style="font-size:13px;color:var(--gray);">No major transits in tight orb today.</p>';}
+  else{results.slice(0,10).forEach(function(t){
+    html+='<div class="transit-row"><div class="transit-icon">'+(PSYM[t.tp]||'·')+'</div>'+
+      '<div><div class="transit-title">'+t.tp+' '+t.gl+' natal '+t.np+'</div>'+
+      '<div class="transit-desc">'+(TRANSIT_MEANINGS[t.name]||'Active transit.')+'</div>'+
+      '<div class="transit-meta">'+t.name+' · '+t.orb+'° orb · Transit '+t.tp+' in '+t.tSign+'</div></div></div>';
+  });}
+  document.getElementById('transitContent').innerHTML=html;
+}
+
+function renderCyclesFromData(natal){
+  var nPlanets=natal.planets||[];
+  var byName={};
+  nPlanets.forEach(function(p){var k=(p.name||'').toLowerCase();byName[k]=p;});
+
+  var cycles=[
+    {planet:'Saturn',period:29.5,name:'Saturn Cycle',desc:'The great teacher. Where are you in your 29-year arc of mastery?'},
+    {planet:'Jupiter',period:12,name:'Jupiter Cycle',desc:'Expansion and wisdom. Your 12-year arc of growth and opportunity.'},
+    {planet:'Mars',period:2,name:'Mars Cycle',desc:'Drive and will. Your 2-year cycle of assertion and desire.'},
+    {planet:'Venus',period:1.6,name:'Venus Cycle',desc:'Love and values. Your 19-month cycle of beauty and connection.'}
+  ];
+
+  var html='';
+  var jd=APP.jd;
+  cycles.forEach(function(c){
+    var nEntry=byName[c.planet.toLowerCase()];
+    if(!nEntry) return;
+    var nLon=parseFloat(nEntry.fullDegree||nEntry.degree||0);
+    var curLon=pLon(c.planet,jd);
+    var diff=nm(curLon-nLon);
+    var pct=diff/360;
+    var phaseNames=['Return','Waxing','Opening Square','Trine','Opposition','Waning Trine','Closing Square','Balsamic'];
+    var phase=phaseNames[Math.floor(pct*8)%8];
+    var pctPx=Math.round(pct*100);
+    html+='<div class="cycle-item"><div class="cycle-header"><div class="cycle-name">'+c.name+'</div><div class="cycle-phase">'+phase+'</div></div>'+
+      '<div class="cycle-bar-wrap"><div class="cycle-bar" style="width:'+pctPx+'%"></div></div>'+
+      '<div class="cycle-desc">'+c.desc+'</div>'+
+      '<div class="cycle-dates">'+pctPx+'% through '+c.period+'-year cycle · '+phase+' phase</div></div>';
+  });
+  document.getElementById('cyclesContent').innerHTML=html||'<p style="font-size:13px;color:var(--gray);">Cycle data unavailable.</p>';
+}
+
+// ══════════════════════════════════════════
+// API KEY
+// ══════════════════════════════════════════
+window.saveApiKey=function(){
+  var k=document.getElementById('apiKeyInput').value.trim();
+  if(!k){alert('Please enter your API key.');return;}
+  setApiKey(k);
+  setApiKeyStatus('checking','Verifying key…');
+  // Test with a simple request
+  var testBody=buildBody(2000,1,1,12,0,0,0,0);
+  apiPost('/western/planets',testBody).then(function(){
+    setApiKeyStatus('active','API key active — Swiss Ephemeris enabled');
+    renderToday(); // Re-render with accurate data
+    if(APP.profile) triggerNatalCalc();
+  }).catch(function(err){
+    setApiKeyStatus('error','Key invalid or quota exceeded: '+err.message);
+  });
+};
+
+function setApiKeyStatus(state, msg){
+  var wrap=document.getElementById('apiKeyStatus');
+  var dot=document.getElementById('statusDot');
+  var txt=document.getElementById('statusText');
+  wrap.style.display='flex';
+  dot.className='status-dot'+(state==='active'?' active':state==='error'?' error':'');
+  txt.textContent=msg;
+}
+
+function setCalcStatus(msg){
+  document.getElementById('calcStatus').textContent=msg;
+}
+
+// ══════════════════════════════════════════
+// BIRTH DATA SAVE
+// ══════════════════════════════════════════
+window.saveBirthData=function(){
+  var bDate=document.getElementById('bDate').value;
+  var bTime=document.getElementById('bTime').value||'12:00';
+  var bTZ=parseFloat(document.getElementById('bTZ').value);
+  var bPlace=document.getElementById('bPlace').value.trim();
+  var bName=document.getElementById('bName').value.trim();
+  var bLat=parseFloat(document.getElementById('bLat').value);
+  var bLon=parseFloat(document.getElementById('bLon').value);
+
+  if(!bDate){alert('Please enter your date of birth.');return;}
+  if(isNaN(bLat)||isNaN(bLon)){alert('Please enter latitude and longitude for accurate chart calculation.');return;}
+
+  var dateParts=bDate.split('-');
+  var timeParts=bTime.split(':');
+
+  var prof={
+    name:bName, date:bDate, time:bTime, tz:bTZ, place:bPlace,
+    lat:bLat, lon:bLon,
+    year:parseInt(dateParts[0]), month:parseInt(dateParts[1]), day:parseInt(dateParts[2]),
+    hours:parseInt(timeParts[0]), minutes:parseInt(timeParts[1]||0)
+  };
+  saveProfile(prof);
+
+  var key=getApiKey();
+  if(!key){
+    setCalcStatus('⚠ No API key set. Add your Free Astrology API key above to calculate with Swiss Ephemeris accuracy. Chart saved — will calculate when key is added.');
+    renderProfileSection();
+    renderYouPage();
+    return;
+  }
+
+  triggerNatalCalc();
+};
+
+function triggerNatalCalc(){
+  var prof=APP.profile; if(!prof) return;
+  var btn=document.getElementById('calcBtn'); if(btn)btn.disabled=true;
+  setCalcStatus('Calculating with Swiss Ephemeris…');
+
+  fetchNatalFromAPI(prof, function(natal){
+    setCalcStatus('✓ Chart calculated using Swiss Ephemeris — matches Astro.com.');
+    if(btn)btn.disabled=false;
+    renderNatalFromData(natal);
+    renderTransitsFromData(natal);
+    renderCyclesFromData(natal);
+    renderProfileSection();
+    renderYouPage();
+  }, function(err){
+    setCalcStatus('API error: '+err.message+'. Try again or check your API key.');
+    if(btn)btn.disabled=false;
+    // Still show profile
+    renderProfileSection();
+    renderYouPage();
+  });
+}
+
+function renderProfileSection(){
+  var prof=APP.profile; if(!prof) return;
+  var natal=APP.natal;
+
+  document.getElementById('profileName').textContent=prof.name||'Your Chart';
+  var tzLabel='UTC'+(prof.tz>=0?'+':'')+prof.tz;
+  document.getElementById('profileDetail').innerHTML=
+    (prof.date?'Born '+prof.date:'')+(prof.time?' at '+prof.time:'')+(prof.tz!==undefined?' ('+tzLabel+')':'')+'<br>'+
+    (prof.place||('Lat '+prof.lat+', Lon '+prof.lon));
+
+  // Big 3 in profile summary
+  if(natal&&natal.planets){
+    var byName={};
+    natal.planets.forEach(function(p){byName[(p.name||'').toLowerCase()]=p;});
+    var sun=byName['sun']||{}, moon=byName['moon']||{}, asc=byName['ascendant']||byName['asc']||{};
+    document.getElementById('big3').innerHTML=
+      '<div class="big3-item"><div class="b3-lbl">☉ Sun</div><div class="b3-sign">'+(sun.sign||'—')+'</div><div class="b3-deg">'+(sun.normDegree||'')+'°</div></div>'+
+      '<div class="big3-item"><div class="b3-lbl">☽ Moon</div><div class="b3-sign">'+(moon.sign||'—')+'</div><div class="b3-deg">'+(moon.normDegree||'')+'°</div></div>'+
+      '<div class="big3-item"><div class="b3-lbl">↑ Rising</div><div class="b3-sign">'+(asc.sign||'—')+'</div><div class="b3-deg">'+(asc.normDegree||asc.degree||'')+'°</div></div>';
+  }
+
+  var firstWord=(prof.name||'').split(' ')[0].toUpperCase();
+  document.getElementById('topWordmark').textContent=firstWord||'—';
+}
+
+window.editProfile=function(){
+  var prof=APP.profile;
+  if(prof){
+    document.getElementById('bName').value=prof.name||'';
+    document.getElementById('bDate').value=prof.date||'';
+    document.getElementById('bTime').value=prof.time||'';
+    document.getElementById('bTZ').value=prof.tz||'-5';
+    document.getElementById('bPlace').value=prof.place||'';
+    document.getElementById('bLat').value=prof.lat||'';
+    document.getElementById('bLon').value=prof.lon||'';
+  }
+  document.getElementById('profileDisplay').style.display='none';
+  document.getElementById('birthFormWrap').style.display='block';
+};
+
+function renderYouPage(){
+  var prof=APP.profile;
+  if(prof){
+    document.getElementById('profileDisplay').style.display='block';
+    document.getElementById('birthFormWrap').style.display='none';
+    document.getElementById('aiReadingWrap').style.display='block';
+  } else {
+    document.getElementById('profileDisplay').style.display='none';
+    document.getElementById('birthFormWrap').style.display='block';
+    document.getElementById('aiReadingWrap').style.display='none';
+  }
+}
+
+// ══════════════════════════════════════════
+// AI READING
+// ══════════════════════════════════════════
+var currentReadingType='general';
+window.setReadingType=function(btn,type){
+  currentReadingType=type;
+  document.querySelectorAll('.rtype-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+};
+
+window.generateReading=function(){
+  var prof=APP.profile;
+  if(!prof){showPage('you',document.querySelector('.nav-item:last-child'));return;}
+
+  var natal=APP.natal;
+  var jd=APP.jd||jday(new Date());
+  var now=APP.now||new Date();
+
+  // Build context string for Claude
+  var natalContext='';
+  if(natal&&natal.planets){
+    var byName={};
+    natal.planets.forEach(function(p){byName[(p.name||'').toLowerCase()]=p;});
+    var labels=['sun','moon','mercury','venus','mars','jupiter','saturn','ascendant'];
+    var parts=labels.map(function(k){
+      var p=byName[k]; if(!p) return null;
+      return (p.name||k)+' in '+(p.sign||'?')+(p.normDegree?' at '+p.normDegree+'°':'');
+    }).filter(Boolean);
+    natalContext='NATAL: '+parts.join(', ')+'.\n';
+  }
+
+  var phase=getPhase(jd);
+  var sunS=l2s(sunLon(jd)), moonS=l2s(moonLon(jd));
+  var asp=getAspects(jd,['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn']);
+  var aspStr=asp.slice(0,4).map(function(a){return a.p1+' '+a.name+' '+a.p2+' ('+a.orb+'°)';}).join(', ')||'no major aspects in tight orb';
+
+  var focusMap={general:'overall life, energy, and direction',love:'love, relationships, and emotional intimacy',career:'career, ambition, and public life',spiritual:'inner life, spirituality, and soul growth'};
+
+  var prompt=
+    'You are the voice of a premium astrology app. Literary, direct, no filler.\n\n'+
+    'DATE: '+now.toDateString()+'\n'+
+    'SKY: Sun '+sunS.deg+'° '+sunS.sign+', Moon '+moonS.deg+'° '+moonS.sign+' ('+phase.name+').\n'+
+    'ASPECTS: '+aspStr+'.\n'+
+    natalContext+
+    (prof.name?'PERSON: '+prof.name+'.\n':'')+
+    '\nWrite a daily reading focused on: '+focusMap[currentReadingType]+'.\n'+
+    'Rules: 4-5 sentences. Reference the sky AND natal placements. Be honest about tension. End with one specific concrete action. No greeting, no emojis, no clichés. Write as if you know this person deeply.\nOutput only the reading.';
+
+  var card=document.getElementById('aiCard');
+  card.innerHTML='<div class="ai-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:8px;font-size:11px;">Reading the cosmos…</span></div>';
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    var txt=(d.content&&d.content[0]&&d.content[0].text)||getFallback();
+    showReading(txt,now);
+  }).catch(function(){showReading(getFallback(),now);});
+};
+
+function showReading(text,now){
+  var lbl=currentReadingType.charAt(0).toUpperCase()+currentReadingType.slice(1);
+  document.getElementById('aiCard').innerHTML=
+    '<div class="ai-result-lbl">'+lbl+' · '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'})+'</div>'+
+    '<div class="ai-result-text">'+text+'</div>';
+}
+
+function getFallback(){
+  var phase=getPhase(APP.jd||jday(new Date()));
+  var mS=l2s(moonLon(APP.jd||jday(new Date())));
+  return 'The '+mS.sign+' moon under this '+phase.name+' creates direct pressure on your nature. Something unclear is becoming visible — move toward it rather than around it. Concrete action: name the one thing you have been circling and take one direct step today.';
+}
+
+// ══════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════
+window.showPage=function(name,navEl){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');
+  if(navEl)navEl.classList.add('active');
+};
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+loadState();
+renderToday();
+
+// Restore API key input field
+var existingKey=getApiKey();
+if(existingKey){
+  document.getElementById('apiKeyInput').value=existingKey;
+  setApiKeyStatus('active','API key saved — Swiss Ephemeris active');
+}
+
+// If profile + natal data already saved, render everything
+if(APP.profile){
+  renderProfileSection();
+  if(APP.natal){
+    renderNatalFromData(APP.natal);
+    renderTransitsFromData(APP.natal);
+    renderCyclesFromData(APP.natal);
+  }
+}
+renderYouPage();
+
+})();
+</script>
+</body>
+</html>

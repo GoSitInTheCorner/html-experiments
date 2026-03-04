@@ -1,0 +1,3364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cannabis Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0a;
+    --surface: #111811;
+    --card: #162016;
+    --card2: #1c281c;
+    --border: #2a3d2a;
+    --green: #4ade80;
+    --green-dim: #22c55e;
+    --green-dark: #15803d;
+    --accent: #84cc16;
+    --gold: #fbbf24;
+    --text: #e8f5e9;
+    --text-dim: #86a886;
+    --text-muted: #4a6b4a;
+    --myrcene: #3b82f6;
+    --limonene: #fbbf24;
+    --caryophyllene: #a855f7;
+    --pinene: #22c55e;
+    --terpinolene: #f97316;
+    --linalool: #ec4899;
+    --humulene: #14b8a6;
+    --ocimene: #f59e0b;
+    --thc-color: #4ade80;
+    --cbd-color: #60a5fa;
+    --indica: #8b5cf6;
+    --sativa: #ef4444;
+    --hybrid: #22c55e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* BACKGROUND TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(74,222,128,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(132,204,22,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,15,10,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(74,222,128,0.3);
+  }
+
+  .logo span { color: var(--accent); }
+
+  nav {
+    display: flex;
+    gap: 4px;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  nav button:hover { color: var(--green); background: rgba(74,222,128,0.06); }
+  nav button.active { color: var(--green); background: rgba(74,222,128,0.1); }
+
+  /* MAIN */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    overflow-x: hidden;
+    min-width: 0;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* PAGE HEADERS */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
+    letter-spacing: 3px;
+    color: var(--text);
+  }
+
+  .page-title span { color: var(--green); }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--green);
+    color: #0a0f0a;
+    font-weight: 600;
+  }
+
+  .btn-primary:hover { background: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(74,222,128,0.3); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .btn-danger {
+    background: transparent;
+    color: #f87171;
+    border: 1px solid #7f1d1d;
+  }
+
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+
+  .btn-sm { padding: 6px 12px; font-size: 0.7rem; }
+
+  /* GRID */
+  .strains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 1.25rem;
+  }
+
+  /* STRAIN CARD */
+  .strain-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .strain-card:hover {
+    border-color: var(--green-dim);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(74,222,128,0.12);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    padding: 1.25rem 1.25rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .strain-meta { flex: 1; min-width: 0; overflow: hidden; }
+
+  .strain-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .terpene-flower {
+    width: 56px;
+    height: 56px;
+  }
+
+  .strain-meta { flex: 1; min-width: 0; }
+
+  .strain-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .strain-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .strain-type.indica { background: rgba(139,92,246,0.15); color: var(--indica); border: 1px solid rgba(139,92,246,0.3); }
+  .strain-type.sativa { background: rgba(239,68,68,0.15); color: var(--sativa); border: 1px solid rgba(239,68,68,0.3); }
+  .strain-type.hybrid { background: rgba(34,197,94,0.15); color: var(--hybrid); border: 1px solid rgba(34,197,94,0.3); }
+
+  .card-cannabinoids {
+    padding: 0 1.25rem 1rem;
+    display: flex;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .card-cannabinoids .cannabinoid { min-width: 0; }
+
+  .cannabinoid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .cannabinoid-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .cannabinoid-bar-wrap {
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .cannabinoid-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  .thc-bar { background: linear-gradient(90deg, var(--green-dark), var(--green)); }
+  .cbd-bar { background: linear-gradient(90deg, #1e40af, var(--cbd-color)); }
+
+  .cannabinoid-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .card-terpenes {
+    padding: 0 1.25rem 1rem;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .terpene-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-dim);
+  }
+
+  .terpene-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .card-lineage {
+    padding: 0.75rem 1.25rem;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .lineage-label { color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
+
+  .card-stock {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stock-display { display: flex; align-items: center; gap: 8px; }
+
+  .stock-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+  }
+
+  .stock-val.high { color: var(--green); }
+  .stock-val.medium { color: var(--gold); }
+  .stock-val.low { color: #f87171; }
+
+  .stock-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+
+  .card-actions {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+
+  /* NOTES */
+  .card-notes {
+    padding: 0 1.25rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* EFFECTS TAGS */
+  .card-effects {
+    padding: 0 1.25rem 1rem;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .effect-tag {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.67rem;
+    font-family: 'DM Mono', monospace;
+    background: rgba(74,222,128,0.08);
+    color: var(--green-dim);
+    border: 1px solid rgba(74,222,128,0.15);
+    text-transform: capitalize;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: min(100%, 600px);
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    z-index: 1;
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+    color: var(--green);
+  }
+
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { border-color: #f87171; color: #f87171; }
+
+  .modal-body { padding: 1.5rem; }
+
+  /* FORM */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  input, select, textarea {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 2px rgba(74,222,128,0.1);
+  }
+
+  select option { background: #1c281c; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .terpenes-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .terpene-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    background: rgba(0,0,0,0.2);
+  }
+
+  .terpene-check:hover { border-color: var(--green-dim); }
+  .terpene-check input[type="checkbox"] { display: none; }
+  .terpene-check.selected { background: rgba(74,222,128,0.1); border-color: var(--green); }
+  .terpene-check .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .effects-input-wrap {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .effects-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .effect-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.2);
+    font-size: 0.72rem;
+    color: var(--green-dim);
+  }
+
+  .effect-chip .rm { cursor: pointer; opacity: 0.6; }
+  .effect-chip .rm:hover { opacity: 1; }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* DASHBOARD */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    transition: all 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--green-dim); }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    letter-spacing: 2px;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .stat-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 4px; }
+
+  /* PURCHASES */
+  .purchases-layout {
+    display: grid;
+    grid-template-columns: 1fr minmax(280px, 360px);
+    gap: 1.5rem;
+    align-items: start;
+    min-width: 0;
+  }
+  .purchases-layout > * { min-width: 0; }
+
+  .purchases-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .purchases-table th {
+    background: rgba(0,0,0,0.3);
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .purchases-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.88rem;
+    vertical-align: middle;
+  }
+
+  .purchases-table tr:hover td { background: rgba(74,222,128,0.03); }
+
+  /* CALENDAR */
+  .calendar-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .calendar-head {
+    background: rgba(0,0,0,0.3);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+
+  .cal-nav button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .cal-nav button:hover { border-color: var(--green); color: var(--green); }
+
+  .cal-body { padding: 1rem; }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .cal-weekday {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 4px;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .cal-day:hover { background: rgba(74,222,128,0.08); border-color: var(--border); }
+  .cal-day.has-purchase { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.25); color: var(--green); font-weight: 600; }
+  .cal-day.today { border-color: var(--gold); color: var(--gold); }
+  .cal-day.empty { cursor: default; pointer-events: none; }
+  .cal-day.selected { background: rgba(74,222,128,0.2); border-color: var(--green); }
+
+  .cal-day .day-dot {
+    position: absolute;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  .cal-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
+  .cal-stats { display: flex; gap: 1rem; }
+  .cal-stat-item { flex: 1; text-align: center; }
+  .cal-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; color: var(--green); }
+  .cal-stat-lbl { font-family: 'DM Mono', monospace; font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
+
+  /* CONVERTER */
+  .converter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 1rem;
+  }
+
+  .converter-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .converter-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    letter-spacing: 2px;
+    color: var(--green);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .converter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    min-width: 0;
+  }
+
+  .converter-row input { flex: 1; min-width: 0; width: 0; }
+  .converter-row .unit-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; white-space: nowrap; text-align: right; max-width: 80px; }
+
+  .converter-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  .price-table { width: 100%; table-layout: auto; }
+  .price-table td { padding: 4px 2px; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .price-table td:first-child { width: 60%; }
+  .price-table td:last-child { text-align: right; color: var(--green); font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+
+  /* ALERTS */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 0.5rem; }
+  .empty-sub { font-size: 0.85rem; }
+
+  /* TABLE WRAPPER */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* SEARCH BAR */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    align-items: center;
+  }
+
+  .search-row input { flex: 1; }
+
+  /* RATING STARS */
+  .stars { color: var(--gold); font-size: 0.9rem; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .section-label:first-child { margin-top: 0; }
+
+  /* TOOLTIP */
+  .tooltip-wrap { position: relative; display: inline-flex; }
+  .tooltip-text {
+    display: none;
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1c281c;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    z-index: 10;
+    color: var(--text-dim);
+  }
+  .tooltip-wrap:hover .tooltip-text { display: block; }
+
+  /* PURCHASE MODAL */
+  .purchase-strain-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .strain-select-item {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    transition: all 0.2s;
+    text-align: center;
+    background: rgba(0,0,0,0.2);
+  }
+
+  .strain-select-item:hover { border-color: var(--green); }
+  .strain-select-item.selected { background: rgba(74,222,128,0.12); border-color: var(--green); color: var(--green); }
+
+  /* RESPONSIVE */
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .purchases-layout { grid-template-columns: 1fr; }
+    .calendar-card { max-width: 100%; }
+  }
+  @media (max-width: 900px) {
+    .favorites-layout { grid-template-columns: 1fr; }
+    .lists-sidebar { position: static; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .converter-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    header { padding: 0 0.75rem; }
+    main { padding: 0.75rem; }
+    nav button { padding: 6px 8px; font-size: 0.62rem; letter-spacing: 0.5px; }
+    .logo { font-size: 1.4rem; }
+    .page-title { font-size: 1.8rem; }
+    .strains-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .purchases-table td:nth-child(4),
+    .purchases-table th:nth-child(4),
+    .purchases-table td:nth-child(6),
+    .purchases-table th:nth-child(6) { display: none; } /* hide price & source on mobile */
+    .fav-strains-grid { grid-template-columns: repeat(2, 1fr); }
+    .modal { max-height: 95vh; }
+    .lineage-modal { max-height: 95vh; }
+  }
+  @media (max-width: 480px) {
+    nav button { padding: 5px 6px; font-size: 0.58rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .fav-strains-grid { grid-template-columns: 1fr; }
+    .page-header { flex-wrap: wrap; gap: 0.5rem; }
+  }
+
+  /* ─── LINEAGE TREE ─── */
+  .lineage-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .lineage-modal-overlay.open { display: flex; }
+  .lineage-modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 860px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+  }
+  .lineage-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .lineage-modal-body {
+    overflow: auto;
+    flex: 1;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .lineage-tree-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .lineage-canvas-wrap svg {
+    min-width: 600px;
+    width: 100%;
+  }
+  .lineage-node {
+    cursor: default;
+    transition: all 0.2s;
+  }
+  .lineage-node:hover rect { stroke-width: 2; }
+  .lineage-node.root rect { stroke: var(--green) !important; }
+  
+  /* ─── SESSION NOTES ─── */
+  .session-notes-section {
+    padding: 0 1.25rem 1rem;
+  }
+  .session-notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .session-note-item {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-dark);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    position: relative;
+  }
+  .session-note-item .note-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .session-note-item .note-del {
+    cursor: pointer;
+    opacity: 0.5;
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .session-note-item .note-del:hover { opacity: 1; color: #f87171; }
+  .note-stars { color: var(--gold); font-size: 0.8rem; }
+  .note-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .note-add-row textarea {
+    flex: 1;
+    min-height: 56px;
+    font-size: 0.82rem;
+  }
+  .note-add-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .note-rating-select {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 6px 10px;
+    width: 80px;
+  }
+
+  /* ─── FAVORITES ─── */
+  .favorites-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .lists-sidebar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 80px;
+  }
+  .lists-sidebar-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.2);
+  }
+  .lists-sidebar-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+  .list-items-container { padding: 0.5rem; }
+  .list-item-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .list-item-row:hover { background: rgba(74,222,128,0.06); }
+  .list-item-row.active { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.25); }
+  .list-item-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .list-item-name {
+    flex: 1;
+    font-size: 0.88rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .list-item-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.3);
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .list-item-actions {
+    display: flex;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .list-item-row:hover .list-item-actions { opacity: 1; }
+  .list-mini-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+  }
+  .list-mini-btn:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+  .fav-content-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .fav-content-head {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.2);
+  }
+  .fav-content-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .fav-list-icon-big {
+    font-size: 1.5rem;
+    margin-right: 8px;
+  }
+  .fav-strains-grid {
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+    gap: 1rem;
+  }
+  .fav-strain-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+  }
+  .fav-strain-card:hover { border-color: var(--green-dim); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(74,222,128,0.1); }
+  .fav-strain-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1.5px; color: var(--text); }
+  .fav-strain-type { font-family: 'DM Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .fav-strain-thc { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--green); margin-top: 6px; }
+  .fav-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: all 0.2s;
+    padding: 3px 6px;
+    border-radius: 4px;
+  }
+  .fav-strain-card:hover .fav-remove-btn { opacity: 1; }
+  .fav-remove-btn:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+
+  .add-to-list-btn {
+    background: rgba(74,222,128,0.08);
+    border: 1px dashed rgba(74,222,128,0.3);
+    color: var(--green-dim);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .add-to-list-btn:hover { background: rgba(74,222,128,0.15); border-color: var(--green); }
+
+  /* Add-to-list dropdown */
+  .atl-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .atl-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 200px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 50;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .atl-menu.open { display: block; }
+  .atl-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.15s;
+  }
+  .atl-menu-item:hover { background: rgba(74,222,128,0.08); color: var(--green); }
+  .atl-menu-item.already-in { opacity: 0.4; cursor: default; }
+  .atl-menu-item.already-in:hover { background: none; color: var(--text); }
+
+  /* New list create modal */
+  .newlist-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1001;
+    align-items: center;
+    justify-content: center;
+  }
+  .newlist-modal.open { display: flex; }
+  .newlist-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+    animation: slideUp 0.25s ease;
+  }
+  .newlist-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    color: var(--green);
+    margin-bottom: 1rem;
+  }
+  .emoji-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0.5rem 0 1rem;
+  }
+  .emoji-opt {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    background: rgba(0,0,0,0.2);
+  }
+  .emoji-opt:hover, .emoji-opt.selected { border-color: var(--green); background: rgba(74,222,128,0.1); }
+
+  @media (max-width: 800px) {
+    .favorites-layout { grid-template-columns: 1fr; }
+    .lists-sidebar { position: static; }
+  }
+
+
+  /* ── OVERFLOW FIXES ── */
+  /* Global box-sizing safety */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* All flex/grid children must not overflow their container */
+  .strain-card, .stat-card, .converter-card, .calendar-card, .fav-strain-card { min-width: 0; }
+
+  /* Text truncation where needed */
+  .strain-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; }
+  .fav-strain-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .converter-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Wrapping text areas */
+  .card-notes, .session-note-item, .strain-meta { word-break: break-word; overflow-wrap: anywhere; }
+
+  /* Tables - auto layout so columns size to content */
+  .purchases-table { table-layout: auto; width: 100%; }
+  .purchases-table td, .purchases-table th { 
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 160px;
+  }
+  .purchases-table td:nth-child(1) { max-width: 100px; } /* date */
+  .purchases-table td:nth-child(2) { max-width: 140px; } /* strain */
+  .purchases-table td:nth-child(6) { max-width: 120px; } /* source */
+
+  /* Inputs never overflow their container */
+  input, select, textarea { max-width: 100%; box-sizing: border-box; }
+
+  /* Badges stay on one line but grid wraps them */
+  .terpene-badge, .effect-tag { white-space: nowrap; }
+  .card-terpenes, .card-effects { overflow: hidden; }
+
+  /* ── DRAGGABLE / RESIZABLE CARDS ── */
+  .draggable-card {
+    position: relative;
+    cursor: default;
+    user-select: none;
+  }
+  .drag-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    cursor: grab;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(180deg, rgba(74,222,128,0.06) 0%, transparent 100%);
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .draggable-card:hover .drag-handle { opacity: 1; }
+  .drag-handle-dots {
+    display: flex;
+    gap: 3px;
+    pointer-events: none;
+  }
+  .drag-handle-dots span {
+    display: block;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--green);
+    opacity: 0.5;
+  }
+
+  /* Converter grid becomes free-flow when dragging enabled */
+  #converter-freeform {
+    /* normal state: just a grid wrapper */
+  }
+  #converter-freeform.freeform-active {
+    position: relative;
+    min-height: 600px;
+  }
+  #converter-freeform.freeform-active .converter-card {
+    position: absolute;
+    min-width: 240px;
+    min-height: 160px;
+    resize: both;
+    overflow: auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    transition: box-shadow 0.2s;
+    width: auto !important;  /* override grid stretch */
+  }
+  #converter-freeform.freeform-active .converter-card:hover {
+    box-shadow: 0 8px 40px rgba(74,222,128,0.15);
+    z-index: 10;
+  }
+  #converter-freeform.freeform-active .converter-card.dragging {
+    box-shadow: 0 16px 60px rgba(74,222,128,0.25);
+    z-index: 100;
+    opacity: 0.95;
+  }
+
+  .freeform-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: none;
+    transition: all 0.2s;
+  }
+  .freeform-toggle:hover { color: var(--green); border-color: var(--green); }
+  .freeform-toggle.active { color: var(--green); border-color: var(--green); background: rgba(74,222,128,0.08); }
+  .freeform-toggle .toggle-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s;
+  }
+  .freeform-toggle.active .toggle-dot { background: var(--green); }
+
+  .resize-hint {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .converter-card:hover .resize-hint { opacity: 0.4; }
+  .resize-hint::before, .resize-hint::after {
+    content: '';
+    position: absolute;
+    background: var(--green);
+    border-radius: 1px;
+  }
+  .resize-hint::before { width: 8px; height: 1.5px; bottom: 4px; right: 0; }
+  .resize-hint::after { width: 1.5px; height: 8px; bottom: 0; right: 4px; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Cannabis<span>.</span></div>
+  <nav>
+    <button class="active" onclick="showTab('dashboard')">Dashboard</button>
+    <button onclick="showTab('strains')">Strains</button>
+    <button onclick="showTab('purchases')">Purchases</button>
+    <button onclick="showTab('converter')">Converter</button>
+    <button onclick="showTab('favorites')">Favorites</button>
+  </nav>
+</header>
+
+<main>
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-content active">
+    <div class="page-header">
+      <h1 class="page-title">Your <span>Stash</span></h1>
+      <button class="btn btn-primary" onclick="showTab('strains')">Manage Strains →</button>
+    </div>
+
+    <div class="stats-grid" id="dashboard-stats"></div>
+
+    <div class="section-label">Recent Purchases</div>
+    <div class="table-wrap" id="dashboard-recent"></div>
+
+    <div class="section-label">Current Inventory</div>
+    <div class="strains-grid" id="dashboard-inventory"></div>
+  </div>
+
+  <!-- STRAINS -->
+  <div id="tab-strains" class="tab-content">
+    <div class="page-header">
+      <h1 class="page-title">Strain <span>Library</span></h1>
+      <button class="btn btn-primary" onclick="openStrainModal()">+ Add Strain</button>
+    </div>
+
+    <div class="search-row">
+      <input type="text" id="strain-search" placeholder="Search strains..." oninput="renderStrains()" style="flex:1;min-width:120px;max-width:320px;">
+      <select id="strain-filter" onchange="renderStrains()" style="flex-shrink:0;">
+        <option value="all">All Types</option>
+        <option value="indica">Indica</option>
+        <option value="sativa">Sativa</option>
+        <option value="hybrid">Hybrid</option>
+      </select>
+    </div>
+
+    <div class="strains-grid" id="strains-container"></div>
+  </div>
+
+  <!-- PURCHASES -->
+  <div id="tab-purchases" class="tab-content">
+    <div class="page-header">
+      <h1 class="page-title">Purchase <span>Log</span></h1>
+      <button class="btn btn-primary" onclick="openPurchaseModal()">+ Log Purchase</button>
+    </div>
+
+    <div class="purchases-layout">
+      <div>
+        <div class="table-wrap">
+          <table class="purchases-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Strain</th>
+                <th>Amount</th>
+                <th>Price</th>
+                <th>$/g</th>
+                <th>Source</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="purchases-tbody"></tbody>
+          </table>
+          <div id="purchases-empty" class="empty-state" style="display:none;">
+            <div class="empty-icon">🛋️</div>
+            <div class="empty-title">No Purchases Yet</div>
+            <div class="empty-sub">Log your first purchase to get started</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="calendar-card">
+          <div class="calendar-head">
+            <span class="cal-title" id="cal-month-title"></span>
+            <div class="cal-nav">
+              <button onclick="calPrev()">◀</button>
+              &nbsp;
+              <button onclick="calNext()">▶</button>
+            </div>
+          </div>
+          <div class="cal-body">
+            <div class="cal-weekdays">
+              <div class="cal-weekday">Su</div>
+              <div class="cal-weekday">Mo</div>
+              <div class="cal-weekday">Tu</div>
+              <div class="cal-weekday">We</div>
+              <div class="cal-weekday">Th</div>
+              <div class="cal-weekday">Fr</div>
+              <div class="cal-weekday">Sa</div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+          </div>
+          <div class="cal-footer">
+            <div class="cal-stats">
+              <div class="cal-stat-item">
+                <div class="cal-stat-val" id="cal-month-grams">0g</div>
+                <div class="cal-stat-lbl">This Month</div>
+              </div>
+              <div class="cal-stat-item">
+                <div class="cal-stat-val" id="cal-day-avg">0g</div>
+                <div class="cal-stat-lbl">Per Day Avg</div>
+              </div>
+              <div class="cal-stat-item">
+                <div class="cal-stat-val" id="cal-month-spend">$0</div>
+                <div class="cal-stat-lbl">Month Spend</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERTER -->
+  <div id="tab-converter" class="tab-content">
+    <div class="page-header">
+      <h1 class="page-title">Weight <span>Converter</span></h1>
+      <button class="freeform-toggle" id="freeform-toggle-btn" onclick="toggleFreeform()"><span class="toggle-dot"></span>Free Arrange</button>
+    </div>
+
+    <div class="converter-grid" id="converter-freeform">
+      <!-- Weight Converter -->
+      <div class="converter-card">
+        <div class="converter-title">⚖ Weight Converter</div>
+        <div class="converter-row">
+          <input type="number" id="conv-g" placeholder="0" oninput="convertFrom('g')" step="0.01">
+          <span class="unit-label">Grams (g)</span>
+        </div>
+        <div class="converter-row">
+          <input type="number" id="conv-oz" placeholder="0" oninput="convertFrom('oz')" step="0.001">
+          <span class="unit-label">Ounces (oz)</span>
+        </div>
+        <div class="converter-row">
+          <input type="number" id="conv-lb" placeholder="0" oninput="convertFrom('lb')" step="0.0001">
+          <span class="unit-label">Pounds (lb)</span>
+        </div>
+        <hr class="converter-divider">
+        <div style="font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--text-muted); line-height:1.9; word-break:break-word;">
+          <div>⅛ oz (eighth) = 3.5435g</div>
+          <div>¼ oz (quarter) = 7.0874g</div>
+          <div>½ oz (half) = 14.1748g</div>
+          <div>1 oz = 28.3495g</div>
+          <div>1 lb = 453.592g = 16 oz</div>
+        </div>
+      </div>
+
+      <!-- Common Amounts Quick Ref -->
+      <div class="converter-card">
+        <div class="converter-title">💡 Common Amounts</div>
+        <table class="price-table">
+          <tr><td style="color:var(--text-dim)">Gram (1g)</td><td id="ppa-1g">—</td></tr>
+          <tr><td style="color:var(--text-dim)">Eighth (⅛ oz)</td><td id="ppa-eighth">—</td></tr>
+          <tr><td style="color:var(--text-dim)">Quarter (¼ oz)</td><td id="ppa-quarter">—</td></tr>
+          <tr><td style="color:var(--text-dim)">Half (½ oz)</td><td id="ppa-half">—</td></tr>
+          <tr><td style="color:var(--text-dim)">Ounce (1 oz)</td><td id="ppa-oz">—</td></tr>
+        </table>
+        <hr class="converter-divider">
+        <div class="section-label" style="margin-top:0">Price per gram calculator</div>
+        <div class="converter-row">
+          <input type="number" id="ppg-price" placeholder="Price paid ($)" step="0.01" oninput="calcPPG()">
+        </div>
+        <div class="converter-row">
+          <input type="number" id="ppg-grams" placeholder="Grams purchased" step="0.01" oninput="calcPPG()">
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:clamp(1.2rem,4vw,2rem); color:var(--green); letter-spacing:2px; margin-top:0.5rem;" id="ppg-result">$—/g</div>
+      </div>
+
+      <!-- Daily Use Calculator -->
+      <div class="converter-card">
+        <div class="converter-title">📅 Usage Calculator</div>
+        <div class="section-label" style="margin-top:0">How long will your stash last?</div>
+        <div class="converter-row">
+          <input type="number" id="usage-grams" placeholder="Total grams" step="0.01" oninput="calcUsage()">
+          <span class="unit-label">Grams</span>
+        </div>
+        <div class="converter-row">
+          <input type="number" id="usage-gpd" placeholder="Grams per day" step="0.1" oninput="calcUsage()">
+          <span class="unit-label">g/day</span>
+        </div>
+        <hr class="converter-divider">
+        <div id="usage-result" style="font-size:0.85rem; color:var(--text-dim); line-height:1.8;">
+          Enter values above to calculate
+        </div>
+      </div>
+
+      <!-- THC Dose Estimator -->
+      <div class="converter-card">
+        <div class="converter-title">🔬 THC Dose Estimator</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">Estimate active THC mg in a session. Bioavailability ~30% smoked.</div>
+        <div class="converter-row">
+          <input type="number" id="thc-amount" placeholder="Amount (g)" step="0.01" oninput="calcTHC()">
+          <span class="unit-label">Grams</span>
+        </div>
+        <div class="converter-row">
+          <input type="number" id="thc-pct" placeholder="THC %" step="0.1" oninput="calcTHC()" max="40">
+          <span class="unit-label">THC %</span>
+        </div>
+        <hr class="converter-divider">
+        <div id="thc-result" style="font-size:0.85rem; color:var(--text-dim); line-height:1.8;">
+          Enter values above to estimate
+        </div>
+        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.5rem;">⚠ Estimates only. Effects vary by individual.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAVORITES -->
+  <div id="tab-favorites" class="tab-content">
+    <div class="page-header">
+      <h1 class="page-title">My <span>Lists</span></h1>
+      <button class="btn btn-primary" onclick="openNewListModal()">+ New List</button>
+    </div>
+
+    <div class="favorites-layout">
+      <!-- Sidebar -->
+      <div class="lists-sidebar">
+        <div class="lists-sidebar-head">
+          <span class="lists-sidebar-title">Your Lists</span>
+          <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);" id="fav-list-count">0 lists</span>
+        </div>
+        <div class="list-items-container" id="fav-sidebar-lists"></div>
+      </div>
+
+      <!-- Content area -->
+      <div class="fav-content-area">
+        <div class="fav-content-head">
+          <div style="display:flex;align-items:center;">
+            <span class="fav-list-icon-big" id="fav-active-icon">📋</span>
+            <span class="fav-content-title" id="fav-active-title">Select a List</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="fav-edit-btn" onclick="editActiveList()" style="display:none;">✏ Edit</button>
+            <button class="btn btn-danger btn-sm" id="fav-del-btn" onclick="deleteActiveList()" style="display:none;">✕ Delete</button>
+          </div>
+        </div>
+        <div id="fav-content-body"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ADD STRAIN MODAL -->
+<div class="modal-overlay" id="strain-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="strain-modal-title">Add Strain</span>
+      <button class="modal-close" onclick="closeStrainModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Strain Name *</label>
+          <input type="text" id="f-name" placeholder="e.g. Blue Dream" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="f-type">
+            <option value="hybrid">Hybrid</option>
+            <option value="indica">Indica</option>
+            <option value="sativa">Sativa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Breeder / Brand</label>
+          <input type="text" id="f-breeder" placeholder="e.g. Cookies">
+        </div>
+        <div class="form-group">
+          <label>THC % (approx)</label>
+          <input type="number" id="f-thc" placeholder="e.g. 22" step="0.1" min="0" max="40">
+        </div>
+        <div class="form-group">
+          <label>CBD % (approx)</label>
+          <input type="number" id="f-cbd" placeholder="e.g. 0.5" step="0.1" min="0" max="30">
+        </div>
+        <div class="form-group full">
+          <label>Lineage / Parents</label>
+          <input type="text" id="f-lineage" placeholder="e.g. Blueberry × Haze">
+        </div>
+        <div class="form-group full">
+          <label>Terpene Profile</label>
+          <div class="terpenes-checkboxes" id="terpene-checks"></div>
+        </div>
+        <div class="form-group full">
+          <label>Effects (press Enter to add)</label>
+          <input type="text" id="f-effects-input" placeholder="e.g. Relaxed, Creative, Happy..." onkeydown="addEffect(event)">
+          <div class="effects-chips" id="f-effects-chips" style="margin-top:8px;"></div>
+        </div>
+        <div class="form-group">
+          <label>Current Stock (g)</label>
+          <input type="number" id="f-stock" placeholder="0" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>Rating (1-5)</label>
+          <input type="number" id="f-rating" placeholder="5" step="0.5" min="1" max="5">
+        </div>
+        <div class="form-group full">
+          <label>Notes / Review</label>
+          <textarea id="f-notes" placeholder="Aroma, flavor, personal observations..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeStrainModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStrain()">Save Strain</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE MODAL -->
+<div class="modal-overlay" id="purchase-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Log Purchase</span>
+      <button class="modal-close" onclick="closePurchaseModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Strain *</label>
+          <div class="purchase-strain-select" id="purchase-strain-list"></div>
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="p-date">
+        </div>
+        <div class="form-group">
+          <label>Source / Dispensary</label>
+          <input type="text" id="p-source" placeholder="e.g. Tokyo Smoke">
+        </div>
+        <div class="form-group">
+          <label>Amount (g) *</label>
+          <input type="number" id="p-grams" placeholder="3.5" step="0.01" min="0.01" oninput="calcPurchaseTotal()">
+        </div>
+        <div class="form-group">
+          <label>Price Paid ($)</label>
+          <input type="number" id="p-price" placeholder="35.00" step="0.01" min="0" oninput="calcPurchaseTotal()">
+        </div>
+        <div class="form-group full">
+          <div style="background:rgba(74,222,128,0.06); border:1px solid rgba(74,222,128,0.15); border-radius:8px; padding:10px 14px; display:flex; gap:1.5rem;">
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:1px;">$/gram</div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--green);" id="p-ppg-display">—</div>
+            </div>
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;text-transform:uppercase;color:var(--text-muted);letter-spacing:1px;">Equivalent oz</div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--text-dim);" id="p-oz-display">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="p-notes" placeholder="Batch notes, quality, etc..." style="min-height:60px;"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closePurchaseModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePurchase()">Log Purchase</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================
+// DATA STORE
+// =====================
+const TERPENES = [
+  { id: 'myrcene', name: 'Myrcene', color: '#3b82f6', desc: 'Earthy, musky' },
+  { id: 'limonene', name: 'Limonene', color: '#fbbf24', desc: 'Citrus' },
+  { id: 'caryophyllene', name: 'Caryophyllene', color: '#a855f7', desc: 'Spicy, woody' },
+  { id: 'pinene', name: 'Pinene', color: '#22c55e', desc: 'Pine, fresh' },
+  { id: 'terpinolene', name: 'Terpinolene', color: '#f97316', desc: 'Floral, herbal' },
+  { id: 'linalool', name: 'Linalool', color: '#ec4899', desc: 'Lavender, floral' },
+  { id: 'humulene', name: 'Humulene', color: '#14b8a6', desc: 'Hoppy, earthy' },
+  { id: 'ocimene', name: 'Ocimene', color: '#f59e0b', desc: 'Sweet, woody' },
+];
+
+const EFFECTS_PRESETS = ['Relaxed','Happy','Euphoric','Creative','Focused','Sleepy','Uplifted','Energetic','Hungry','Giggly','Talkative','Aroused'];
+
+function load(key, def) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch { return def; }
+}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+let strains = load('cannabis_strains', [
+  { id: 's1', name: 'Blue Dream', type: 'hybrid', breeder: 'Classic', thc: 21, cbd: 0.1, lineage: 'Blueberry × Haze', terpenes: ['myrcene', 'pinene', 'caryophyllene'], effects: ['Relaxed','Happy','Creative'], stock: 7, rating: 4.5, notes: 'Classic daytime strain. Sweet berry aroma with earthy undertones.', createdAt: Date.now() },
+  { id: 's2', name: 'Gorilla Glue #4', type: 'hybrid', breeder: 'GG Strains', thc: 28, cbd: 0.05, lineage: 'Chem\'s Sister × Sour Dubb × Chocolate Diesel', terpenes: ['caryophyllene', 'limonene', 'myrcene'], effects: ['Relaxed','Euphoric','Sleepy'], stock: 3.5, rating: 5, notes: 'Heavy hitter. Earthy diesel with a pungent punch.', createdAt: Date.now() },
+  { id: 's3', name: 'Sour Diesel', type: 'sativa', breeder: 'Unknown', thc: 19, cbd: 0.2, lineage: 'Chemdawg × Super Skunk', terpenes: ['limonene', 'caryophyllene', 'myrcene'], effects: ['Energetic','Uplifted','Creative'], stock: 0, rating: 4, notes: 'Fast-acting cerebral high. Gassy, diesel fuel scent.', createdAt: Date.now() },
+  { id: 'banana-punch-001', name: 'Banana Punch', type: 'hybrid', breeder: 'Symbiotic Genetics', thc: 22, cbd: 0.5, lineage: 'Banana OG × Purple Punch', terpenes: ['limonene', 'caryophyllene', 'myrcene'], effects: ['Happy','Relaxed','Tingly','Euphoric','Giggly'], stock: 0, rating: 4.5, notes: 'Bred by Symbiotic Genetics (California). True creeper strain — effects build slowly into full-body sedating relaxation. Flavor: ripe banana, tropical pineapple, hazy berries, citrus. Aroma: sweet/sour citrus with rich banana and earthy spice. Dense buds covered in purple and orange trichomes. THC range: 18-26%, CBD up to 1%, CBG up to 1%. Medical: stress, anxiety, chronic pain, appetite loss, insomnia, depression. Caution: potential couch-lock at high doses; start low. Deep lineage: Banana OG (OG Kush × Banana Kush) × Purple Punch (Granddaddy Purple × Larry OG). Granddaddy Purple = Purple Urkle × Big Bud. OG Kush = Chemdawg × (Lemon Thai × Hindu Kush). Flowering: 8-10 weeks, yield up to 53 oz outdoors. 50% indica / 50% sativa.', createdAt: Date.now() },
+  {
+    id: 'blockberry-001',
+    name: 'Blockberry',
+    type: 'hybrid',
+    breeder: 'Blockhead Budz',
+    thc: 28,
+    cbd: 0.3,
+    lineage: 'Black Cherry Punch × Tropicana Cookies',
+    terpenes: ['myrcene', 'limonene', 'caryophyllene'],
+    effects: ['Euphoric', 'Creative', 'Focused', 'Giggly', 'Relaxed'],
+    stock: 0,
+    rating: 0,
+    notes: 'Also known as Super Boof / Superboof — Leafly Strain of the Year 2024. Bred by Blockhead Budz (California, 2019). True 50/50 hybrid. Dense olive-green buds with deep purple hues and thick silver trichomes. Flavor: sweet berry, creamy vanilla, citrus orange, subtle blue cheese and chocolate finish. Aroma: earthy cherry, sweet citrus, musky undertones. THC 28–30%, CBD <1%, CBG up to 1.2%. Fast euphoric onset → creative focus → gentle body relaxation, no heavy couch-lock. Medical: depression, fibromyalgia, GI disorders, stress, chronic pain, anxiety, inflammation. Flowering 8–10 weeks. Lineage: Black Cherry Punch (Purple Punch × Black Cherry Pie) × Tropicana Cookies (GSC-derived citrus hybrid, Bloom Seed Co).',
+    createdAt: Date.now(),
+  },
+  {
+    id: 'block-party-001',
+    name: 'Block Party',
+    type: 'hybrid',
+    breeder: 'Blockhead Budz / THC Design',
+    thc: 24,
+    cbd: 0.11,
+    lineage: 'Super Sherb × Blockberry',
+    terpenes: ['caryophyllene', 'limonene', 'humulene'],
+    effects: ['Relaxed', 'Euphoric', 'Creative', 'Happy', 'Uplifted'],
+    stock: 0,
+    rating: 0,
+    notes: 'Also known as BlockParty. Balanced 50/50 hybrid — child of Blockberry (Super Boof) × Super Sherb. Third-generation Blockhead Budz genetics, also featured by THC Design (California). Compact plant under 4ft; responds well to topping and LST. Flavor: sweet fruity berry, creamy lemony pine on exhale, candy-like with tropical fruit. Aroma: peppery clove, diesel backbone with woody echo — bold and gassy. Terpenes: β-Caryophyllene (spice/anti-inflammatory), D-Limonene (citrus/mood lift), α-Humulene (woody/dry). THC ~24.5%, CBD ~0.11%, plus minor CBG. Effects: tingly calming onset, lifted happy euphoria with creativity, settles into buzzy relaxation without couch-lock. Medical: chronic stress, PTSD, chronic pain, inflammation, depression, mood swings. Flowering 9–11 weeks; 510g/m2 indoors, up to 539g/plant outdoors. Lineage depth: Super Sherb (Sherbert family) × Blockberry (Black Cherry Punch × Tropicana Cookies).',
+    createdAt: Date.now(),
+  },
+]);
+
+let purchases = load('cannabis_purchases', [
+  { id: 'p1', strainId: 's1', strainName: 'Blue Dream', date: '2026-02-15', source: 'Tokyo Smoke', grams: 7, price: 70, notes: 'Good batch.' },
+  { id: 'p2', strainId: 's2', strainName: 'Gorilla Glue #4', date: '2026-02-20', source: 'Fire & Flower', grams: 3.5, price: 40, notes: '' },
+  { id: 'p3', strainId: 's1', strainName: 'Blue Dream', date: '2026-03-01', source: 'Tokyo Smoke', grams: 3.5, price: 35, notes: 'Fresh delivery.' },
+]);
+
+let editingStrainId = null;
+let selectedEffects = [];
+let selectedTerpenes = [];
+let selectedPurchaseStrainId = null;
+
+// Calendar state
+let calDate = new Date();
+
+// =====================
+// TAB ROUTING
+// =====================
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const btns = document.querySelectorAll('nav button');
+  const tabMap = { dashboard: 0, strains: 1, purchases: 2, converter: 3, favorites: 4 };
+  btns[tabMap[tab]].classList.add('active');
+
+  if (tab === 'dashboard') renderDashboard();
+// Pre-render notes after strains are rendered
+setTimeout(renderAllNotes, 100);
+
+// Safe DOM event bindings (elements rendered after script tag)
+(function attachModalOverlayListeners() {
+  const lineageMod = document.getElementById('lineage-modal');
+  if (lineageMod) lineageMod.addEventListener('click', function(e) { if (e.target === this) closeLineageModal(); });
+
+  const newlistMod = document.getElementById('newlist-modal');
+  if (newlistMod) newlistMod.addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
+})();
+  if (tab === 'strains') renderStrains();
+  if (tab === 'purchases') { renderPurchases(); renderCalendar(); }
+  if (tab === 'favorites') renderFavorites();
+  if (tab === 'strains') renderStrains();
+}
+
+// =====================
+// TERPENE FLOWER SVG
+// =====================
+function renderFlower(terpenes, thc, cbd) {
+  const size = 56;
+  const cx = size / 2;
+  const cy = size / 2;
+  const terps = (terpenes || []).slice(0, 3);
+  const rings = [18, 13, 9];
+  let circles = '';
+
+  terps.forEach((tid, i) => {
+    const t = TERPENES.find(t => t.id === tid);
+    if (!t) return;
+    const r = rings[i];
+    const angle = (i * 120 - 90) * Math.PI / 180;
+    const dist = [10, 8, 6][i];
+    const px = cx + Math.cos(angle) * dist;
+    const py = cy + Math.sin(angle) * dist;
+    circles += `<circle cx="${px}" cy="${py}" r="${r}" fill="${t.color}" opacity="${0.35 - i*0.08}"/>`;
+  });
+
+  // Center: THC diamond or CBD circle
+  const thcPct = thc || 0;
+  const cbdPct = cbd || 0;
+  const dominant = thcPct >= cbdPct ? 'thc' : 'cbd';
+  const size1 = Math.min(10, 5 + (Math.max(thcPct, cbdPct) / 40) * 6);
+
+  let center = '';
+  if (dominant === 'thc') {
+    const d = size1;
+    center = `<polygon points="${cx},${cy-d} ${cx+d},${cy} ${cx},${cy+d} ${cx-d},${cy}" fill="#4ade80" opacity="0.9"/>`;
+  } else {
+    center = `<circle cx="${cx}" cy="${cy}" r="${size1}" fill="#60a5fa" opacity="0.9"/>`;
+  }
+
+  return `<svg class="terpene-flower" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cy}" r="${size/2-1}" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+    ${circles}
+    ${center}
+  </svg>`;
+}
+
+// =====================
+// STRAINS
+// =====================
+function renderStrains() {
+  const container = document.getElementById('strains-container');
+  const search = (document.getElementById('strain-search')?.value || '').toLowerCase();
+  const filter = document.getElementById('strain-filter')?.value || 'all';
+
+  let filtered = strains.filter(s => {
+    const matchSearch = s.name.toLowerCase().includes(search) || (s.lineage||'').toLowerCase().includes(search);
+    const matchType = filter === 'all' || s.type === filter;
+    return matchSearch && matchType;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">🌿</div>
+      <div class="empty-title">No Strains Found</div>
+      <div class="empty-sub">Add your first strain or adjust filters</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(s => strainCard(s)).join('');
+  setTimeout(renderAllNotes, 0);
+}
+
+function strainCard(s) {
+  const thcPct = s.thc || 0;
+  const cbdPct = s.cbd || 0;
+  const terpsHtml = (s.terpenes || []).slice(0, 3).map(tid => {
+    const t = TERPENES.find(t => t.id === tid);
+    if (!t) return '';
+    return `<div class="terpene-badge"><div class="terpene-dot" style="background:${t.color}"></div>${t.name}</div>`;
+  }).join('');
+
+  const effectsHtml = (s.effects || []).slice(0, 4).map(e => `<span class="effect-tag">${e}</span>`).join('');
+  const stockClass = s.stock > 7 ? 'high' : s.stock > 2 ? 'medium' : s.stock > 0 ? 'low' : 'low';
+  const stars = '★'.repeat(Math.floor(s.rating||0)) + (((s.rating||0)%1)>=0.5?'½':'') + '☆'.repeat(5-Math.ceil(s.rating||0));
+  const typeIcon = { indica: '🔵', sativa: '🔴', hybrid: '🟢' }[s.type] || '🟢';
+
+  return `<div class="strain-card">
+    <div class="card-header">
+      <div class="strain-icon">${renderFlower(s.terpenes, s.thc, s.cbd)}</div>
+      <div class="strain-meta">
+        <div class="strain-name" title="${s.name}">${s.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <div class="strain-type ${s.type}">${typeIcon} ${s.type}</div>
+          ${s.rating ? `<div class="stars" style="font-size:0.7rem;">${'★'.repeat(Math.floor(s.rating))}${(s.rating%1)>=0.5?'½':''}${'☆'.repeat(5-Math.ceil(s.rating))}</div>` : ''}
+        </div>
+        ${s.breeder ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;font-family:'DM Mono',monospace;">${s.breeder}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="card-cannabinoids">
+      <div class="cannabinoid">
+        <div class="cannabinoid-label">THC ${thcPct}%</div>
+        <div class="cannabinoid-bar-wrap"><div class="cannabinoid-bar thc-bar" style="width:${Math.min(100,(thcPct/35)*100)}%"></div></div>
+      </div>
+      <div class="cannabinoid">
+        <div class="cannabinoid-label">CBD ${cbdPct}%</div>
+        <div class="cannabinoid-bar-wrap"><div class="cannabinoid-bar cbd-bar" style="width:${Math.min(100,(cbdPct/20)*100)}%"></div></div>
+      </div>
+    </div>
+
+    ${terpsHtml ? `<div class="card-terpenes">${terpsHtml}</div>` : ''}
+    ${s.lineage ? `<div class="card-lineage"><div class="lineage-label">Lineage</div><div style="margin-top:4px;font-size:0.82rem;">${s.lineage}</div></div>` : ''}
+    ${effectsHtml ? `<div class="card-effects">${effectsHtml}</div>` : ''}
+    ${s.notes ? `<div class="card-notes">"${s.notes}"</div>` : ''}
+
+    <div class="card-stock">
+      <div class="stock-display">
+        <div>
+          <div class="stock-val ${stockClass}">${(s.stock||0).toFixed(1)}<span style="font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0;"> g</span></div>
+          <div class="stock-label">In Stock</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text-muted);">${(s.stock||0).toFixed(2)}g = ${((s.stock||0)/28.3495).toFixed(3)} oz</div>
+        ${s.stock > 0 ? `<div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);">${((s.stock||0)/3.5435).toFixed(1)} eighths</div>` : ''}
+      </div>
+    </div>
+
+    <div class="session-notes-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-family:'DM Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);">Session Notes</span>
+        <button style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:0.65rem;padding:3px 8px;cursor:pointer;" onclick="toggleAddNote('${s.id}')">+ Note</button>
+      </div>
+      <div class="session-notes-list" id="notes-list-${s.id}"></div>
+      <div id="note-add-form-${s.id}" style="display:none;margin-top:8px;">
+        <textarea id="note-text-${s.id}" placeholder="Session notes, flavor, effects, vibes..." style="width:100%;min-height:60px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:8px 10px;outline:none;resize:vertical;margin-bottom:6px;"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="note-rating-${s.id}" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.78rem;padding:6px 10px;outline:none;">
+            <option value="">No rating</option>
+            <option value="5">5 Stars</option>
+            <option value="4.5">4.5 Stars</option>
+            <option value="4">4 Stars</option>
+            <option value="3.5">3.5 Stars</option>
+            <option value="3">3 Stars</option>
+            <option value="2">2 Stars</option>
+            <option value="1">1 Star</option>
+          </select>
+          <button style="background:var(--green);border:none;border-radius:8px;color:#0a0f0a;font-family:'DM Mono',monospace;font-size:0.7rem;font-weight:600;padding:7px 14px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;" onclick="saveNote('${s.id}')">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openStrainModal('${s.id}')">Edit</button>
+      <button class="btn btn-ghost btn-sm" onclick="openLineageModal('${s.id}')">Lineage</button>
+      <button class="btn btn-ghost btn-sm" onclick="adjustStock('${s.id}')">Stock</button>
+      <div style="position:relative;display:inline-block;">
+        <button class="btn btn-ghost btn-sm" onclick="toggleAtlMenu(event,'${s.id}')">+ List</button>
+        <div class="atl-menu" id="atl-${s.id}"></div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteStrain('${s.id}')">Remove</button>
+    </div>
+  </div>`;
+}
+
+function adjustStock(id) {
+  const s = strains.find(s => s.id === id);
+  if (!s) return;
+  const val = prompt(`Update stock for ${s.name}.\nCurrent: ${s.stock}g\nEnter new amount in grams:`, s.stock);
+  if (val === null) return;
+  const num = parseFloat(val);
+  if (isNaN(num) || num < 0) { alert('Invalid amount'); return; }
+  s.stock = num;
+  save('cannabis_strains', strains);
+  renderStrains();
+}
+
+// =====================
+// STRAIN MODAL
+// =====================
+function buildTerpeneChecks() {
+  const container = document.getElementById('terpene-checks');
+  container.innerHTML = TERPENES.map(t => `
+    <label class="terpene-check ${selectedTerpenes.includes(t.id) ? 'selected' : ''}" onclick="toggleTerpene('${t.id}', this)">
+      <input type="checkbox" ${selectedTerpenes.includes(t.id) ? 'checked' : ''}>
+      <div class="dot" style="background:${t.color}"></div>
+      <span>${t.name}</span>
+    </label>
+  `).join('');
+}
+
+function toggleTerpene(id, el) {
+  if (selectedTerpenes.includes(id)) {
+    selectedTerpenes = selectedTerpenes.filter(t => t !== id);
+    el.classList.remove('selected');
+  } else {
+    if (selectedTerpenes.length < 3) {
+      selectedTerpenes.push(id);
+      el.classList.add('selected');
+    } else {
+      alert('Max 3 terpenes (primary, secondary, tertiary)');
+    }
+  }
+}
+
+function openStrainModal(id = null) {
+  editingStrainId = id;
+  selectedEffects = [];
+  selectedTerpenes = [];
+
+  if (id) {
+    const s = strains.find(s => s.id === id);
+    if (!s) return;
+    document.getElementById('strain-modal-title').textContent = 'Edit Strain';
+    document.getElementById('f-name').value = s.name || '';
+    document.getElementById('f-type').value = s.type || 'hybrid';
+    document.getElementById('f-breeder').value = s.breeder || '';
+    document.getElementById('f-thc').value = s.thc || '';
+    document.getElementById('f-cbd').value = s.cbd || '';
+    document.getElementById('f-lineage').value = s.lineage || '';
+    document.getElementById('f-stock').value = s.stock || '';
+    document.getElementById('f-rating').value = s.rating || '';
+    document.getElementById('f-notes').value = s.notes || '';
+    selectedEffects = [...(s.effects || [])];
+    selectedTerpenes = [...(s.terpenes || [])];
+  } else {
+    document.getElementById('strain-modal-title').textContent = 'Add Strain';
+    ['f-name','f-type','f-breeder','f-thc','f-cbd','f-lineage','f-stock','f-rating','f-notes','f-effects-input'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el.tagName === 'SELECT') el.value = 'hybrid'; else el.value = '';
+    });
+  }
+
+  buildTerpeneChecks();
+  renderEffectChips();
+  document.getElementById('strain-modal').classList.add('open');
+}
+
+function closeStrainModal() { document.getElementById('strain-modal').classList.remove('open'); }
+
+function addEffect(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('f-effects-input');
+  const val = input.value.trim();
+  if (val && !selectedEffects.includes(val)) {
+    selectedEffects.push(val);
+    renderEffectChips();
+  }
+  input.value = '';
+}
+
+function renderEffectChips() {
+  const container = document.getElementById('f-effects-chips');
+  container.innerHTML = selectedEffects.map(e => `
+    <div class="effect-chip">
+      ${e} <span class="rm" onclick="removeEffect('${e}')">×</span>
+    </div>
+  `).join('');
+}
+
+function removeEffect(e) {
+  selectedEffects = selectedEffects.filter(x => x !== e);
+  renderEffectChips();
+}
+
+function saveStrain() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Strain name is required'); return; }
+
+  const data = {
+    name,
+    type: document.getElementById('f-type').value,
+    breeder: document.getElementById('f-breeder').value.trim(),
+    thc: parseFloat(document.getElementById('f-thc').value) || 0,
+    cbd: parseFloat(document.getElementById('f-cbd').value) || 0,
+    lineage: document.getElementById('f-lineage').value.trim(),
+    terpenes: [...selectedTerpenes],
+    effects: [...selectedEffects],
+    stock: parseFloat(document.getElementById('f-stock').value) || 0,
+    rating: parseFloat(document.getElementById('f-rating').value) || 0,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+
+  if (editingStrainId) {
+    const idx = strains.findIndex(s => s.id === editingStrainId);
+    if (idx !== -1) strains[idx] = { ...strains[idx], ...data };
+  } else {
+    strains.push({ id: 'str_' + Date.now(), createdAt: Date.now(), ...data });
+  }
+
+  save('cannabis_strains', strains);
+  closeStrainModal();
+  renderStrains();
+}
+
+function deleteStrain(id) {
+  if (!confirm('Delete this strain?')) return;
+  strains = strains.filter(s => s.id !== id);
+  save('cannabis_strains', strains);
+  renderStrains();
+}
+
+// =====================
+// PURCHASES
+// =====================
+function renderPurchases() {
+  const tbody = document.getElementById('purchases-tbody');
+  const empty = document.getElementById('purchases-empty');
+
+  if (!purchases.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const sorted = [...purchases].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  tbody.innerHTML = sorted.map(p => {
+    const ppg = p.price && p.grams ? (p.price / p.grams).toFixed(2) : '—';
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim);">${p.date}</td>
+      <td><span style="color:var(--green);font-weight:500;">${p.strainName}</span></td>
+      <td style="font-family:'DM Mono',monospace;">${p.grams}g<span style="color:var(--text-muted);font-size:0.72rem;"> (${(p.grams/28.3495).toFixed(3)}oz)</span></td>
+      <td style="font-family:'DM Mono',monospace;color:var(--gold);">${p.price ? '$'+p.price.toFixed(2) : '—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim);">${ppg !== '—' ? '$'+ppg : '—'}</td>
+      <td style="font-size:0.8rem;color:var(--text-dim);">${p.source || '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deletePurchase('${p.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openPurchaseModal() {
+  selectedPurchaseStrainId = null;
+  const list = document.getElementById('purchase-strain-list');
+
+  if (!strains.length) {
+    alert('Add at least one strain first');
+    showTab('strains');
+    openStrainModal();
+    return;
+  }
+
+  list.innerHTML = strains.map(s => `
+    <div class="strain-select-item" id="psi-${s.id}" onclick="selectPurchaseStrain('${s.id}')">
+      <div style="font-weight:500;">${s.name}</div>
+      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">${s.type} · ${s.thc}% THC</div>
+    </div>
+  `).join('');
+
+  document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('p-grams').value = '';
+  document.getElementById('p-price').value = '';
+  document.getElementById('p-source').value = '';
+  document.getElementById('p-notes').value = '';
+  document.getElementById('p-ppg-display').textContent = '—';
+  document.getElementById('p-oz-display').textContent = '—';
+
+  document.getElementById('purchase-modal').classList.add('open');
+}
+
+function selectPurchaseStrain(id) {
+  selectedPurchaseStrainId = id;
+  document.querySelectorAll('.strain-select-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('psi-' + id)?.classList.add('selected');
+}
+
+function closePurchaseModal() { document.getElementById('purchase-modal').classList.remove('open'); }
+
+function calcPurchaseTotal() {
+  const g = parseFloat(document.getElementById('p-grams').value);
+  const p = parseFloat(document.getElementById('p-price').value);
+  if (g && p) {
+    document.getElementById('p-ppg-display').textContent = '$' + (p/g).toFixed(2) + '/g';
+  }
+  if (g) {
+    document.getElementById('p-oz-display').textContent = (g/28.3495).toFixed(3) + ' oz';
+  }
+}
+
+function savePurchase() {
+  if (!selectedPurchaseStrainId) { alert('Please select a strain'); return; }
+  const strain = strains.find(s => s.id === selectedPurchaseStrainId);
+  if (!strain) return;
+
+  const grams = parseFloat(document.getElementById('p-grams').value);
+  if (!grams || grams <= 0) { alert('Enter a valid amount'); return; }
+
+  const dateVal = document.getElementById('p-date').value;
+  if (!dateVal) { alert('Enter a date'); return; }
+
+  const price = parseFloat(document.getElementById('p-price').value) || 0;
+
+  const purchase = {
+    id: 'p_' + Date.now(),
+    strainId: selectedPurchaseStrainId,
+    strainName: strain.name,
+    date: dateVal,
+    source: document.getElementById('p-source').value.trim(),
+    grams,
+    price,
+    notes: document.getElementById('p-notes').value.trim(),
+  };
+
+  purchases.push(purchase);
+
+  // Update stock
+  strain.stock = (strain.stock || 0) + grams;
+  save('cannabis_strains', strains);
+  save('cannabis_purchases', purchases);
+  closePurchaseModal();
+  renderPurchases();
+  renderCalendar();
+}
+
+function deletePurchase(id) {
+  if (!confirm('Remove this purchase?')) return;
+  purchases = purchases.filter(p => p.id !== id);
+  save('cannabis_purchases', purchases);
+  renderPurchases();
+  renderCalendar();
+}
+
+// =====================
+// CALENDAR
+// =====================
+function renderCalendar() {
+  const now = calDate;
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  document.getElementById('cal-month-title').textContent = `${months[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Build day → purchases map
+  const dayMap = {};
+  purchases.forEach(p => {
+    const pd = new Date(p.date + 'T00:00:00');
+    if (pd.getFullYear() === year && pd.getMonth() === month) {
+      const d = pd.getDate();
+      if (!dayMap[d]) dayMap[d] = { grams: 0, price: 0 };
+      dayMap[d].grams += p.grams || 0;
+      dayMap[d].price += p.price || 0;
+    }
+  });
+
+  const today = new Date();
+  const grid = document.getElementById('cal-grid');
+  let html = '';
+
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+    const hasPurchase = !!dayMap[d];
+    const cls = ['cal-day', isToday ? 'today' : '', hasPurchase ? 'has-purchase' : ''].filter(Boolean).join(' ');
+    const tip = hasPurchase ? ` title="${dayMap[d].grams.toFixed(1)}g purchased"` : '';
+    html += `<div class="${cls}"${tip}>${d}${hasPurchase ? '<div class="day-dot"></div>' : ''}</div>`;
+  }
+
+  grid.innerHTML = html;
+
+  // Stats
+  let monthGrams = 0, monthSpend = 0;
+  Object.values(dayMap).forEach(v => { monthGrams += v.grams; monthSpend += v.price; });
+  const daysWithPurchase = Object.keys(dayMap).length;
+  const dayAvg = daysWithPurchase > 0 ? (monthGrams / daysInMonth) : 0;
+
+  document.getElementById('cal-month-grams').textContent = monthGrams.toFixed(1) + 'g';
+  document.getElementById('cal-day-avg').textContent = dayAvg.toFixed(2) + 'g';
+  document.getElementById('cal-month-spend').textContent = '$' + monthSpend.toFixed(0);
+}
+
+function calPrev() { calDate = new Date(calDate.getFullYear(), calDate.getMonth() - 1, 1); renderCalendar(); }
+function calNext() { calDate = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 1); renderCalendar(); }
+
+// =====================
+// DASHBOARD
+// =====================
+function renderDashboard() {
+  // Stats
+  const totalStrains = strains.length;
+  const totalStock = strains.reduce((a, s) => a + (s.stock || 0), 0);
+  const totalSpent = purchases.reduce((a, p) => a + (p.price || 0), 0);
+  const totalGramsBought = purchases.reduce((a, p) => a + (p.grams || 0), 0);
+
+  // This month
+  const now = new Date();
+  const monthPurchases = purchases.filter(p => {
+    const pd = new Date(p.date + 'T00:00:00');
+    return pd.getMonth() === now.getMonth() && pd.getFullYear() === now.getFullYear();
+  });
+  const monthGrams = monthPurchases.reduce((a, p) => a + (p.grams || 0), 0);
+  const daysThisMonth = now.getDate();
+  const gpd = daysThisMonth > 0 ? (monthGrams / daysThisMonth) : 0;
+
+  document.getElementById('dashboard-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Strains Tracked</div><div class="stat-value">${totalStrains}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Stock</div><div class="stat-value">${totalStock.toFixed(1)}<span style="font-family:'DM Mono',monospace;font-size:1rem;">g</span></div><div class="stat-sub">${(totalStock/28.3495).toFixed(2)} oz</div></div>
+    <div class="stat-card"><div class="stat-label">This Month (g)</div><div class="stat-value">${monthGrams.toFixed(1)}<span style="font-family:'DM Mono',monospace;font-size:1rem;">g</span></div><div class="stat-sub">${gpd.toFixed(2)} g/day avg</div></div>
+    <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" style="color:var(--gold)">$${totalSpent.toFixed(0)}</div><div class="stat-sub">${totalGramsBought > 0 ? '$'+(totalSpent/totalGramsBought).toFixed(2)+'/g avg' : ''}</div></div>
+  `;
+
+  // Recent purchases
+  const recent = [...purchases].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,5);
+  if (recent.length) {
+    document.getElementById('dashboard-recent').innerHTML = `<table class="purchases-table"><thead><tr><th>Date</th><th>Strain</th><th>Amount</th><th>Price</th><th>Source</th></tr></thead><tbody>
+      ${recent.map(p => `<tr>
+        <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-dim);">${p.date}</td>
+        <td style="color:var(--green)">${p.strainName}</td>
+        <td style="font-family:'DM Mono',monospace;">${p.grams}g</td>
+        <td style="font-family:'DM Mono',monospace;color:var(--gold);">${p.price ? '$'+p.price.toFixed(2) : '—'}</td>
+        <td style="font-size:0.8rem;color:var(--text-dim);">${p.source || '—'}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  } else {
+    document.getElementById('dashboard-recent').innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No Purchases</div></div>`;
+  }
+
+  // Inventory with stock > 0
+  const inStock = strains.filter(s => s.stock > 0);
+  if (inStock.length) {
+    document.getElementById('dashboard-inventory').innerHTML = inStock.map(s => strainCard(s)).join('');
+  } else {
+    document.getElementById('dashboard-inventory').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📦</div><div class="empty-title">Nothing in Stock</div><div class="empty-sub">Log a purchase to add to your inventory</div></div>`;
+  }
+}
+
+// =====================
+// CONVERTER
+// =====================
+function convertFrom(unit) {
+  const g = document.getElementById('conv-g');
+  const oz = document.getElementById('conv-oz');
+  const lb = document.getElementById('conv-lb');
+
+  let grams = 0;
+  if (unit === 'g') grams = parseFloat(g.value) || 0;
+  else if (unit === 'oz') grams = (parseFloat(oz.value) || 0) * 28.3495;
+  else if (unit === 'lb') grams = (parseFloat(lb.value) || 0) * 453.592;
+
+  if (unit !== 'g') g.value = grams ? grams.toFixed(3) : '';
+  if (unit !== 'oz') oz.value = grams ? (grams / 28.3495).toFixed(4) : '';
+  if (unit !== 'lb') lb.value = grams ? (grams / 453.592).toFixed(5) : '';
+}
+
+function calcPPG() {
+  const p = parseFloat(document.getElementById('ppg-price').value) || 0;
+  const g = parseFloat(document.getElementById('ppg-grams').value) || 0;
+  const ppg = g > 0 ? p / g : 0;
+  document.getElementById('ppg-result').textContent = ppg > 0 ? '$' + ppg.toFixed(2) + '/g' : '$—/g';
+
+  if (ppg > 0) {
+    document.getElementById('ppa-1g').textContent = '$' + (ppg * 1).toFixed(2);
+    document.getElementById('ppa-eighth').textContent = '$' + (ppg * 3.5435).toFixed(2);
+    document.getElementById('ppa-quarter').textContent = '$' + (ppg * 7.0874).toFixed(2);
+    document.getElementById('ppa-half').textContent = '$' + (ppg * 14.1748).toFixed(2);
+    document.getElementById('ppa-oz').textContent = '$' + (ppg * 28.3495).toFixed(2);
+  }
+}
+
+function calcUsage() {
+  const g = parseFloat(document.getElementById('usage-grams').value) || 0;
+  const gpd = parseFloat(document.getElementById('usage-gpd').value) || 0;
+  const result = document.getElementById('usage-result');
+
+  if (!g || !gpd) { result.textContent = 'Enter values above to calculate'; return; }
+
+  const days = g / gpd;
+  const weeks = days / 7;
+  const months = days / 30;
+
+  result.innerHTML = `
+    <div>📅 <strong style="color:var(--green)">${days.toFixed(1)} days</strong></div>
+    <div>📅 ${weeks.toFixed(1)} weeks</div>
+    <div>📅 ${months.toFixed(2)} months</div>
+    <hr style="border-color:var(--border);margin:8px 0;">
+    <div style="font-size:0.75rem;color:var(--text-muted);">At ${gpd}g/day with ${g}g total</div>
+  `;
+}
+
+function calcTHC() {
+  const g = parseFloat(document.getElementById('thc-amount').value) || 0;
+  const pct = parseFloat(document.getElementById('thc-pct').value) || 0;
+  const result = document.getElementById('thc-result');
+
+  if (!g || !pct) { result.textContent = 'Enter values above to estimate'; return; }
+
+  const totalMg = g * 1000 * (pct / 100);
+  const absorbed = totalMg * 0.30; // ~30% bioavailability smoked
+
+  result.innerHTML = `
+    <div>Total THC: <strong style="color:var(--text)">${totalMg.toFixed(0)} mg</strong></div>
+    <div>Est. absorbed (~30%): <strong style="color:var(--green)">${absorbed.toFixed(0)} mg</strong></div>
+    <hr style="border-color:var(--border);margin:8px 0;">
+    <div style="font-size:0.72rem;color:var(--text-muted);">Beginner: 2-5mg active | Moderate: 5-15mg | High: 15mg+</div>
+  `;
+}
+
+
+
+// =====================
+// SESSION NOTES
+// =====================
+let sessionNotes = load('cannabis_session_notes', {});
+// sessionNotes = { strainId: [ { id, date, text, rating, timestamp } ] }
+
+function toggleAddNote(strainId) {
+  const form = document.getElementById('note-add-form-' + strainId);
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveNote(strainId) {
+  const textEl = document.getElementById('note-text-' + strainId);
+  const ratingEl = document.getElementById('note-rating-' + strainId);
+  const text = textEl ? textEl.value.trim() : '';
+  if (!text) { alert('Write something first!'); return; }
+
+  const note = {
+    id: 'n_' + Date.now(),
+    date: new Date().toISOString().split('T')[0],
+    timestamp: Date.now(),
+    text,
+    rating: ratingEl ? parseFloat(ratingEl.value) || 0 : 0,
+  };
+
+  if (!sessionNotes[strainId]) sessionNotes[strainId] = [];
+  sessionNotes[strainId].unshift(note);
+  save('cannabis_session_notes', sessionNotes);
+
+  // Reset form
+  if (textEl) textEl.value = '';
+  if (ratingEl) ratingEl.value = '';
+  const form = document.getElementById('note-add-form-' + strainId);
+  if (form) form.style.display = 'none';
+
+  renderNotesForStrain(strainId);
+}
+
+function deleteNote(strainId, noteId) {
+  if (!sessionNotes[strainId]) return;
+  sessionNotes[strainId] = sessionNotes[strainId].filter(n => n.id !== noteId);
+  save('cannabis_session_notes', sessionNotes);
+  renderNotesForStrain(strainId);
+}
+
+function renderNotesForStrain(strainId) {
+  const container = document.getElementById('notes-list-' + strainId);
+  if (!container) return;
+  const notes = sessionNotes[strainId] || [];
+  if (!notes.length) {
+    container.innerHTML = '<div style="font-size:0.75rem;color:var(--text-muted);font-style:italic;padding:4px 0;">No notes yet. Add your first session note!</div>';
+    return;
+  }
+  container.innerHTML = notes.map(n => {
+    const stars = n.rating ? (' · ' + '★'.repeat(Math.floor(n.rating)) + (n.rating % 1 >= 0.5 ? '½' : '') + '☆'.repeat(5 - Math.ceil(n.rating))) : '';
+    return `<div class="session-note-item">
+      <div class="note-meta">
+        <span>${n.date}${stars ? '<span style="color:var(--gold);">' + stars + '</span>' : ''}</span>
+        <span class="note-del" onclick="deleteNote('${strainId}','${n.id}')">✕</span>
+      </div>
+      <div>${n.text}</div>
+    </div>`;
+  }).join('');
+}
+
+// Render notes for all visible strain cards
+function renderAllNotes() {
+  strains.forEach(s => renderNotesForStrain(s.id));
+}
+
+// =====================
+// LINEAGE TREE
+// =====================
+
+// Parse lineage string into a tree structure
+// Format: "Parent A × Parent B" or deeper "Child (P1 × P2) × (P3 × P4)"
+function parseLineageTree(strain) {
+  // Build a nested tree from what we know
+  // For known strains we'll provide deep lineage
+  const deepLineages = {
+    'Banana Punch': {
+      name: 'Banana Punch',
+      type: strain.type,
+      children: [
+        {
+          name: 'Banana OG',
+          type: 'hybrid',
+          children: [
+            { name: 'OG Kush', type: 'hybrid', children: [
+              { name: 'Chemdawg', type: 'hybrid', children: [] },
+              { name: 'Lemon Thai × Hindu Kush', type: 'hybrid', children: [] },
+            ]},
+            { name: 'Banana Kush', type: 'indica', children: [] },
+          ]
+        },
+        {
+          name: 'Purple Punch',
+          type: 'indica',
+          children: [
+            { name: 'Granddaddy Purple', type: 'indica', children: [
+              { name: 'Purple Urkle', type: 'indica', children: [] },
+              { name: 'Big Bud', type: 'indica', children: [] },
+            ]},
+            { name: 'Larry OG', type: 'hybrid', children: [] },
+          ]
+        }
+      ]
+    },
+    'Blue Dream': {
+      name: 'Blue Dream',
+      type: strain.type,
+      children: [
+        { name: 'Blueberry', type: 'indica', children: [
+          { name: 'Purple Thai', type: 'sativa', children: [] },
+          { name: 'Afghani', type: 'indica', children: [] },
+        ]},
+        { name: 'Haze', type: 'sativa', children: [
+          { name: 'Colombian', type: 'sativa', children: [] },
+          { name: 'Mexican × Thai', type: 'sativa', children: [] },
+        ]},
+      ]
+    },
+    'Gorilla Glue #4': {
+      name: 'Gorilla Glue #4',
+      type: strain.type,
+      children: [
+        { name: "Chem's Sister", type: 'hybrid', children: [
+          { name: 'Chemdawg', type: 'hybrid', children: [] },
+        ]},
+        { name: 'Sour Dubb', type: 'hybrid', children: [] },
+        { name: 'Chocolate Diesel', type: 'hybrid', children: [] },
+      ]
+    },
+    'Sour Diesel': {
+      name: 'Sour Diesel',
+      type: strain.type,
+      children: [
+        { name: 'Chemdawg', type: 'hybrid', children: [
+          { name: 'Thai × Nepalese', type: 'sativa', children: [] },
+        ]},
+        { name: 'Super Skunk', type: 'indica', children: [
+          { name: 'Skunk #1', type: 'hybrid', children: [] },
+          { name: 'Afghani', type: 'indica', children: [] },
+        ]},
+      ]
+    },
+    'Blockberry': {
+      name: 'Blockberry',
+      type: strain.type,
+      children: [
+        {
+          name: 'Black Cherry Punch',
+          type: 'indica',
+          children: [
+            { name: 'Purple Punch', type: 'indica', children: [
+              { name: 'Granddaddy Purple', type: 'indica', children: [
+                { name: 'Purple Urkle', type: 'indica', children: [] },
+                { name: 'Big Bud', type: 'indica', children: [] },
+              ]},
+              { name: 'Larry OG', type: 'hybrid', children: [] },
+            ]},
+            { name: 'Black Cherry Pie', type: 'indica', children: [
+              { name: 'Cherry Pie', type: 'hybrid', children: [] },
+              { name: 'Blackberry Kush', type: 'indica', children: [] },
+            ]},
+          ]
+        },
+        {
+          name: 'Tropicana Cookies',
+          type: 'sativa',
+          children: [
+            { name: 'GSC (Girl Scout Cookies)', type: 'hybrid', children: [
+              { name: 'OG Kush', type: 'hybrid', children: [] },
+              { name: 'Durban Poison', type: 'sativa', children: [] },
+            ]},
+            { name: 'Tangie', type: 'sativa', children: [
+              { name: 'California Orange', type: 'hybrid', children: [] },
+              { name: 'Skunk #1', type: 'hybrid', children: [] },
+            ]},
+          ]
+        },
+      ]
+    },
+    'Block Party': {
+      name: 'Block Party',
+      type: strain.type,
+      children: [
+        {
+          name: 'Super Sherb',
+          type: 'hybrid',
+          children: [
+            { name: 'Sunset Sherbet', type: 'indica', children: [
+              { name: 'GSC (Girl Scout Cookies)', type: 'hybrid', children: [] },
+              { name: 'Pink Panties', type: 'indica', children: [] },
+            ]},
+            { name: 'Super Skunk', type: 'indica', children: [
+              { name: 'Skunk #1', type: 'hybrid', children: [] },
+              { name: 'Afghani', type: 'indica', children: [] },
+            ]},
+          ]
+        },
+        {
+          name: 'Blockberry',
+          type: 'hybrid',
+          children: [
+            { name: 'Black Cherry Punch', type: 'indica', children: [
+              { name: 'Purple Punch', type: 'indica', children: [] },
+              { name: 'Black Cherry Pie', type: 'indica', children: [] },
+            ]},
+            { name: 'Tropicana Cookies', type: 'sativa', children: [
+              { name: 'GSC (Girl Scout Cookies)', type: 'hybrid', children: [] },
+              { name: 'Tangie', type: 'sativa', children: [] },
+            ]},
+          ]
+        },
+      ]
+    }
+  };
+
+  if (deepLineages[strain.name]) return deepLineages[strain.name];
+
+  // Generic parse from lineage string
+  const lineageStr = strain.lineage || '';
+  if (!lineageStr) return { name: strain.name, type: strain.type, children: [] };
+
+  const parts = lineageStr.split('×').map(p => p.trim()).filter(Boolean);
+  return {
+    name: strain.name,
+    type: strain.type,
+    children: parts.map(p => ({ name: p, type: 'hybrid', children: [] }))
+  };
+}
+
+function typeColor(type) {
+  const map = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
+  return map[type] || '#4ade80';
+}
+
+function buildLineageSVG(tree) {
+  // Layout tree with proper spacing
+  const NODE_W = 140;
+  const NODE_H = 44;
+  const V_GAP = 70;
+  const H_GAP = 16;
+
+  // Assign positions level by level
+  let nodes = [];
+  let edges = [];
+
+  function assignPositions(node, depth, index, parentX, parentY) {
+    // Count leaves to determine width
+    function countLeaves(n) {
+      if (!n.children || !n.children.length) return 1;
+      return n.children.reduce((s, c) => s + countLeaves(c), 0);
+    }
+    const leaves = countLeaves(node);
+    const totalWidth = leaves * (NODE_W + H_GAP) - H_GAP;
+    
+    return totalWidth;
+  }
+
+  // Simpler: compute x positions bottom-up
+  let nodeList = [];
+  let edgeList = [];
+  let depthMap = {};
+
+  function layout(node, depth) {
+    if (!depthMap[depth]) depthMap[depth] = [];
+    const nodeObj = { ...node, depth, id: nodeList.length, children_ids: [] };
+    const myIdx = nodeList.length;
+    nodeList.push(nodeObj);
+    depthMap[depth].push(myIdx);
+
+    (node.children || []).forEach(child => {
+      const childIdx = layout(child, depth + 1);
+      nodeObj.children_ids.push(childIdx);
+      edgeList.push({ from: myIdx, to: childIdx });
+    });
+
+    return myIdx;
+  }
+
+  layout(tree, 0);
+
+  // Position: assign x based on subtree widths, top-down
+  const maxDepth = Math.max(...nodeList.map(n => n.depth));
+
+  function subtreeWidth(nodeIdx) {
+    const node = nodeList[nodeIdx];
+    if (!node.children_ids.length) return NODE_W;
+    const childWidths = node.children_ids.map(subtreeWidth);
+    return childWidths.reduce((s, w) => s + w + H_GAP, 0) - H_GAP;
+  }
+
+  function assignX(nodeIdx, left) {
+    const node = nodeList[nodeIdx];
+    const w = subtreeWidth(nodeIdx);
+    node.x = left + (w - NODE_W) / 2;
+    let childLeft = left;
+    (node.children_ids || []).forEach(cid => {
+      const cw = subtreeWidth(cid);
+      assignX(cid, childLeft);
+      childLeft += cw + H_GAP;
+    });
+  }
+
+  assignX(0, 0);
+
+  const SVG_PADDING = 30;
+  nodeList.forEach(n => {
+    n.y = n.depth * (NODE_H + V_GAP) + SVG_PADDING;
+    n.cx = n.x + SVG_PADDING;
+  });
+
+  const totalWidth = subtreeWidth(0) + SVG_PADDING * 2;
+  const totalHeight = (maxDepth + 1) * (NODE_H + V_GAP) + SVG_PADDING * 2;
+
+  // Build SVG
+  let svgParts = [];
+
+  // Edges first
+  edgeList.forEach(e => {
+    const from = nodeList[e.from];
+    const to = nodeList[e.to];
+    const x1 = from.cx + NODE_W / 2;
+    const y1 = from.y + NODE_H;
+    const x2 = to.cx + NODE_W / 2;
+    const y2 = to.y;
+    const midY = (y1 + y2) / 2;
+    svgParts.push(
+      `<path d="M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}" fill="none" stroke="rgba(74,222,128,0.25)" stroke-width="1.5" stroke-dasharray="${e.from === 0 ? 'none' : '4,3'}"/>`
+    );
+  });
+
+  // Nodes
+  nodeList.forEach(n => {
+    const isRoot = n.depth === 0;
+    const c = typeColor(n.type);
+    const rx = n.cx;
+    const ry = n.y;
+    const textColor = isRoot ? '#0a0f0a' : '#e8f5e9';
+    const fill = isRoot ? '#4ade80' : '#1c281c';
+    const stroke = isRoot ? '#4ade80' : c;
+    const sw = isRoot ? 2 : 1.5;
+    const opacity = isRoot ? 1 : (1 - n.depth * 0.1);
+
+    // Truncate name if too long
+    const displayName = n.name.length > 18 ? n.name.substring(0, 16) + '…' : n.name;
+    const typeLabel = n.type ? n.type.charAt(0).toUpperCase() + n.type.slice(1) : '';
+
+    svgParts.push(`
+      <g class="lineage-node${isRoot ? ' root' : ''}" opacity="${opacity}">
+        <rect x="${rx}" y="${ry}" width="${NODE_W}" height="${NODE_H}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>
+        <text x="${rx + NODE_W/2}" y="${ry + 16}" text-anchor="middle" font-family="'Bebas Neue', sans-serif" font-size="13" letter-spacing="0.5" fill="${textColor}">${displayName}</text>
+        <text x="${rx + NODE_W/2}" y="${ry + 31}" text-anchor="middle" font-family="'DM Mono', monospace" font-size="9" letter-spacing="0.5" fill="${c}" opacity="0.8">${typeLabel}</text>
+      </g>
+    `);
+  });
+
+  return `<svg viewBox="0 0 ${totalWidth} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:400px;overflow:visible;">${svgParts.join('')}</svg>`;
+}
+
+function openLineageModal(strainId) {
+  const s = strains.find(s => s.id === strainId);
+  if (!s) return;
+
+  document.getElementById('lineage-modal-title').textContent = s.name + ' — Lineage Tree';
+
+  const tree = parseLineageTree(s);
+  const svg = buildLineageSVG(tree);
+  document.getElementById('lineage-svg-container').innerHTML = svg;
+
+  // Legend
+  const types = ['indica','sativa','hybrid'];
+  const typeColors = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
+  document.getElementById('lineage-legend').innerHTML = types.map(t =>
+    `<div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim);">
+      <div style="width:10px;height:10px;border-radius:3px;background:${typeColors[t]};opacity:0.8;"></div>${t}
+    </div>`
+  ).join('') + `<div style="display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-dim);">
+    <div style="width:10px;height:10px;border-radius:3px;background:#4ade80;"></div>subject strain
+  </div>`;
+
+  document.getElementById('lineage-modal').classList.add('open');
+}
+
+function closeLineageModal() {
+  document.getElementById('lineage-modal').classList.remove('open');
+}
+
+// Close lineage modal on overlay click
+// lineage-modal overlay click — attached after DOM ready (see INIT)
+
+// =====================
+// FAVORITES / LISTS
+// =====================
+let favLists = load('cannabis_fav_lists', [
+  { id: 'fl_default', name: 'All-Time Faves', icon: '🌟', desc: 'My personal favourites', strainIds: [] },
+  { id: 'fl_topshelf', name: 'Top Shelf', icon: '👑', desc: 'Premium picks only', strainIds: [] },
+  { id: 'fl_chill', name: 'Chill & Relax', icon: '🛋️', desc: 'Evening wind-down strains', strainIds: [] },
+]);
+let activeListId = favLists.length ? favLists[0].id : null;
+let editingListId = null;
+let selectedListEmoji = '🌟';
+
+const EMOJI_OPTIONS = ['🌟','👑','🔥','💚','🌿','🍃','🛋️','🎯','⚡','🌈','🎵','🧘','🍀','🌙','☀️','💎','🏆','🎪','🧪','💫'];
+
+function renderFavorites() {
+  renderFavSidebar();
+  renderFavContent();
+}
+
+function renderFavSidebar() {
+  const container = document.getElementById('fav-sidebar-lists');
+  const countEl = document.getElementById('fav-list-count');
+  if (countEl) countEl.textContent = favLists.length + ' list' + (favLists.length !== 1 ? 's' : '');
+
+  if (!container) return;
+  if (!favLists.length) {
+    container.innerHTML = '<div style="padding:1rem;font-size:0.8rem;color:var(--text-muted);text-align:center;">No lists yet</div>';
+    return;
+  }
+
+  container.innerHTML = favLists.map(list => {
+    const count = (list.strainIds || []).length;
+    const isActive = list.id === activeListId;
+    return `<div class="list-item-row${isActive ? ' active' : ''}" onclick="setActiveList('${list.id}')">
+      <div class="list-item-icon" style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.15);">${list.icon || '📋'}</div>
+      <div class="list-item-name">${list.name}</div>
+      <div class="list-item-count">${count}</div>
+      <div class="list-item-actions">
+        <button class="list-mini-btn" onclick="event.stopPropagation();openNewListModal('${list.id}')" title="Edit">✏</button>
+        <button class="list-mini-btn" onclick="event.stopPropagation();deleteList('${list.id}')" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setActiveList(id) {
+  activeListId = id;
+  renderFavSidebar();
+  renderFavContent();
+}
+
+function renderFavContent() {
+  const titleEl = document.getElementById('fav-active-title');
+  const iconEl = document.getElementById('fav-active-icon');
+  const bodyEl = document.getElementById('fav-content-body');
+  const editBtn = document.getElementById('fav-edit-btn');
+  const delBtn = document.getElementById('fav-del-btn');
+
+  if (!activeListId || !favLists.length) {
+    if (titleEl) titleEl.textContent = 'Select a List';
+    if (iconEl) iconEl.textContent = '📋';
+    if (bodyEl) bodyEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No List Selected</div><div class="empty-sub">Create or select a list from the sidebar</div></div>';
+    if (editBtn) editBtn.style.display = 'none';
+    if (delBtn) delBtn.style.display = 'none';
+    return;
+  }
+
+  const list = favLists.find(l => l.id === activeListId);
+  if (!list) return;
+
+  if (titleEl) titleEl.textContent = list.name;
+  if (iconEl) iconEl.textContent = list.icon || '📋';
+  if (editBtn) editBtn.style.display = 'flex';
+  if (delBtn) delBtn.style.display = 'flex';
+
+  const listStrains = (list.strainIds || []).map(id => strains.find(s => s.id === id)).filter(Boolean);
+
+  if (!bodyEl) return;
+
+  const descHtml = list.desc ? `<div style="padding:0 1.5rem 0.75rem;font-size:0.82rem;color:var(--text-muted);font-style:italic;">${list.desc}</div>` : '';
+
+  if (!listStrains.length) {
+    bodyEl.innerHTML = descHtml + `<div class="empty-state">
+      <div class="empty-icon">${list.icon || '📋'}</div>
+      <div class="empty-title">Empty List</div>
+      <div class="empty-sub">Add strains using the "♥ List" button on any strain card</div>
+    </div>`;
+    return;
+  }
+
+  bodyEl.innerHTML = descHtml + `<div class="fav-strains-grid">${listStrains.map(s => {
+    const typeColors = { indica: '#8b5cf6', sativa: '#ef4444', hybrid: '#22c55e' };
+    const tc = typeColors[s.type] || '#22c55e';
+    const stars = s.rating ? '★'.repeat(Math.floor(s.rating)) + (s.rating%1>=0.5?'½':'') : '';
+    const noteCount = (sessionNotes[s.id] || []).length;
+    return `<div class="fav-strain-card" onclick="showTab('strains')">
+      <button class="fav-remove-btn" onclick="event.stopPropagation();removeFromList('${activeListId}','${s.id}')">✕</button>
+      <div style="font-size:1.6rem;margin-bottom:6px;">${list.icon || '📋'}</div>
+      <div class="fav-strain-name">${s.name}</div>
+      <div class="fav-strain-type" style="color:${tc};">${s.type}</div>
+      ${s.breeder ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:3px;">${s.breeder}</div>` : ''}
+      <div class="fav-strain-thc">${s.thc}% THC${s.cbd ? ' · ' + s.cbd + '% CBD' : ''}</div>
+      ${stars ? `<div style="color:var(--gold);font-size:0.78rem;margin-top:4px;">${stars}</div>` : ''}
+      ${noteCount ? `<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);margin-top:4px;">${noteCount} note${noteCount!==1?'s':''}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function removeFromList(listId, strainId) {
+  const list = favLists.find(l => l.id === listId);
+  if (!list) return;
+  list.strainIds = list.strainIds.filter(id => id !== strainId);
+  save('cannabis_fav_lists', favLists);
+  renderFavContent();
+  renderFavSidebar();
+}
+
+function addToList(listId, strainId) {
+  const list = favLists.find(l => l.id === listId);
+  if (!list) return;
+  if (!list.strainIds.includes(strainId)) list.strainIds.push(strainId);
+  save('cannabis_fav_lists', favLists);
+  // Update fav sidebar if open
+  if (activeListId === listId) renderFavContent();
+  renderFavSidebar();
+}
+
+function editActiveList() {
+  if (activeListId) openNewListModal(activeListId);
+}
+
+function deleteActiveList() {
+  if (activeListId) deleteList(activeListId);
+}
+
+function deleteList(id) {
+  if (!confirm('Delete this list? Strains will not be removed.')) return;
+  favLists = favLists.filter(l => l.id !== id);
+  if (activeListId === id) activeListId = favLists.length ? favLists[0].id : null;
+  save('cannabis_fav_lists', favLists);
+  renderFavorites();
+}
+
+// ATL dropdown (Add To List)
+function toggleAtlMenu(event, strainId) {
+  event.stopPropagation();
+  // Close all other menus
+  document.querySelectorAll('.atl-menu.open').forEach(m => {
+    if (m.id !== 'atl-' + strainId) m.classList.remove('open');
+  });
+
+  const menu = document.getElementById('atl-' + strainId);
+  if (!menu) return;
+
+  const isOpen = menu.classList.contains('open');
+
+  if (!isOpen) {
+    // Populate menu
+    if (!favLists.length) {
+      menu.innerHTML = '<div class="atl-menu-item" onclick="openNewListModal()">+ Create First List</div>';
+    } else {
+      menu.innerHTML = favLists.map(list => {
+        const inList = list.strainIds.includes(strainId);
+        return `<div class="atl-menu-item${inList ? ' already-in' : ''}" onclick="${inList ? '' : "addToList('" + list.id + "','" + strainId + "');closeAllAtlMenus();"}">
+          ${list.icon} ${list.name} ${inList ? '<span style="float:right;color:var(--green);">✓</span>' : ''}
+        </div>`;
+      }).join('') + '<div style="border-top:1px solid var(--border);margin:4px 0;"></div><div class="atl-menu-item" onclick="openNewListModal();closeAllAtlMenus();">+ New List</div>';
+    }
+    menu.classList.add('open');
+  } else {
+    menu.classList.remove('open');
+  }
+}
+
+function closeAllAtlMenus() {
+  document.querySelectorAll('.atl-menu.open').forEach(m => m.classList.remove('open'));
+}
+
+document.addEventListener('click', () => closeAllAtlMenus());
+
+// =====================
+// NEW LIST MODAL
+// =====================
+function openNewListModal(editId = null) {
+  editingListId = editId;
+  selectedListEmoji = '🌟';
+
+  const titleEl = document.getElementById('newlist-modal-title');
+  const nameEl = document.getElementById('nl-name');
+  const descEl = document.getElementById('nl-desc');
+
+  if (editId) {
+    const list = favLists.find(l => l.id === editId);
+    if (list) {
+      if (titleEl) titleEl.textContent = 'Edit List';
+      if (nameEl) nameEl.value = list.name || '';
+      if (descEl) descEl.value = list.desc || '';
+      selectedListEmoji = list.icon || '🌟';
+    }
+  } else {
+    if (titleEl) titleEl.textContent = 'New List';
+    if (nameEl) nameEl.value = '';
+    if (descEl) descEl.value = '';
+    selectedListEmoji = '🌟';
+  }
+
+  // Render emoji picker
+  const picker = document.getElementById('nl-emoji-picker');
+  if (picker) {
+    picker.innerHTML = EMOJI_OPTIONS.map(e =>
+      `<div class="emoji-opt${e === selectedListEmoji ? ' selected' : ''}" onclick="selectEmoji('${e}', this)">${e}</div>`
+    ).join('');
+  }
+
+  document.getElementById('newlist-modal').classList.add('open');
+}
+
+function selectEmoji(emoji, el) {
+  selectedListEmoji = emoji;
+  document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeNewListModal() {
+  document.getElementById('newlist-modal').classList.remove('open');
+}
+
+function saveList() {
+  const name = (document.getElementById('nl-name')?.value || '').trim();
+  if (!name) { alert('List name is required'); return; }
+  const desc = (document.getElementById('nl-desc')?.value || '').trim();
+
+  if (editingListId) {
+    const list = favLists.find(l => l.id === editingListId);
+    if (list) { list.name = name; list.icon = selectedListEmoji; list.desc = desc; }
+  } else {
+    const newList = { id: 'fl_' + Date.now(), name, icon: selectedListEmoji, desc, strainIds: [] };
+    favLists.push(newList);
+    activeListId = newList.id;
+  }
+
+  save('cannabis_fav_lists', favLists);
+  closeNewListModal();
+  renderFavorites();
+
+  // Switch to favorites tab
+  showTab('favorites');
+}
+
+// newlist-modal overlay click — attached after DOM ready (see INIT)
+
+
+
+// =====================
+// DRAG & RESIZE (Converter cards)
+// =====================
+let freeformActive = false;
+
+const CARD_DEFAULTS = [
+  { left: 0,   top: 0,   w: 320, h: 320 },
+  { left: 340, top: 0,   w: 380, h: 320 },
+  { left: 0,   top: 340, w: 320, h: 280 },
+  { left: 340, top: 340, w: 380, h: 300 },
+];
+
+function toggleFreeform() {
+  freeformActive = !freeformActive;
+  const btn = document.getElementById('freeform-toggle-btn');
+  const grid = document.getElementById('converter-freeform');
+  if (!btn || !grid) return;
+
+  if (freeformActive) {
+    btn.classList.add('active');
+    grid.classList.remove('converter-grid');
+    grid.classList.add('freeform-active');
+    const cards = grid.querySelectorAll('.converter-card');
+    cards.forEach((card, i) => {
+      const d = CARD_DEFAULTS[i] || { left: i*30, top: i*30, w: 320, h: 280 };
+      card.style.left = d.left + 'px';
+      card.style.top  = d.top  + 'px';
+      card.style.width  = d.w + 'px';
+      card.style.height = d.h + 'px';
+      makeDraggable(card);
+    });
+    // Update container height
+    updateFreeformHeight(grid);
+  } else {
+    btn.classList.remove('active');
+    grid.classList.add('converter-grid');
+    grid.classList.remove('freeform-active');
+    const cards = grid.querySelectorAll('.converter-card');
+    cards.forEach(card => {
+      card.style.position = '';
+      card.style.left = '';
+      card.style.top  = '';
+      card.style.width  = '';
+      card.style.height = '';
+      const handle = card.querySelector('.drag-handle');
+      if (handle) handle.remove();
+    });
+    grid.style.height = '';
+  }
+}
+
+function updateFreeformHeight(grid) {
+  const cards = grid.querySelectorAll('.converter-card');
+  let maxBottom = 400;
+  cards.forEach(card => {
+    const b = parseInt(card.style.top || 0) + card.offsetHeight;
+    if (b > maxBottom) maxBottom = b;
+  });
+  grid.style.height = (maxBottom + 40) + 'px';
+}
+
+function makeDraggable(card) {
+  // Remove existing handle
+  const existing = card.querySelector('.drag-handle');
+  if (existing) existing.remove();
+
+  // Add drag handle + resize hint
+  const handle = document.createElement('div');
+  handle.className = 'drag-handle';
+  handle.innerHTML = '<div class="drag-handle-dots"><span></span><span></span><span></span><span></span><span></span><span></span></div>';
+  card.insertBefore(handle, card.firstChild);
+
+  const hint = document.createElement('div');
+  hint.className = 'resize-hint';
+  card.appendChild(hint);
+
+  let startX, startY, startLeft, startTop;
+  let isDragging = false;
+
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = parseInt(card.style.left) || 0;
+    startTop  = parseInt(card.style.top)  || 0;
+    card.classList.add('dragging');
+    card.style.zIndex = 100;
+
+    function onMove(e) {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const newLeft = Math.max(0, startLeft + dx);
+      const newTop  = Math.max(0, startTop  + dy);
+      card.style.left = newLeft + 'px';
+      card.style.top  = newTop  + 'px';
+    }
+
+    function onUp() {
+      isDragging = false;
+      card.classList.remove('dragging');
+      card.style.zIndex = '';
+      updateFreeformHeight(card.parentElement);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  // Touch support
+  handle.addEventListener('touchstart', e => {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    startLeft = parseInt(card.style.left) || 0;
+    startTop  = parseInt(card.style.top)  || 0;
+    card.classList.add('dragging');
+
+    function onTouchMove(e) {
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      card.style.left = Math.max(0, startLeft + dx) + 'px';
+      card.style.top  = Math.max(0, startTop  + dy) + 'px';
+      e.preventDefault();
+    }
+
+    function onTouchEnd() {
+      card.classList.remove('dragging');
+      updateFreeformHeight(card.parentElement);
+      handle.removeEventListener('touchmove', onTouchMove);
+      handle.removeEventListener('touchend', onTouchEnd);
+    }
+
+    handle.addEventListener('touchmove', onTouchMove, { passive: false });
+    handle.addEventListener('touchend', onTouchEnd);
+  });
+}
+
+// =====================
+// INIT
+// =====================
+renderDashboard();
+// Pre-render notes after strains are rendered
+setTimeout(renderAllNotes, 100);
+
+// Safe DOM event bindings (elements rendered after script tag)
+(function attachModalOverlayListeners() {
+  const lineageMod = document.getElementById('lineage-modal');
+  if (lineageMod) lineageMod.addEventListener('click', function(e) { if (e.target === this) closeLineageModal(); });
+
+  const newlistMod = document.getElementById('newlist-modal');
+  if (newlistMod) newlistMod.addEventListener('click', function(e) { if (e.target === this) closeNewListModal(); });
+})();
+</script>
+
+<!-- LINEAGE TREE MODAL -->
+<div class="lineage-modal-overlay" id="lineage-modal">
+  <div class="lineage-modal">
+    <div class="lineage-modal-header">
+      <span class="modal-title" id="lineage-modal-title">Lineage</span>
+      <button class="modal-close" onclick="closeLineageModal()">✕</button>
+    </div>
+    <div class="lineage-modal-body">
+      <div class="lineage-tree-wrap">
+        <div class="lineage-canvas-wrap" id="lineage-svg-container"></div>
+      </div>
+      <div id="lineage-legend" style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW LIST MODAL -->
+<div class="newlist-modal" id="newlist-modal">
+  <div class="newlist-box">
+    <div class="newlist-title" id="newlist-modal-title">New List</div>
+    <div class="form-group" style="margin-bottom:0.75rem;">
+      <label>List Name *</label>
+      <input type="text" id="nl-name" placeholder="e.g. My All-Time Faves">
+    </div>
+    <div class="form-group">
+      <label>Icon</label>
+      <div class="emoji-picker" id="nl-emoji-picker"></div>
+    </div>
+    <div class="form-group">
+      <label>Description (optional)</label>
+      <input type="text" id="nl-desc" placeholder="e.g. Strains I'd buy again">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeNewListModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveList()">Save List</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

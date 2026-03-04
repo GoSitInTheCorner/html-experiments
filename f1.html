@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>F1 Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,500;0,700;0,900;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0b;--surface:#111113;--surface2:#1a1a1d;--surface3:#222226;
+  --border:#2a2a2e;--border2:#363639;
+  --red:#e10600;--red2:#ff2810;--red-dim:#3a0800;
+  --gold:#c9a84c;--silver:#a8a9ad;--bronze:#cd7f32;
+  --text:#f0f0f2;--muted:#70707a;--accent:#e10600;
+  --safe:#2ecc71;--warn:#f39c12;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:clamp(12px,1.4vw,15px)}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── BACK BAR ── */
+.back-bar{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;position:relative;overflow:hidden}
+.back-bar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),transparent 60%)}
+.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'DM Mono',monospace;font-size:.72rem;padding:4px 10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;letter-spacing:.04em}
+.back-btn:hover{border-color:var(--red);color:var(--red)}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;letter-spacing:.06em;color:var(--text);text-transform:uppercase;flex:1}
+.page-title span{color:var(--red)}
+.season-badge{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;background:var(--surface2);border:1px solid var(--border);padding:3px 10px;border-radius:3px}
+
+/* ── TABS ── */
+#main-tabs{display:flex;background:var(--surface);border-bottom:2px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#main-tabs::-webkit-scrollbar{display:none}
+.mtab{padding:11px 20px;font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s}
+.mtab.active{color:var(--text);border-bottom-color:var(--red)}
+.mtab:hover{color:var(--text)}
+
+/* ── SCREENS ── */
+#app-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen{display:none;padding:16px;padding-bottom:60px;animation:fadeIn .2s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sec-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.sec-sub{font-size:.7rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+/* ── STANDINGS TABLE ── */
+.standings-table{width:100%;border-collapse:collapse}
+.standings-table thead tr{border-bottom:2px solid var(--red)}
+.standings-table th{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left}
+.standings-table th.num{text-align:right;width:40px}
+.standings-table th.pts{text-align:right;width:60px}
+.standings-table td{padding:0}
+.stand-row{display:grid;grid-template-columns:36px 28px 1fr auto;align-items:center;gap:0;border-bottom:1px solid var(--border);padding:0;cursor:default;transition:background .1s}
+.stand-row:hover{background:var(--surface2)}
+.stand-pos{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:900;color:var(--muted);padding:10px 6px 10px 12px;text-align:center}
+.stand-pos.p1{color:var(--gold)}
+.stand-pos.p2{color:var(--silver)}
+.stand-pos.p3{color:var(--bronze)}
+.team-bar{width:4px;height:100%;min-height:42px;flex-shrink:0;border-radius:2px}
+.stand-info{padding:10px 10px}
+.stand-name{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.02em;line-height:1}
+.stand-sub{font-size:.65rem;color:var(--muted);margin-top:2px;letter-spacing:.04em}
+.stand-pts{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:900;color:var(--text);padding:10px 12px 10px 4px;text-align:right;white-space:nowrap}
+.stand-pts span{font-size:.6rem;color:var(--muted);font-weight:400;font-family:'DM Mono',monospace}
+
+/* ── RACE CARD ── */
+.race-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.race-card:hover{border-color:var(--border2)}
+.race-card.next-race{border-color:var(--red);background:linear-gradient(135deg,#1a0500 0%,var(--surface) 40%)}
+.race-card-top{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.race-round{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);flex-shrink:0;width:28px}
+.race-flag{font-size:1.6rem;flex-shrink:0}
+.race-info{flex:1;min-width:0}
+.race-name{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.03em;line-height:1.1}
+.race-circuit{font-size:.65rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.race-date{font-size:.68rem;color:var(--muted);text-align:right;flex-shrink:0}
+.race-date.upcoming{color:var(--red)}
+.next-badge{display:inline-block;background:var(--red);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:2px;margin-top:3px}
+.race-result{padding:0 14px 12px 54px}
+.race-podium{display:flex;gap:8px}
+.podium-item{display:flex;align-items:center;gap:5px;font-size:.72rem}
+.podium-num{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:900}
+.podium-num.p1{color:var(--gold)}
+.podium-num.p2{color:var(--silver)}
+.podium-num.p3{color:var(--bronze)}
+
+/* ── NEXT RACE HERO ── */
+.next-hero{background:linear-gradient(135deg,#1a0500,var(--surface));border:1px solid var(--red);border-radius:8px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.next-hero::before{content:'NEXT';position:absolute;right:-10px;top:50%;transform:translateY(-50%) rotate(90deg);font-family:'Barlow Condensed',sans-serif;font-size:5rem;font-weight:900;color:rgba(225,6,0,.07);letter-spacing:.1em;pointer-events:none}
+.next-hero-label{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--red);margin-bottom:8px}
+.next-hero-race{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;letter-spacing:.03em;line-height:1;text-transform:uppercase}
+.next-hero-circuit{font-size:.75rem;color:var(--muted);margin-top:4px}
+.next-hero-date{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);margin-top:10px}
+.countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.countdown-cell{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:8px;text-align:center}
+.countdown-num{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:900;line-height:1;color:var(--text)}
+.countdown-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+
+/* ── DRIVER CARD ── */
+.driver-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:500px){.driver-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:800px){.driver-grid{grid-template-columns:repeat(4,1fr)}}
+.driver-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 10px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.driver-card:hover{border-color:var(--border2)}
+.driver-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.driver-num{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;opacity:.15;position:absolute;top:4px;right:8px;letter-spacing:-.02em;line-height:1}
+.driver-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.02em;line-height:1.1;margin-bottom:2px}
+.driver-team{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.driver-pts-big{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;color:var(--text);line-height:1}
+.driver-pts-lbl{font-size:.6rem;color:var(--muted);letter-spacing:.08em}
+.driver-flag{font-size:1rem;position:absolute;bottom:10px;right:10px;opacity:.7}
+
+/* ── TEAM CHIP ── */
+.team-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 5px;border-radius:3px;font-size:.68rem;border:1px solid var(--border);background:var(--surface2)}
+.team-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── MODALS / EDIT ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:flex-end}
+.modal-ov.active{display:flex}
+@media(min-width:600px){.modal-ov{align-items:center;justify-content:center}}
+.modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:8px 8px 0 0;padding:20px 16px 36px;width:100%;animation:slideUp .22s ease;max-height:85dvh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:8px;max-width:480px;max-height:80dvh}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;color:var(--red)}
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:9px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;outline:none;margin-bottom:8px}
+.mi:focus{border-color:var(--red)}
+.mi::placeholder{color:var(--muted)}
+.mi-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.mact{display:flex;gap:8px;margin-top:10px}
+.mprim{flex:1;background:var(--red);color:#fff;border:none;border-radius:5px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+
+/* ── TABS WITHIN STANDINGS ── */
+.sub-tabs{display:flex;gap:4px;margin-bottom:14px}
+.sub-tab{padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;border:1px solid var(--border);border-radius:4px}
+.sub-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:24px;right:20px;width:48px;height:48px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(225,6,0,.4);z-index:30;transition:transform .15s}
+.fab:active{transform:scale(.93)}
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a class="back-btn" href="index.html">← Back</a>
+  <div class="page-title">F<span>1</span> Tracker</div>
+  <div class="season-badge" id="season-lbl">2025</div>
+</div>
+
+<div id="main-tabs">
+  <div class="mtab active" onclick="showTab('home')">Home</div>
+  <div class="mtab" onclick="showTab('standings')">Standings</div>
+  <div class="mtab" onclick="showTab('schedule')">Schedule</div>
+  <div class="mtab" onclick="showTab('teams')">Teams</div>
+</div>
+
+<div id="app-body">
+
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div id="next-race-hero"></div>
+    <div class="sec-hdr"><span class="sec-title">Championship Lead</span></div>
+    <div id="home-top3"></div>
+    <div class="sec-hdr" style="margin-top:16px"><span class="sec-title">Recent Results</span></div>
+    <div id="home-recent"></div>
+  </div>
+
+  <!-- STANDINGS -->
+  <div class="screen" id="s-standings">
+    <div class="sub-tabs">
+      <div class="sub-tab active" onclick="showStandType('drivers')">Drivers</div>
+      <div class="sub-tab" onclick="showStandType('constructors')">Constructors</div>
+    </div>
+    <div id="standings-body"></div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="screen" id="s-schedule">
+    <div id="schedule-body"></div>
+  </div>
+
+  <!-- TEAMS -->
+  <div class="screen" id="s-teams">
+    <div id="teams-body"></div>
+  </div>
+
+</div>
+
+<!-- Add/Edit Result Modal -->
+<div class="modal-ov" id="result-modal">
+  <div class="modal">
+    <div class="modal-title" id="result-modal-title">Add Result</div>
+    <input class="mi" id="rm-race" placeholder="Race name (e.g. Bahrain GP)" />
+    <input class="mi" id="rm-p1" placeholder="🥇 Winner" />
+    <input class="mi" id="rm-p2" placeholder="🥈 2nd place" />
+    <input class="mi" id="rm-p3" placeholder="🥉 3rd place" />
+    <input class="mi" id="rm-fl" placeholder="⚡ Fastest Lap (optional)" />
+    <div class="mact">
+      <button class="msec" onclick="closeResultModal()">Cancel</button>
+      <button class="mprim" onclick="saveResult()">Save</button>
+    </div>
+  </div>
+</div>
+
+<button class="fab" onclick="openResultModal()" title="Add Result">+</button>
+
+<script>
+// ════════════════════════════════════════
+// DATA — 2025 Season
+// ════════════════════════════════════════
+const SK = 'f1_2025_v2';
+function loadData(){try{return JSON.parse(localStorage.getItem(SK))||null}catch{return null}}
+function saveData(){localStorage.setItem(SK,JSON.stringify(data))}
+
+const TEAMS = [
+  {id:'rbr', name:'Red Bull Racing',    color:'#3671C6', short:'RBR'},
+  {id:'fer', name:'Ferrari',             color:'#E8002D', short:'FER'},
+  {id:'mer', name:'Mercedes',            color:'#27F4D2', short:'MER'},
+  {id:'mca', name:'McLaren',             color:'#FF8000', short:'MCL'},
+  {id:'ast', name:'Aston Martin',        color:'#229971', short:'AMR'},
+  {id:'alp', name:'Alpine',              color:'#0093CC', short:'ALP'},
+  {id:'wil', name:'Williams',            color:'#64C4FF', short:'WIL'},
+  {id:'vis', name:'Visa Cash App RB',   color:'#6692FF', short:'VCR'},
+  {id:'kic', name:'Kick Sauber',         color:'#52E252', short:'KIC'},
+  {id:'haa', name:'Haas',                color:'#B6BABD', short:'HAA'},
+];
+
+const TEAM_MAP = Object.fromEntries(TEAMS.map(t=>[t.id,t]));
+
+const DRIVERS_DEFAULT = [
+  {id:'ver', name:'Max Verstappen',      short:'VER', team:'rbr', num:1,  flag:'🇳🇱', pts:0},
+  {id:'nor', name:'Lando Norris',        short:'NOR', team:'mca', num:4,  flag:'🇬🇧', pts:0},
+  {id:'lec', name:'Charles Leclerc',     short:'LEC', team:'fer', num:16, flag:'🇲🇨', pts:0},
+  {id:'pst', name:'Oscar Piastri',       short:'PIA', team:'mca', num:81, flag:'🇦🇺', pts:0},
+  {id:'ham', name:'Lewis Hamilton',      short:'HAM', team:'fer', num:44, flag:'🇬🇧', pts:0},
+  {id:'rus', name:'George Russell',      short:'RUS', team:'mer', num:63, flag:'🇬🇧', pts:0},
+  {id:'ant', name:'Kimi Antonelli',      short:'ANT', team:'mer', num:12, flag:'🇮🇹', pts:0},
+  {id:'alb', name:'Alexander Albon',     short:'ALB', team:'wil', num:23, flag:'🇹🇭', pts:0},
+  {id:'alo', name:'Fernando Alonso',     short:'ALO', team:'ast', num:14, flag:'🇪🇸', pts:0},
+  {id:'str', name:'Lance Stroll',        short:'STR', team:'ast', num:18, flag:'🇨🇦', pts:0},
+  {id:'gas', name:'Pierre Gasly',        short:'GAS', team:'alp', num:10, flag:'🇫🇷', pts:0},
+  {id:'doc', name:'Jack Doohan',         short:'DOO', team:'alp', num:7,  flag:'🇦🇺', pts:0},
+  {id:'tsu', name:'Yuki Tsunoda',        short:'TSU', team:'vis', num:22, flag:'🇯🇵', pts:0},
+  {id:'law', name:'Liam Lawson',         short:'LAW', team:'vis', num:30, flag:'🇳🇿', pts:0},
+  {id:'hul', name:'Nico Hülkenberg',     short:'HUL', team:'kic', num:27, flag:'🇩🇪', pts:0},
+  {id:'bor', name:'Gabriel Bortoleto',   short:'BOR', team:'kic', num:5,  flag:'🇧🇷', pts:0},
+  {id:'oco', name:'Esteban Ocon',        short:'OCO', team:'haa', num:31, flag:'🇫🇷', pts:0},
+  {id:'bea', name:'Oliver Bearman',      short:'BEA', team:'haa', num:87, flag:'🇬🇧', pts:0},
+  {id:'sai', name:'Carlos Sainz',        short:'SAI', team:'wil', num:55, flag:'🇪🇸', pts:0},
+  {id:'had', name:'Isack Hadjar',        short:'HAD', team:'rbr', num:6,  flag:'🇫🇷', pts:0},
+];
+
+const SCHEDULE_DEFAULT = [
+  {round:1,  name:'Australian GP',     circuit:'Albert Park',          country:'Australia', flag:'🇦🇺', date:'2025-03-16', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:2,  name:'Chinese GP',        circuit:'Shanghai Int\'l',      country:'China',     flag:'🇨🇳', date:'2025-03-23', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:3,  name:'Japanese GP',       circuit:'Suzuka',               country:'Japan',     flag:'🇯🇵', date:'2025-04-06', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:4,  name:'Bahrain GP',        circuit:'Bahrain Int\'l',       country:'Bahrain',   flag:'🇧🇭', date:'2025-04-13', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:5,  name:'Saudi Arabian GP',  circuit:'Jeddah Corniche',      country:'Saudi Arabia',flag:'🇸🇦',date:'2025-04-20',done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:6,  name:'Miami GP',          circuit:'Miami Int\'l Autodrome',country:'USA',      flag:'🇺🇸', date:'2025-05-04', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:7,  name:'Emilia-Romagna GP', circuit:'Imola',                country:'Italy',     flag:'🇮🇹', date:'2025-05-18', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:8,  name:'Monaco GP',         circuit:'Circuit de Monaco',    country:'Monaco',    flag:'🇲🇨', date:'2025-05-25', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:9,  name:'Spanish GP',        circuit:'Circuit de Barcelona',country:'Spain',      flag:'🇪🇸', date:'2025-06-01', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:10, name:'Canadian GP',       circuit:'Circuit Gilles Villeneuve',country:'Canada',flag:'🇨🇦',date:'2025-06-15', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:11, name:'Austrian GP',       circuit:'Red Bull Ring',        country:'Austria',   flag:'🇦🇹', date:'2025-06-29', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:12, name:'British GP',        circuit:'Silverstone',          country:'UK',        flag:'🇬🇧', date:'2025-07-06', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:13, name:'Belgian GP',        circuit:'Spa-Francorchamps',    country:'Belgium',   flag:'🇧🇪', date:'2025-07-27', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:14, name:'Hungarian GP',      circuit:'Hungaroring',          country:'Hungary',   flag:'🇭🇺', date:'2025-08-03', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:15, name:'Dutch GP',          circuit:'Circuit Zandvoort',    country:'Netherlands',flag:'🇳🇱',date:'2025-08-31', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:16, name:'Italian GP',        circuit:'Monza',                country:'Italy',     flag:'🇮🇹', date:'2025-09-07', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:17, name:'Azerbaijan GP',     circuit:'Baku City Circuit',    country:'Azerbaijan',flag:'🇦🇿', date:'2025-09-21', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:18, name:'Singapore GP',      circuit:'Marina Bay',           country:'Singapore', flag:'🇸🇬', date:'2025-10-05', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:19, name:'US GP',             circuit:'Circuit of the Americas',country:'USA',     flag:'🇺🇸', date:'2025-10-19', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:20, name:'Mexico City GP',    circuit:'Autódromo Hermanos Rodríguez',country:'Mexico',flag:'🇲🇽',date:'2025-10-26',done:false,p1:'',p2:'',p3:'',fl:''},
+  {round:21, name:'São Paulo GP',      circuit:'Interlagos',           country:'Brazil',    flag:'🇧🇷', date:'2025-11-09', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:22, name:'Las Vegas GP',      circuit:'Las Vegas Strip',      country:'USA',       flag:'🇺🇸', date:'2025-11-22', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:23, name:'Qatar GP',          circuit:'Losail Int\'l',        country:'Qatar',     flag:'🇶🇦', date:'2025-11-30', done:false, p1:'', p2:'', p3:'', fl:''},
+  {round:24, name:'Abu Dhabi GP',      circuit:'Yas Marina',           country:'UAE',       flag:'🇦🇪', date:'2025-12-07', done:false, p1:'', p2:'', p3:'', fl:''},
+];
+
+const PTS_MAP = {1:25,2:18,3:15,4:12,5:10,6:8,7:6,8:4,9:2,10:1};
+
+let data = loadData() || {
+  drivers: JSON.parse(JSON.stringify(DRIVERS_DEFAULT)),
+  schedule: JSON.parse(JSON.stringify(SCHEDULE_DEFAULT)),
+  season: 2025,
+};
+// Ensure schedule has all rounds (merge in new ones if stored data is old)
+if (data.schedule.length < SCHEDULE_DEFAULT.length) {
+  SCHEDULE_DEFAULT.forEach(r => { if (!data.schedule.find(x=>x.round===r.round)) data.schedule.push(r); });
+  data.schedule.sort((a,b)=>a.round-b.round);
+}
+
+let curTab = 'home';
+let standType = 'drivers';
+let editingRound = null;
+
+// ── Computed ──
+function getConstructorPts() {
+  const pts = {};
+  TEAMS.forEach(t => pts[t.id] = 0);
+  data.drivers.forEach(d => { if(pts[d.team]!==undefined) pts[d.team] += (d.pts||0); });
+  return pts;
+}
+
+function getNextRace() {
+  const now = new Date();
+  return data.schedule.find(r => !r.done && new Date(r.date) >= now) || null;
+}
+
+function getRecentResults() {
+  return [...data.schedule].filter(r=>r.done).reverse().slice(0,5);
+}
+
+// ── Tabs ──
+function showTab(id) {
+  curTab = id;
+  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',['home','standings','schedule','teams'][i]===id));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  render();
+}
+
+function showStandType(t) {
+  standType = t;
+  document.querySelectorAll('.sub-tab').forEach((el,i)=>el.classList.toggle('active',['drivers','constructors'][i]===t));
+  renderStandings();
+}
+
+// ── Render dispatcher ──
+function render() {
+  if (curTab==='home') renderHome();
+  else if (curTab==='standings') renderStandings();
+  else if (curTab==='schedule') renderSchedule();
+  else if (curTab==='teams') renderTeams();
+}
+
+// ── HOME ──
+function renderHome() {
+  const next = getNextRace();
+  const hero = document.getElementById('next-race-hero');
+
+  if (next) {
+    const raceDate = new Date(next.date + 'T15:00:00');
+    const now = new Date();
+    const diff = raceDate - now;
+    const days = Math.max(0,Math.floor(diff/86400000));
+    const hrs  = Math.max(0,Math.floor((diff%86400000)/3600000));
+    const mins = Math.max(0,Math.floor((diff%3600000)/60000));
+    const secs = Math.max(0,Math.floor((diff%60000)/1000));
+    hero.innerHTML = `
+      <div class="next-hero">
+        <div class="next-hero-label">Next Race · Round ${next.round}</div>
+        <div class="next-hero-race">${next.flag} ${next.name}</div>
+        <div class="next-hero-circuit">${next.circuit}</div>
+        <div class="next-hero-date">${formatDate(next.date)}</div>
+        <div class="countdown-grid">
+          <div class="countdown-cell"><div class="countdown-num" id="cd-d">${days}</div><div class="countdown-lbl">Days</div></div>
+          <div class="countdown-cell"><div class="countdown-num" id="cd-h">${String(hrs).padStart(2,'0')}</div><div class="countdown-lbl">Hours</div></div>
+          <div class="countdown-cell"><div class="countdown-num" id="cd-m">${String(mins).padStart(2,'0')}</div><div class="countdown-lbl">Mins</div></div>
+          <div class="countdown-cell"><div class="countdown-num" id="cd-s">${String(secs).padStart(2,'0')}</div><div class="countdown-lbl">Secs</div></div>
+        </div>
+      </div>`;
+  } else {
+    hero.innerHTML = '<div class="next-hero"><div class="next-hero-label">Season Complete</div><div class="next-hero-race">2025 Season Finished</div></div>';
+  }
+
+  // Top 3
+  const sorted = [...data.drivers].sort((a,b)=>b.pts-a.pts).slice(0,3);
+  const top3 = document.getElementById('home-top3');
+  top3.innerHTML = sorted.map((d,i) => {
+    const t = TEAM_MAP[d.team];
+    const pc = ['p1','p2','p3'][i];
+    return `<div class="stand-row" style="margin-bottom:6px;background:var(--surface);border:1px solid var(--border);border-radius:6px">
+      <div class="stand-pos ${pc}">${i+1}</div>
+      <div class="team-bar" style="background:${t?.color||'#444'};min-height:54px"></div>
+      <div class="stand-info">
+        <div class="stand-name">${d.name}</div>
+        <div class="stand-sub">${t?.name||d.team}</div>
+      </div>
+      <div class="stand-pts">${d.pts} <span>pts</span></div>
+    </div>`;
+  }).join('');
+
+  // Recent
+  const recent = getRecentResults();
+  const rec = document.getElementById('home-recent');
+  if (!recent.length) { rec.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:8px 0">No results yet. Use + to add race results.</div>'; return; }
+  rec.innerHTML = recent.map(r => `
+    <div class="race-card">
+      <div class="race-card-top">
+        <div class="race-round">R${r.round}</div>
+        <div class="race-flag">${r.flag}</div>
+        <div class="race-info"><div class="race-name">${r.name}</div><div class="race-circuit">${r.circuit}</div></div>
+        <div class="race-date">${formatDate(r.date)}</div>
+      </div>
+      ${r.p1 ? `<div class="race-result"><div class="race-podium">
+        <div class="podium-item"><span class="podium-num p1">1</span>${r.p1}</div>
+        ${r.p2?`<div class="podium-item"><span class="podium-num p2">2</span>${r.p2}</div>`:''}
+        ${r.p3?`<div class="podium-item"><span class="podium-num p3">3</span>${r.p3}</div>`:''}
+      </div></div>` : ''}
+    </div>`).join('');
+}
+
+// ── STANDINGS ──
+function renderStandings() {
+  const body = document.getElementById('standings-body');
+  if (standType === 'drivers') {
+    const sorted = [...data.drivers].sort((a,b)=>b.pts-a.pts);
+    body.innerHTML = sorted.map((d,i) => {
+      const t = TEAM_MAP[d.team];
+      const pc = i===0?'p1':i===1?'p2':i===2?'p3':'';
+      return `<div class="stand-row">
+        <div class="stand-pos ${pc}">${i+1}</div>
+        <div class="team-bar" style="background:${t?.color||'#444'};min-height:46px"></div>
+        <div class="stand-info">
+          <div class="stand-name">${d.flag} ${d.name}</div>
+          <div class="stand-sub">${t?.name||d.team} · #${d.num}</div>
+        </div>
+        <div class="stand-pts">${d.pts} <span>pts</span></div>
+      </div>`;
+    }).join('');
+  } else {
+    const cpts = getConstructorPts();
+    const sorted = TEAMS.map(t=>({...t,pts:cpts[t.id]||0})).sort((a,b)=>b.pts-a.pts);
+    body.innerHTML = sorted.map((t,i) => {
+      const pc = i===0?'p1':i===1?'p2':i===2?'p3':'';
+      const tDrivers = data.drivers.filter(d=>d.team===t.id).map(d=>d.short).join(' · ');
+      return `<div class="stand-row">
+        <div class="stand-pos ${pc}">${i+1}</div>
+        <div class="team-bar" style="background:${t.color};min-height:52px"></div>
+        <div class="stand-info">
+          <div class="stand-name">${t.name}</div>
+          <div class="stand-sub" style="font-size:.6rem">${tDrivers}</div>
+        </div>
+        <div class="stand-pts">${t.pts} <span>pts</span></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ── SCHEDULE ──
+function renderSchedule() {
+  const now = new Date();
+  const body = document.getElementById('schedule-body');
+  const next = getNextRace();
+  body.innerHTML = data.schedule.map(r => {
+    const isNext = next && r.round === next.round;
+    const isPast = r.done;
+    return `<div class="race-card ${isNext?'next-race':''}" onclick="openResultModal(${r.round})">
+      <div class="race-card-top">
+        <div class="race-round">R${r.round}</div>
+        <div class="race-flag">${r.flag}</div>
+        <div class="race-info">
+          <div class="race-name">${r.name}</div>
+          <div class="race-circuit">${r.circuit}</div>
+        </div>
+        <div class="race-date ${isNext?'upcoming':''}">
+          ${formatDate(r.date)}
+          ${isNext?'<br><span class="next-badge">Next</span>':''}
+          ${isPast?'<br><span style="font-size:.6rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Completed</span>':''}
+        </div>
+      </div>
+      ${r.p1 ? `<div class="race-result"><div class="race-podium">
+        <div class="podium-item"><span class="podium-num p1">1</span>${r.p1}</div>
+        ${r.p2?`<div class="podium-item"><span class="podium-num p2">2</span>${r.p2}</div>`:''}
+        ${r.p3?`<div class="podium-item"><span class="podium-num p3">3</span>${r.p3}</div>`:''}
+        ${r.fl?`<div class="podium-item" style="margin-left:auto"><span style="color:#9b59b6;font-family:Barlow Condensed,sans-serif;font-weight:900;font-size:.85rem">⚡</span>${r.fl}</div>`:''}
+      </div></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── TEAMS ──
+function renderTeams() {
+  const cpts = getConstructorPts();
+  const body = document.getElementById('teams-body');
+  body.innerHTML = TEAMS.map(t => {
+    const drivers = data.drivers.filter(d=>d.team===t.id);
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden;border-top:3px solid ${t.color}">
+      <div style="padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <div style="width:12px;height:12px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:900;letter-spacing:.03em;flex:1">${t.name}</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900">${cpts[t.id]||0} <span style="font-size:.65rem;color:var(--muted);font-weight:400;font-family:'DM Mono',monospace">pts</span></div>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--border)">
+        ${drivers.map(d=>`<div style="flex:1;padding:10px 14px;border-right:1px solid var(--border)">
+          <div style="font-size:.6rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px">${d.flag} #${d.num}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:700">${d.name}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:900;color:${t.color};margin-top:4px">${d.pts} <span style="font-size:.6rem;color:var(--muted);font-weight:400;font-family:'DM Mono',monospace">pts</span></div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Modal ──
+function openResultModal(round) {
+  editingRound = round || null;
+  const r = round ? data.schedule.find(x=>x.round===round) : null;
+  document.getElementById('result-modal-title').textContent = r ? `Round ${r.round}: ${r.name}` : 'Add Result';
+  document.getElementById('rm-race').value = r?.name || '';
+  document.getElementById('rm-p1').value = r?.p1 || '';
+  document.getElementById('rm-p2').value = r?.p2 || '';
+  document.getElementById('rm-p3').value = r?.p3 || '';
+  document.getElementById('rm-fl').value = r?.fl || '';
+  document.getElementById('rm-race').style.display = round ? 'none' : 'block';
+  document.getElementById('result-modal').classList.add('active');
+}
+function closeResultModal(){ document.getElementById('result-modal').classList.remove('active'); }
+document.getElementById('result-modal').onclick = e => { if(e.target===document.getElementById('result-modal'))closeResultModal(); };
+
+const PTS_ORDER = [25,18,15,12,10,8,6,4,2,1];
+
+function saveResult(){
+  const p1 = document.getElementById('rm-p1').value.trim();
+  const p2 = document.getElementById('rm-p2').value.trim();
+  const p3 = document.getElementById('rm-p3').value.trim();
+  const fl = document.getElementById('rm-fl').value.trim();
+
+  if (editingRound) {
+    const r = data.schedule.find(x=>x.round===editingRound);
+    if (r) {
+      // Undo previous points if result already existed
+      if (r.done) undoRacePoints(r);
+      r.p1=p1; r.p2=p2; r.p3=p3; r.fl=fl;
+      r.done = !!(p1);
+      if (r.done) applyRacePoints(r);
+    }
+  }
+  saveData(); closeResultModal(); render();
+}
+
+function applyRacePoints(r) {
+  // Award pts: 25-18-15-12-10-8-6-4-2-1 for top 10, +1 for FL if in top 10
+  const results = [r.p1,r.p2,r.p3].filter(Boolean);
+  results.forEach((name,i) => {
+    const d = findDriver(name);
+    if (d) d.pts = (d.pts||0) + (PTS_ORDER[i]||0);
+  });
+  if (r.fl) {
+    const flD = findDriver(r.fl);
+    if (flD) flD.pts = (flD.pts||0) + 1;
+  }
+}
+
+function undoRacePoints(r) {
+  const results = [r.p1,r.p2,r.p3].filter(Boolean);
+  results.forEach((name,i) => {
+    const d = findDriver(name);
+    if (d) d.pts = Math.max(0,(d.pts||0) - (PTS_ORDER[i]||0));
+  });
+  if (r.fl) {
+    const flD = findDriver(r.fl);
+    if (flD) flD.pts = Math.max(0,(flD.pts||0) - 1);
+  }
+}
+
+function findDriver(nameOrShort) {
+  const q = nameOrShort.toLowerCase().trim();
+  return data.drivers.find(d=>
+    d.name.toLowerCase().includes(q) ||
+    d.short.toLowerCase()===q ||
+    d.name.toLowerCase()===q
+  );
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+// ── Countdown ticker ──
+function tickCountdown() {
+  if (curTab !== 'home') return;
+  const next = getNextRace();
+  if (!next) return;
+  const raceDate = new Date(next.date+'T15:00:00');
+  const diff = raceDate - new Date();
+  if (diff <= 0) return;
+  const days = Math.floor(diff/86400000);
+  const hrs  = Math.floor((diff%86400000)/3600000);
+  const mins = Math.floor((diff%3600000)/60000);
+  const secs = Math.floor((diff%60000)/1000);
+  const d=document.getElementById('cd-d'),h=document.getElementById('cd-h'),m=document.getElementById('cd-m'),s=document.getElementById('cd-s');
+  if(d) d.textContent=days;
+  if(h) h.textContent=String(hrs).padStart(2,'0');
+  if(m) m.textContent=String(mins).padStart(2,'0');
+  if(s) s.textContent=String(secs).padStart(2,'0');
+}
+setInterval(tickCountdown,1000);
+
+// ── Init ──
+render();
+</script>
+</body>
+</html>

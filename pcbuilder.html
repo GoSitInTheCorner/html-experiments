@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>PC Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0b0e;--surface:#13151a;--surface2:#1c1f26;--surface3:#242830;
+  --border:#2a2d36;--border2:#363a46;
+  --accent:#00d4ff;--accent2:#0099cc;--accent3:#60ffcc;--accent4:#ff9030;--accent5:#c8f060;
+  --text:#e8eaf0;--muted:#70737f;--danger:#ff4455;--ok:#30d090;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:clamp(12px,1.4vw,14px)}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Subtle grid bg */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* ── BACK BAR ── */
+.back-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);background:rgba(10,11,14,.95);flex-shrink:0;position:relative;z-index:10;backdrop-filter:blur(8px)}
+.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:.72rem;padding:5px 10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-title{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-.01em;color:var(--text);flex:1}
+.page-title span{color:var(--accent)}
+
+/* ── TABS ── */
+#main-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none;position:relative;z-index:10}
+#main-tabs::-webkit-scrollbar{display:none}
+.mtab{padding:10px 18px;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s}
+.mtab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.mtab:hover{color:var(--text)}
+
+/* ── SCREENS ── */
+#app-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;z-index:1}
+.screen{display:none;padding:14px;padding-bottom:80px;animation:fadeIn .18s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.card-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface2)}
+.card-hdr-title{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);flex:1}
+.card-hdr-badge{font-size:.65rem;padding:2px 8px;border-radius:20px;background:var(--surface3);border:1px solid var(--border2);color:var(--accent)}
+
+/* ── BUILD SELECTOR ── */
+#build-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+#build-tabs::-webkit-scrollbar{display:none}
+.btab{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'DM Mono',monospace;font-size:.72rem;cursor:pointer;white-space:nowrap}
+.btab.active{background:#001a22;border-color:var(--accent);color:var(--accent)}
+.btab-add{color:var(--accent3);border-color:var(--accent3)}
+.btab-add:hover{background:#001a10}
+
+/* ── COMPONENT SLOT ── */
+.comp-slot{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative}
+.comp-slot:last-child{border-bottom:none}
+.comp-slot:hover{background:var(--surface2)}
+.comp-slot.filled:hover{background:#0a1620}
+.comp-icon{font-size:1.2rem;flex-shrink:0;width:28px;text-align:center}
+.comp-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px}
+.comp-name{font-size:.85rem;color:var(--text);line-height:1.2}
+.comp-name.empty{color:var(--muted);font-style:italic}
+.comp-price{font-family:'Fraunces',serif;font-size:.9rem;font-weight:200;color:var(--accent);margin-left:auto;flex-shrink:0;white-space:nowrap}
+.comp-actions{display:flex;gap:4px;margin-left:6px;flex-shrink:0}
+.comp-act-btn{background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:.65rem;padding:3px 7px;cursor:pointer;white-space:nowrap}
+.comp-act-btn:hover{border-color:var(--accent);color:var(--accent)}
+.comp-act-btn.del:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ── TOTAL BAR ── */
+.total-bar{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.total-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex:1}
+.total-amt{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:200;color:var(--accent);line-height:1}
+.total-count{font-size:.68rem;color:var(--muted)}
+.budget-bar-wrap{margin-top:8px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.budget-bar{height:100%;border-radius:2px;transition:width .4s ease,background .3s}
+
+/* ── PART PICKER MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-ov.active{display:flex}
+@media(min-width:620px){.modal-ov{align-items:center;justify-content:center}}
+.modal{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);border-radius:12px 12px 0 0;width:100%;animation:slideUp .22s ease;max-height:88dvh;overflow:hidden;display:flex;flex-direction:column}
+@media(min-width:620px){.modal{border-radius:12px;max-width:520px;max-height:82dvh}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--surface2)}
+.modal-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--accent);flex:1;letter-spacing:-.01em}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:2px 6px}
+.modal-close:hover{color:var(--text)}
+.modal-search{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.search-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;outline:none}
+.search-inp:focus{border-color:var(--accent)}
+.search-inp::placeholder{color:var(--muted)}
+.modal-body{flex:1;overflow-y:auto;padding:8px}
+.part-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:border-color .12s,background .12s}
+.part-item:hover{border-color:var(--accent);background:#00111a}
+.part-item-icon{font-size:1.3rem;flex-shrink:0}
+.part-item-info{flex:1;min-width:0}
+.part-item-name{font-size:.82rem;color:var(--text);line-height:1.3;font-weight:500}
+.part-item-specs{font-size:.65rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.part-item-price{font-family:'Fraunces',serif;font-size:1rem;font-weight:200;color:var(--accent);flex-shrink:0}
+.part-item-wish{background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--muted);font-size:.65rem;padding:3px 7px;cursor:pointer;flex-shrink:0;margin-left:4px}
+.part-item-wish:hover{border-color:var(--accent3);color:var(--accent3)}
+.part-item-wish.wished{background:#001a10;border-color:var(--accent3);color:var(--accent3)}
+.add-custom-btn{width:100%;background:transparent;border:1px dashed var(--border);border-radius:8px;padding:10px;color:var(--muted);font-family:'DM Mono',monospace;font-size:.78rem;cursor:pointer;text-align:center;margin-top:4px}
+.add-custom-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Add custom form */
+.custom-form{padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0;display:none}
+.custom-form.open{display:block}
+.cf-row{display:flex;gap:7px;margin-bottom:7px}
+.cf-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.78rem;outline:none;min-width:0}
+.cf-inp:focus{border-color:var(--accent)}
+.cf-inp::placeholder{color:var(--muted)}
+.cf-btn{background:var(--accent);color:#000;border:none;border-radius:6px;padding:7px 14px;font-family:'DM Mono',monospace;font-size:.78rem;font-weight:500;cursor:pointer;white-space:nowrap}
+
+/* ── COMPARE ── */
+.compare-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:600px){.compare-grid{grid-template-columns:repeat(3,1fr)}}
+.compare-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.compare-card:hover{border-color:var(--border2)}
+.compare-card.sel{border-color:var(--accent);background:#001a22}
+.compare-card-hdr{padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:6px}
+.compare-card-name{font-size:.82rem;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compare-card-pts{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:200;color:var(--accent)}
+.compare-spec-row{display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid var(--border);font-size:.72rem}
+.compare-spec-row:last-child{border-bottom:none}
+.compare-spec-lbl{color:var(--muted);flex:1;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em}
+.compare-spec-val{color:var(--text)}
+
+/* ── WISHLIST ── */
+.wish-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.wish-item:last-child{border-bottom:none}
+.wish-cat{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);width:60px;flex-shrink:0}
+.wish-name{flex:1;font-size:.82rem;color:var(--text)}
+.wish-price{font-family:'Fraunces',serif;font-size:.9rem;font-weight:200;color:var(--accent);flex-shrink:0}
+.wish-del{background:transparent;border:none;color:var(--border2);font-size:.9rem;cursor:pointer;padding:0 4px;flex-shrink:0}
+.wish-del:hover{color:var(--danger)}
+.wish-add-btn{background:transparent;border:none;color:var(--muted);font-size:.72rem;cursor:pointer;padding:0 4px;flex-shrink:0;text-decoration:underline}
+.wish-add-btn:hover{color:var(--accent)}
+
+/* ── BUILD NAME MODAL ── */
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem;width:100%;outline:none;margin-bottom:8px}
+.mi:focus{border-color:var(--accent)}
+.mi::placeholder{color:var(--muted)}
+.mact{display:flex;gap:8px;margin-top:4px}
+.mprim{flex:1;background:var(--accent);color:#000;border:none;border-radius:7px;padding:10px;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;cursor:pointer}
+.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:10px;font-family:'DM Mono',monospace;font-size:.8rem;cursor:pointer}
+
+/* ── COMPAT WARNING ── */
+.compat-warn{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1a0f00;border:1px solid var(--accent4);border-radius:7px;margin-bottom:10px;font-size:.72rem;color:var(--accent4)}
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a class="back-btn" href="index.html">← Back</a>
+  <div class="page-title"><span>PC</span> Builder</div>
+</div>
+
+<div id="main-tabs">
+  <div class="mtab active" onclick="showTab('builder')">Builder</div>
+  <div class="mtab" onclick="showTab('wishlist')">Wishlist</div>
+  <div class="mtab" onclick="showTab('compare')">Compare</div>
+</div>
+
+<div id="app-body">
+  <div class="screen active" id="s-builder"></div>
+  <div class="screen" id="s-wishlist"></div>
+  <div class="screen" id="s-compare"></div>
+</div>
+
+<!-- Part Picker Modal -->
+<div class="modal-ov" id="picker-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="picker-title">Select Component</span>
+      <button class="modal-close" onclick="closePicker()">✕</button>
+    </div>
+    <div class="modal-search">
+      <input class="search-inp" id="picker-search" placeholder="Search components…" oninput="filterParts()" />
+    </div>
+    <div class="modal-body" id="picker-body"></div>
+    <div class="custom-form" id="custom-form">
+      <div class="cf-row">
+        <input class="cf-inp" id="cf-name" placeholder="Component name…" />
+        <input class="cf-inp" id="cf-price" placeholder="$0" style="width:80px;flex:none" type="number" min="0" />
+      </div>
+      <div class="cf-row">
+        <input class="cf-inp" id="cf-specs" placeholder="Specs / notes…" />
+        <button class="cf-btn" onclick="addCustomPart()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Build Modal -->
+<div class="modal-ov" id="build-modal">
+  <div class="modal" style="border-radius:12px 12px 0 0;max-height:auto">
+    <div class="modal-hdr">
+      <span class="modal-title">New Build</span>
+      <button class="modal-close" onclick="closeBuildModal()">✕</button>
+    </div>
+    <div style="padding:14px 16px">
+      <input class="mi" id="bm-name" placeholder="Build name (e.g. Gaming Rig 2025)" />
+      <input class="mi" id="bm-budget" placeholder="Budget (e.g. 2000) — optional" type="number" min="0" />
+      <div class="mact">
+        <button class="msec" onclick="closeBuildModal()">Cancel</button>
+        <button class="mprim" onclick="createBuild()">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+const SK = 'pcbuilder_v2';
+function load(){try{return JSON.parse(localStorage.getItem(SK))||null}catch{return null}}
+function save(){localStorage.setItem(SK,JSON.stringify(state))}
+
+const SLOT_DEFS = [
+  {key:'cpu',    label:'CPU',           icon:'🔲', hint:'Processor'},
+  {key:'mobo',   label:'Motherboard',   icon:'🟩', hint:'Motherboard'},
+  {key:'ram',    label:'RAM',           icon:'📊', hint:'Memory'},
+  {key:'gpu',    label:'GPU',           icon:'🎮', hint:'Graphics Card'},
+  {key:'storage',label:'Storage',       icon:'💾', hint:'SSD / HDD'},
+  {key:'storage2',label:'Storage 2',   icon:'💾', hint:'SSD / HDD #2'},
+  {key:'psu',    label:'PSU',           icon:'⚡', hint:'Power Supply'},
+  {key:'case',   label:'Case',          icon:'🖥️', hint:'PC Case'},
+  {key:'cooler', label:'CPU Cooler',    icon:'❄️', hint:'Cooling'},
+  {key:'fans',   label:'Case Fans',     icon:'🌀', hint:'Fans'},
+  {key:'monitor',label:'Monitor',       icon:'🖥', hint:'Display'},
+  {key:'kb',     label:'Keyboard',      icon:'⌨️', hint:'Keyboard'},
+  {key:'mouse',  label:'Mouse',         icon:'🖱️', hint:'Mouse'},
+  {key:'other',  label:'Other',         icon:'📦', hint:'Misc'},
+];
+
+// Curated component catalog
+const CATALOG = {
+  cpu:[
+    {name:'AMD Ryzen 9 9950X',        specs:'16C/32T · 5.7GHz · AM5',              price:649,  icon:'🔲'},
+    {name:'AMD Ryzen 9 9900X',        specs:'12C/24T · 5.6GHz · AM5',              price:449,  icon:'🔲'},
+    {name:'AMD Ryzen 7 9700X',        specs:'8C/16T · 5.5GHz · AM5',               price:329,  icon:'🔲'},
+    {name:'AMD Ryzen 5 9600X',        specs:'6C/12T · 5.4GHz · AM5',               price:229,  icon:'🔲'},
+    {name:'Intel Core Ultra 9 285K',  specs:'24C(8P+16E) · 5.7GHz · LGA1851',      price:589,  icon:'🔲'},
+    {name:'Intel Core Ultra 7 265K',  specs:'20C(8P+12E) · 5.5GHz · LGA1851',      price:394,  icon:'🔲'},
+    {name:'Intel Core Ultra 5 245K',  specs:'14C(6P+8E) · 5.2GHz · LGA1851',       price:309,  icon:'🔲'},
+    {name:'AMD Ryzen 9 7950X',        specs:'16C/32T · 5.7GHz · AM5 (prev gen)',    price:499,  icon:'🔲'},
+    {name:'AMD Ryzen 7 7700X',        specs:'8C/16T · 5.4GHz · AM5 (prev gen)',     price:249,  icon:'🔲'},
+  ],
+  mobo:[
+    {name:'ASUS ROG Crosshair X870E Hero',   specs:'X870E · AM5 · ATX · DDR5',      price:499,  icon:'🟩'},
+    {name:'MSI MEG X870E ACE',               specs:'X870E · AM5 · ATX · DDR5',      price:399,  icon:'🟩'},
+    {name:'Gigabyte X870 AORUS Elite WiFi',  specs:'X870 · AM5 · ATX · DDR5',       price:249,  icon:'🟩'},
+    {name:'ASUS Prime X870-P',               specs:'X870 · AM5 · ATX · DDR5',       price:199,  icon:'🟩'},
+    {name:'MSI MAG X870 Tomahawk WiFi',      specs:'X870 · AM5 · ATX · DDR5',       price:229,  icon:'🟩'},
+    {name:'ASUS ROG Maximus Z890 Hero',      specs:'Z890 · LGA1851 · ATX · DDR5',   price:599,  icon:'🟩'},
+    {name:'MSI MEG Z890 ACE',               specs:'Z890 · LGA1851 · ATX · DDR5',    price:449,  icon:'🟩'},
+    {name:'Gigabyte Z890 AORUS Master',     specs:'Z890 · LGA1851 · ATX · DDR5',    price:349,  icon:'🟩'},
+    {name:'ASUS TUF Gaming Z890-Plus WiFi', specs:'Z890 · LGA1851 · ATX · DDR5',    price:229,  icon:'🟩'},
+  ],
+  ram:[
+    {name:'G.Skill Trident Z5 RGB 64GB',    specs:'2×32GB · DDR5-6000 · CL30',      price:189,  icon:'📊'},
+    {name:'G.Skill Trident Z5 RGB 32GB',    specs:'2×16GB · DDR5-6000 · CL30',      price:109,  icon:'📊'},
+    {name:'Corsair Dominator Platinum 64GB', specs:'2×32GB · DDR5-5600 · CL36',     price:169,  icon:'📊'},
+    {name:'Kingston Fury Beast 32GB',       specs:'2×16GB · DDR5-5200 · CL40',      price:79,   icon:'📊'},
+    {name:'Crucial Pro 32GB',               specs:'2×16GB · DDR5-5600 · CL46',      price:69,   icon:'📊'},
+    {name:'Corsair Vengeance 128GB',        specs:'4×32GB · DDR5-5600 · CL40',      price:229,  icon:'📊'},
+  ],
+  gpu:[
+    {name:'NVIDIA RTX 5090',             specs:'32GB GDDR7 · 600W TDP',             price:1999, icon:'🎮'},
+    {name:'NVIDIA RTX 5080',             specs:'16GB GDDR7 · 360W TDP',             price:999,  icon:'🎮'},
+    {name:'NVIDIA RTX 5070 Ti',          specs:'16GB GDDR7 · 300W TDP',             price:749,  icon:'🎮'},
+    {name:'NVIDIA RTX 5070',             specs:'12GB GDDR7 · 250W TDP',             price:549,  icon:'🎮'},
+    {name:'NVIDIA RTX 4090',             specs:'24GB GDDR6X · 450W TDP',            price:1599, icon:'🎮'},
+    {name:'NVIDIA RTX 4080 Super',       specs:'16GB GDDR6X · 320W TDP',            price:899,  icon:'🎮'},
+    {name:'AMD RX 9070 XT',              specs:'16GB GDDR6 · 304W TDP',             price:599,  icon:'🎮'},
+    {name:'AMD RX 9070',                 specs:'16GB GDDR6 · 220W TDP',             price:449,  icon:'🎮'},
+    {name:'AMD RX 7900 XTX',            specs:'24GB GDDR6 · 355W TDP',              price:799,  icon:'🎮'},
+    {name:'AMD RX 7800 XT',             specs:'16GB GDDR6 · 263W TDP',              price:349,  icon:'🎮'},
+  ],
+  storage:[
+    {name:'Samsung 990 Pro 4TB',         specs:'PCIe 4.0 NVMe · 7450/6900 MB/s',   price:279,  icon:'💾'},
+    {name:'Samsung 990 Pro 2TB',         specs:'PCIe 4.0 NVMe · 7450/6900 MB/s',   price:149,  icon:'💾'},
+    {name:'WD Black SN850X 4TB',         specs:'PCIe 4.0 NVMe · 7300/6600 MB/s',   price:259,  icon:'💾'},
+    {name:'WD Black SN850X 2TB',         specs:'PCIe 4.0 NVMe · 7300/6600 MB/s',   price:139,  icon:'💾'},
+    {name:'Crucial T705 2TB',            specs:'PCIe 5.0 NVMe · 14500/12700 MB/s', price:189,  icon:'💾'},
+    {name:'Seagate Barracuda 4TB HDD',   specs:'SATA · 5400RPM · 256MB cache',      price:79,   icon:'💾'},
+    {name:'WD Red Plus 6TB HDD',         specs:'SATA · 5400RPM · NAS optimized',    price:109,  icon:'💾'},
+  ],
+  psu:[
+    {name:'Corsair HX1000i 1000W',      specs:'80+ Platinum · Fully Modular · ATX 3.0', price:199, icon:'⚡'},
+    {name:'be quiet! Dark Power 13 1000W',specs:'80+ Titanium · Fully Modular · ATX 3.0',price:229,icon:'⚡'},
+    {name:'Seasonic Focus GX-850',       specs:'80+ Gold · Fully Modular · ATX 3.0', price:129,  icon:'⚡'},
+    {name:'EVGA SuperNOVA 850 G7',      specs:'80+ Gold · Fully Modular · ATX 3.0', price:119,  icon:'⚡'},
+    {name:'Corsair RM1000x 1000W',      specs:'80+ Gold · Fully Modular · ATX 3.0', price:159,  icon:'⚡'},
+    {name:'Fractal Design Ion+ 3 750W', specs:'80+ Platinum · Fully Modular · ATX 3.0',price:139,icon:'⚡'},
+    {name:'MSI MAG A750GL 750W',        specs:'80+ Gold · Fully Modular · ATX 3.0', price:99,   icon:'⚡'},
+  ],
+  case:[
+    {name:'Lian Li PC-O11 Dynamic EVO', specs:'Mid Tower · ATX · 3×2.5" · 6×120mm', price:149,  icon:'🖥️'},
+    {name:'Fractal Design Torrent',      specs:'Mid Tower · ATX · High airflow',      price:169,  icon:'🖥️'},
+    {name:'be quiet! Dark Base 901',    specs:'Full Tower · E-ATX · Dual Chamber',   price:229,  icon:'🖥️'},
+    {name:'Phanteks Enthoo 719',        specs:'Full Tower · E-ATX · 17-slot GPU',    price:179,  icon:'🖥️'},
+    {name:'NZXT H9 Elite',             specs:'Mid Tower · ATX · Panoramic Glass',    price:199,  icon:'🖥️'},
+    {name:'Fractal Design Define 7',    specs:'Mid Tower · ATX · Soundproofed',      price:149,  icon:'🖥️'},
+    {name:'Corsair 4000D Airflow',      specs:'Mid Tower · ATX · Budget pick',       price:99,   icon:'🖥️'},
+  ],
+  cooler:[
+    {name:'Noctua NH-D15 G2',           specs:'Dual Tower Air · 140mm × 2 · 250W TDP', price:149,icon:'❄️'},
+    {name:'be quiet! Dark Rock Pro 5',  specs:'Dual Tower Air · 135mm+120mm · 250W',  price:89, icon:'❄️'},
+    {name:'Corsair H150i Elite LCD',    specs:'360mm AIO · Triple 120mm fans · LCD',  price:249, icon:'❄️'},
+    {name:'NZXT Kraken 360',            specs:'360mm AIO · Triple 120mm fans',        price:179, icon:'❄️'},
+    {name:'DeepCool LT720',             specs:'360mm AIO · Triple 120mm · TDP 350W',  price:149, icon:'❄️'},
+    {name:'Arctic Liquid Freezer III 360',specs:'360mm AIO · Budget pick · Excellent perf',price:99,icon:'❄️'},
+    {name:'Thermalright Peerless Assassin 120',specs:'Dual Tower Air · Budget king',  price:35,  icon:'❄️'},
+  ],
+  monitor:[
+    {name:'LG 27GR95QE-B 27"',         specs:'QHD OLED · 240Hz · 0.03ms · G-Sync',  price:749,  icon:'🖥'},
+    {name:'Samsung Odyssey G8 32"',     specs:'4K OLED · 240Hz · 0.03ms · HDR2000',  price:999,  icon:'🖥'},
+    {name:'ASUS ROG Swift PG32UQX 32"', specs:'4K IPS · 144Hz · HDR1400 · Mini LED', price:599,  icon:'🖥'},
+    {name:'LG 45GR95QE 45"',           specs:'Ultrawide OLED · 200Hz · 3440×1440',   price:1199, icon:'🖥'},
+    {name:'Dell AW3225QF 32"',         specs:'4K OLED · 240Hz · 0.03ms · HDR1000',   price:1099, icon:'🖥'},
+    {name:'MSI MPG 321URX QD-OLED 32"',specs:'4K QD-OLED · 240Hz · HDR1000',         price:849,  icon:'🖥'},
+  ],
+  kb:[
+    {name:'Keychron Q1 Pro',            specs:'TKL · Wireless · Aluminum · Hot-swap', price:199,  icon:'⌨️'},
+    {name:'ASUS ROG Strix Flare II',    specs:'Full Size · Cherry MX · RGB',          price:149,  icon:'⌨️'},
+    {name:'Logitech G Pro X TKL',       specs:'TKL · GX switches · Wireless',         price:129,  icon:'⌨️'},
+    {name:'Corsair K100 RGB',           specs:'Full Size · Cherry MX · OPX optical', price:199,  icon:'⌨️'},
+    {name:'SteelSeries Apex Pro TKL',   specs:'TKL · Adjustable actuation · OLED',   price:179,  icon:'⌨️'},
+  ],
+  mouse:[
+    {name:'Logitech G Pro X Superlight 2', specs:'60g · 32000 DPI · HERO sensor · Wireless',price:159,icon:'🖱️'},
+    {name:'Razer DeathAdder V3 HyperSpeed',specs:'59g · 30000 DPI · Focus Pro · Wireless',price:99, icon:'🖱️'},
+    {name:'Zowie EC2-C',                specs:'128g · 3600 DPI · Wired · No software', price:69,   icon:'🖱️'},
+    {name:'SteelSeries Rival 600',      specs:'96g · 12000 DPI · Dual sensor',        price:79,   icon:'🖱️'},
+    {name:'Corsair M75 Air Wireless',   specs:'60g · 26000 DPI · Wireless',           price:99,   icon:'🖱️'},
+  ],
+  fans:[
+    {name:'Noctua NF-A12x25 × 3',      specs:'120mm · 2000 RPM · Brown/beige',        price:89,  icon:'🌀'},
+    {name:'be quiet! Silent Wings 4 × 3',specs:'120mm · 2500 RPM · Ultra silent',     price:59,  icon:'🌀'},
+    {name:'Lian Li Uni Fan SL-Infinity × 3',specs:'120mm · Daisy chain · ARGB',       price:99,  icon:'🌀'},
+    {name:'Arctic P12 PWM PST × 5 Pack',specs:'120mm · 1800 RPM · Budget pick',       price:29,  icon:'🌀'},
+    {name:'Corsair LL120 RGB × 3',      specs:'120mm · Dual LED ring · ARGB',          price:79,  icon:'🌀'},
+  ],
+  storage2:[],
+  other:[],
+};
+// Copy storage catalog for storage2
+CATALOG.storage2 = [...CATALOG.storage];
+
+let state = load() || {
+  builds: [{id:'b1', name:'My Build', budget:2000, components:{}}],
+  curBuild: 'b1',
+  wishlist: [],
+  nextId: 10,
+};
+
+let curTab = 'builder';
+let pickerSlotKey = null;
+let pickerSearch = '';
+
+// ── Helpers ──
+function curBuild(){ return state.builds.find(b=>b.id===state.curBuild) || state.builds[0]; }
+function buildTotal(b){ return Object.values(b.components||{}).reduce((s,c)=>s+(c?.price||0),0); }
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── Tabs ──
+function showTab(id){
+  curTab=id;
+  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',['builder','wishlist','compare'][i]===id));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  render();
+}
+
+function render(){
+  if(curTab==='builder') renderBuilder();
+  else if(curTab==='wishlist') renderWishlist();
+  else if(curTab==='compare') renderCompare();
+}
+
+// ════════════════════════════════════════
+// BUILDER
+// ════════════════════════════════════════
+function renderBuilder(){
+  const el = document.getElementById('s-builder');
+  const b = curBuild();
+  const total = buildTotal(b);
+  const filled = SLOT_DEFS.filter(s=>b.components[s.key]).length;
+  const budgetPct = b.budget ? Math.min(100, (total/b.budget)*100) : 0;
+  const budgetColor = budgetPct > 100 ? 'var(--danger)' : budgetPct > 85 ? 'var(--accent4)' : 'var(--ok)';
+
+  // Build tabs
+  const buildTabsHtml = state.builds.map(build=>`
+    <div class="btab ${build.id===state.curBuild?'active':''}" onclick="selectBuild('${build.id}')">${escH(build.name)}</div>
+  `).join('') + `<div class="btab btab-add" onclick="openBuildModal()">+ New</div>`;
+
+  // Compatibility checks
+  const warns = checkCompat(b);
+  const warnHtml = warns.map(w=>`<div class="compat-warn">⚠ ${w}</div>`).join('');
+
+  // Component slots
+  const slotsHtml = SLOT_DEFS.map(s=>{
+    const c = b.components[s.key];
+    return `<div class="comp-slot ${c?'filled':''}" onclick="openPicker('${s.key}')">
+      <div class="comp-icon">${s.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="comp-label">${s.label}</div>
+        <div class="comp-name ${c?'':'empty'}">${c ? escH(c.name) : 'Click to select…'}</div>
+        ${c?.specs ? `<div style="font-size:.62rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(c.specs)}</div>` : ''}
+      </div>
+      ${c ? `<div class="comp-price">$${c.price?.toLocaleString()||0}</div>
+        <div class="comp-actions">
+          <button class="comp-act-btn del" onclick="event.stopPropagation();removeComponent('${s.key}')">✕</button>
+        </div>` : `<div style="font-size:.7rem;color:var(--border2)">＋</div>`}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div id="build-tabs">${buildTabsHtml}</div>
+
+    <div class="total-bar">
+      <div>
+        <div class="total-lbl">Build Total · ${filled}/${SLOT_DEFS.length} slots filled</div>
+        ${b.budget ? `<div style="font-size:.65rem;color:var(--muted);margin-top:2px">Budget: $${b.budget.toLocaleString()}</div>` : ''}
+      </div>
+      <div style="text-align:right">
+        <div class="total-amt">$${total.toLocaleString()}</div>
+        ${b.budget ? `<div class="total-count" style="color:${budgetColor}">${budgetPct.toFixed(0)}% of budget</div>` : ''}
+      </div>
+    </div>
+    ${b.budget ? `<div class="budget-bar-wrap"><div class="budget-bar" style="width:${budgetPct}%;background:${budgetColor}"></div></div><div style="height:10px"></div>` : ''}
+
+    ${warnHtml}
+
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-hdr-title">${escH(b.name)}</span>
+        <button onclick="deleteBuild('${b.id}')" style="background:transparent;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;padding:2px 6px" title="Delete build">🗑</button>
+      </div>
+      ${slotsHtml}
+    </div>
+  `;
+}
+
+function checkCompat(b){
+  const warns = [];
+  const cpu = b.components.cpu?.name||'';
+  const mobo = b.components.mobo?.name||'';
+  if(cpu && mobo){
+    const am5cpu = /AM5|Ryzen.*9[0-9]{2}|9[0-9]{3}X/.test(cpu);
+    const am5board = /X870|B850|X670|B650|AM5/.test(mobo);
+    const lga1851cpu = /LGA1851|Core Ultra.*[0-9]K|285K|265K|245K/.test(cpu);
+    const lga1851board = /Z890|B860|H870|Z790|LGA1851/.test(mobo);
+    const lga1700cpu = /LGA1700|Core i[0-9]-1[2-4]/.test(cpu);
+    const lga1700board = /Z790|B760|H770|H610|LGA1700/.test(mobo);
+    if((am5cpu && !am5board && !lga1700board)||(am5board && !am5cpu && cpu))
+      warns.push('CPU/Motherboard socket mismatch — check AM5 compatibility');
+    if((lga1851cpu && !lga1851board && mobo)||(lga1851board && !lga1851cpu && cpu))
+      warns.push('CPU/Motherboard socket mismatch — check LGA1851 compatibility');
+  }
+  const psu = b.components.psu;
+  const gpu = b.components.gpu;
+  if(psu && gpu){
+    const psuW = parseInt(psu.name.match(/(\d{3,4})W/)?.[1]||0);
+    const gpuTdp = parseInt(gpu.specs?.match(/(\d{2,3})W TDP/)?.[1]||0);
+    if(psuW && gpuTdp && psuW < gpuTdp+150)
+      warns.push(`PSU may be underpowered — GPU needs ~${gpuTdp+150}W recommended`);
+  }
+  return warns;
+}
+
+function selectBuild(id){state.curBuild=id;save();renderBuilder();}
+
+function removeComponent(key){
+  const b=curBuild();
+  delete b.components[key];
+  save();renderBuilder();
+}
+
+function deleteBuild(id){
+  if(state.builds.length<=1){alert('Need at least one build');return;}
+  if(!confirm('Delete this build?'))return;
+  state.builds=state.builds.filter(b=>b.id!==id);
+  state.curBuild=state.builds[0].id;
+  save();render();
+}
+
+// ── Build modal ──
+function openBuildModal(){
+  document.getElementById('bm-name').value='';
+  document.getElementById('bm-budget').value='';
+  document.getElementById('build-modal').classList.add('active');
+  setTimeout(()=>document.getElementById('bm-name').focus(),100);
+}
+function closeBuildModal(){document.getElementById('build-modal').classList.remove('active');}
+document.getElementById('build-modal').onclick=e=>{if(e.target===document.getElementById('build-modal'))closeBuildModal();}
+document.getElementById('bm-name').onkeydown=e=>{if(e.key==='Enter')createBuild();}
+
+function createBuild(){
+  const name=document.getElementById('bm-name').value.trim();
+  if(!name)return;
+  const budget=parseFloat(document.getElementById('bm-budget').value)||0;
+  const b={id:'b'+(state.nextId++),name,budget,components:{}};
+  state.builds.push(b);
+  state.curBuild=b.id;
+  save();closeBuildModal();renderBuilder();
+}
+
+// ════════════════════════════════════════
+// PART PICKER
+// ════════════════════════════════════════
+function openPicker(key){
+  pickerSlotKey=key;
+  pickerSearch='';
+  const def=SLOT_DEFS.find(s=>s.key===key);
+  document.getElementById('picker-title').textContent=`${def.icon} Select ${def.label}`;
+  document.getElementById('picker-search').value='';
+  document.getElementById('custom-form').classList.remove('open');
+  document.getElementById('picker-modal').classList.add('active');
+  filterParts();
+}
+function closePicker(){document.getElementById('picker-modal').classList.remove('active');}
+document.getElementById('picker-modal').onclick=e=>{if(e.target===document.getElementById('picker-modal'))closePicker();}
+
+function filterParts(){
+  const q=(document.getElementById('picker-search').value||'').toLowerCase();
+  const cats=CATALOG[pickerSlotKey]||[];
+  // also show all custom parts for this slot
+  const b=curBuild();
+  const customParts=(state.customParts||[]).filter(p=>p.slot===pickerSlotKey);
+  const allParts=[...cats,...customParts];
+  const filtered=q?allParts.filter(p=>p.name.toLowerCase().includes(q)||p.specs?.toLowerCase().includes(q)):allParts;
+
+  const wished=new Set((state.wishlist||[]).map(w=>w.name));
+  const body=document.getElementById('picker-body');
+  body.innerHTML=filtered.map(p=>`
+    <div class="part-item" onclick="selectPart(${JSON.stringify(JSON.stringify(p))})">
+      <span class="part-item-icon">${p.icon||'📦'}</span>
+      <div class="part-item-info">
+        <div class="part-item-name">${escH(p.name)}</div>
+        ${p.specs?`<div class="part-item-specs">${escH(p.specs)}</div>`:''}
+      </div>
+      <div class="part-item-price">$${(p.price||0).toLocaleString()}</div>
+      <button class="part-item-wish ${wished.has(p.name)?'wished':''}" onclick="event.stopPropagation();toggleWish(${JSON.stringify(JSON.stringify(p))})" title="Add to wishlist">♡</button>
+    </div>
+  `).join('') + `<button class="add-custom-btn" onclick="toggleCustomForm()">+ Add custom component</button>`;
+}
+
+function selectPart(jsonStr){
+  const p=JSON.parse(jsonStr);
+  const b=curBuild();
+  b.components[pickerSlotKey]={...p};
+  save();closePicker();renderBuilder();
+}
+
+function toggleCustomForm(){
+  const f=document.getElementById('custom-form');
+  f.classList.toggle('open');
+  if(f.classList.contains('open'))document.getElementById('cf-name').focus();
+}
+
+function addCustomPart(){
+  const name=document.getElementById('cf-name').value.trim();
+  if(!name)return;
+  const price=parseFloat(document.getElementById('cf-price').value)||0;
+  const specs=document.getElementById('cf-specs').value.trim();
+  const def=SLOT_DEFS.find(s=>s.key===pickerSlotKey);
+  const p={name,price,specs,icon:def?.icon||'📦',slot:pickerSlotKey,custom:true};
+  if(!state.customParts)state.customParts=[];
+  state.customParts.push(p);
+  save();selectPart(JSON.stringify(p));
+}
+
+// ════════════════════════════════════════
+// WISHLIST
+// ════════════════════════════════════════
+function toggleWish(jsonStr){
+  const p=JSON.parse(jsonStr);
+  if(!state.wishlist)state.wishlist=[];
+  const idx=state.wishlist.findIndex(w=>w.name===p.name);
+  if(idx>=0) state.wishlist.splice(idx,1);
+  else state.wishlist.push({...p});
+  save();filterParts();
+}
+
+function renderWishlist(){
+  const el=document.getElementById('s-wishlist');
+  const wish=state.wishlist||[];
+  if(!wish.length){
+    el.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--muted)"><div style="font-size:32px;margin-bottom:10px">♡</div><p style="font-size:.82rem;line-height:1.7">Your wishlist is empty.<br>Browse components in Builder and ♡ anything you want to track.</p></div>';
+    return;
+  }
+  const total=wish.reduce((s,w)=>s+(w.price||0),0);
+  // Group by slot
+  const bySlot={};
+  wish.forEach(w=>{const slot=w.slot||'other';if(!bySlot[slot])bySlot[slot]=[];bySlot[slot].push(w);});
+
+  el.innerHTML=`
+    <div class="total-bar" style="margin-bottom:12px">
+      <div class="total-lbl">Wishlist · ${wish.length} items</div>
+      <div class="total-amt">$${total.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      ${Object.entries(bySlot).map(([slot,items])=>{
+        const def=SLOT_DEFS.find(s=>s.key===slot)||{label:slot,icon:'📦'};
+        return items.map(w=>`
+          <div class="wish-item">
+            <span style="font-size:1rem;flex-shrink:0">${w.icon||def.icon}</span>
+            <span class="wish-cat">${def.label}</span>
+            <span class="wish-name">${escH(w.name)}</span>
+            <span class="wish-price">$${(w.price||0).toLocaleString()}</span>
+            <button class="wish-add-btn" onclick="addWishToBuild(${JSON.stringify(JSON.stringify(w))})">+ Build</button>
+            <button class="wish-del" onclick="removeWish('${escH(w.name)}')">×</button>
+          </div>`).join('');
+      }).join('')}
+    </div>
+  `;
+}
+
+function removeWish(name){
+  state.wishlist=(state.wishlist||[]).filter(w=>w.name!==name);
+  save();renderWishlist();
+}
+
+function addWishToBuild(jsonStr){
+  const p=JSON.parse(jsonStr);
+  const b=curBuild();
+  const slot=p.slot||'other';
+  b.components[slot]={...p};
+  save();
+  alert(`Added "${p.name}" to ${b.name}`);
+}
+
+// ════════════════════════════════════════
+// COMPARE
+// ════════════════════════════════════════
+let compareSelected=new Set();
+
+function renderCompare(){
+  const el=document.getElementById('s-compare');
+  if(state.builds.length<2){
+    el.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--muted)"><div style="font-size:32px;margin-bottom:10px">⚖</div><p style="font-size:.82rem;line-height:1.7">Create at least 2 builds in Builder to compare them side-by-side.</p></div>';
+    return;
+  }
+
+  const sel=state.builds.filter(b=>compareSelected.has(b.id));
+  const compHtml=sel.length>=2?renderCompareTable(sel):'<div style="color:var(--muted);font-size:.78rem;text-align:center;padding:16px">Select 2 or more builds above to compare</div>';
+
+  el.innerHTML=`
+    <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">Select builds to compare</div>
+    <div class="compare-grid" style="margin-bottom:16px">
+      ${state.builds.map(b=>{
+        const total=buildTotal(b);
+        const isSel=compareSelected.has(b.id);
+        return `<div class="compare-card ${isSel?'sel':''}" onclick="toggleCompare('${b.id}')">
+          <div class="compare-card-hdr">
+            <span class="compare-card-name">${escH(b.name)}</span>
+            ${isSel?'<span style="color:var(--accent);font-size:.8rem">✓</span>':''}
+          </div>
+          <div class="compare-spec-row"><span class="compare-spec-lbl">Total</span><span class="compare-spec-val" style="color:var(--accent)">$${total.toLocaleString()}</span></div>
+          <div class="compare-spec-row"><span class="compare-spec-lbl">Budget</span><span class="compare-spec-val">${b.budget?'$'+b.budget.toLocaleString():'—'}</span></div>
+          <div class="compare-spec-row"><span class="compare-spec-lbl">Parts</span><span class="compare-spec-val">${Object.keys(b.components||{}).length}/${SLOT_DEFS.length}</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${compHtml}
+  `;
+}
+
+function toggleCompare(id){
+  if(compareSelected.has(id))compareSelected.delete(id);
+  else compareSelected.add(id);
+  renderCompare();
+}
+
+function renderCompareTable(builds){
+  const rows=SLOT_DEFS.map(s=>{
+    const vals=builds.map(b=>{
+      const c=b.components[s.key];
+      return c?`<td style="padding:8px 10px;font-size:.75rem;border-right:1px solid var(--border);vertical-align:top;max-width:140px"><div style="font-weight:500;color:var(--text);margin-bottom:2px;line-height:1.3">${escH(c.name)}</div>${c.price?`<div style="color:var(--accent);font-size:.68rem">$${c.price.toLocaleString()}</div>`:''}${c.specs?`<div style="color:var(--muted);font-size:.62rem;margin-top:2px;line-height:1.4">${escH(c.specs)}</div>`:''}</td>`
+        :`<td style="padding:8px 10px;color:var(--muted);font-size:.72rem;border-right:1px solid var(--border)">—</td>`;
+    }).join('');
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 10px;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-right:1px solid var(--border);white-space:nowrap;background:var(--surface2)">${s.icon} ${s.label}</td>
+      ${vals}
+    </tr>`;
+  }).join('');
+
+  const totals=builds.map(b=>`<td style="padding:10px;text-align:center;border-right:1px solid var(--border)"><div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:200;color:var(--accent)">$${buildTotal(b).toLocaleString()}</div></td>`).join('');
+
+  return `<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="padding:10px;text-align:left;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);background:var(--surface2);border-right:1px solid var(--border)">Part</th>
+          ${builds.map(b=>`<th style="padding:10px;text-align:left;font-size:.75rem;color:var(--accent);background:var(--surface2);border-right:1px solid var(--border)">${escH(b.name)}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="border-top:2px solid var(--border);background:var(--surface2)">
+          <td style="padding:10px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-right:1px solid var(--border)">TOTAL</td>
+          ${totals}
+        </tr>
+      </tfoot>
+    </table>
+  </div>`;
+}
+
+// ── Init ──
+render();
+</script>
+</body>
+</html>

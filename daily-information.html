@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  /* ── LIGHT THEME: white bg, black text, blue accents ── */
+  :root {
+    --bg:       #ffffff;
+    --bg2:      #ffffff;
+    --ink:      #000000;
+    --ink2:     #000000;
+    --muted:    #555555;
+    --rule:     #cccccc;
+    --accent:   #2563eb;
+    --on-accent:#ffffff;
+  }
+
+  /* ── DARK THEME: full inversion ── */
+  body.dark {
+    --bg:       #000000;
+    --bg2:      #000000;
+    --ink:      #ffffff;
+    --ink2:     #ffffff;
+    --muted:    #aaaaaa;
+    --rule:     #333333;
+    --accent:   #3b82f6;
+    --on-accent:#ffffff;
+  }
+
+  *, *::before, *::after {
+    transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease, fill 0.22s ease;
+    box-sizing: border-box;
+  }
+  * { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── SETTINGS GEAR BUTTON ── */
+  .settings-btn {
+    position: fixed;
+    top: 13px;
+    right: 16px;
+    z-index: 10002;
+    width: 34px;
+    height: 34px;
+    background: #000000;
+    border: 1px solid #000000;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.2s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) !important;
+  }
+  .settings-btn svg { width: 16px; height: 16px; fill: #ffffff; flex-shrink: 0; }
+  .settings-btn:hover { background: #333333; transform: rotate(55deg) !important; }
+  body.dark .settings-btn { background: #ffffff; border-color: #ffffff; }
+  body.dark .settings-btn svg { fill: #000000; }
+  body.dark .settings-btn:hover { background: #cccccc; }
+
+  /* ── SETTINGS PANEL ── */
+  .settings-panel {
+    position: fixed;
+    top: 56px;
+    right: 16px;
+    z-index: 10001;
+    width: 230px;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px) scale(0.96);
+    transform-origin: top right;
+    transition: opacity 0.18s ease, transform 0.18s ease !important;
+  }
+  .settings-panel.open { opacity: 1; pointer-events: all; transform: translateY(0) scale(1); }
+  .settings-panel-header {
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+  }
+  .settings-section { padding: 14px 14px 12px; border-bottom: 1px solid var(--rule); }
+  .settings-section:last-child { border-bottom: none; }
+  .settings-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .theme-toggle { display: flex; border: 1px solid var(--rule); overflow: hidden; }
+  .theme-opt {
+    flex: 1;
+    padding: 8px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--muted);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s !important;
+  }
+  .theme-opt + .theme-opt { border-left: 1px solid var(--rule); }
+  .theme-opt.active { background: var(--ink); color: var(--bg); }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    background: var(--bg);
+    color: var(--ink);
+    text-align: center;
+    padding: 18px 60px 14px 24px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .masthead-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .masthead h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .masthead-sub {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .edition-bar {
+    background: var(--bg);
+    color: var(--muted);
+    border-top: 1px solid var(--rule);
+    border-bottom: 2px solid var(--ink);
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 5px;
+  }
+
+  /* CLOCK STRIP */
+  .clock-strip {
+    background: var(--bg);
+    border-bottom: 2px solid var(--rule);
+    padding: 12px 24px;
+    display: flex;
+    gap: 0;
+    overflow: hidden;
+  }
+  .clock-cell {
+    flex: 1;
+    padding: 8px 20px;
+    border-right: 1px solid var(--rule);
+    text-align: center;
+  }
+  .clock-cell:last-child { border-right: none; }
+  .clock-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .clock-time {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .clock-date {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .panel {
+    background: var(--bg);
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 20px 22px;
+    animation: fadeIn 0.6s ease both;
+  }
+  .panel:last-child, .panel.no-right { border-right: none; }
+  .panel-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+  }
+  .panel-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  /* WEATHER */
+  .weather-hero { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .weather-icon { font-size: 3.5rem; line-height: 1; }
+  .weather-temp-block .temp-main {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .weather-temp-block .temp-desc {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--muted);
+  }
+  .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+  .ws-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .ws-value { font-family: 'Crimson Pro', serif; font-size: 1.05rem; color: var(--ink); }
+  .wu-attribution {
+    margin-top: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  /* ── LOCATION INPUT ── */
+  .location-input-row { display: flex; gap: 6px; margin-top: 10px; }
+  .location-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    padding: 7px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    outline: none;
+    letter-spacing: 0.05em;
+  }
+  .location-input::placeholder { color: var(--muted); }
+  .location-input:focus { border-color: var(--accent); }
+  .location-go-btn {
+    background: var(--accent);
+    color: var(--on-accent);
+    border: none;
+    padding: 7px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: opacity 0.15s !important;
+  }
+  .location-go-btn:hover { opacity: 0.85; }
+  .location-or-divider {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .location-or-divider::before,
+  .location-or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .location-error {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #dc2626;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+    display: none;
+  }
+
+  /* SUN */
+  .sun-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .sun-box {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .sun-icon { font-size: 1.6rem; margin-bottom: 2px; }
+  .sun-label { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .sun-time { font-family: 'DM Mono', monospace; font-size: 1rem; font-weight: 500; color: var(--accent); }
+
+  .daylight-bar-wrap { margin-top: 6px; }
+  .daylight-bar-label { font-family: 'DM Mono', monospace; font-size: 8px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .daylight-bar { height: 6px; background: var(--rule); border-radius: 3px; position: relative; overflow: visible; }
+  .daylight-bar-fill { height: 100%; background: linear-gradient(90deg, #93c5fd, #2563eb); border-radius: 3px; transition: width 1s ease; }
+  .daylight-cursor { position: absolute; top: -3px; width: 12px; height: 12px; background: var(--ink); border-radius: 50%; transform: translateX(-50%); }
+
+  .dst-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    margin-top: 8px;
+  }
+
+  /* CALENDAR */
+  .cal-event { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+  .cal-event:last-child { border-bottom: none; }
+  .cal-time { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); min-width: 48px; padding-top: 1px; }
+  .cal-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .cal-text .title { font-size: 0.95rem; color: var(--ink); }
+  .cal-text .subtitle { font-size: 0.8rem; font-style: italic; color: var(--muted); }
+
+  /* TASKS */
+  .task-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .task-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    padding: 7px 10px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    outline: none;
+  }
+  .task-input:focus { border-color: var(--accent); }
+  .task-add-btn {
+    background: var(--accent);
+    color: var(--on-accent);
+    border: none;
+    padding: 7px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .task-add-btn:hover { opacity: 0.85; }
+  .task-list { list-style: none; }
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px dotted var(--rule); animation: slideIn 0.3s ease; }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 16px; height: 16px; flex-shrink: 0;
+    border: 2px solid var(--rule);
+    cursor: pointer; margin-top: 2px;
+    appearance: none; -webkit-appearance: none;
+    background: transparent;
+    position: relative;
+  }
+  .task-check:checked { background: var(--accent); border-color: var(--accent); }
+  .task-check:checked::after { content: '✓'; position: absolute; top: -3px; left: 1px; font-size: 12px; color: #ffffff; }
+  .task-text { font-size: 0.95rem; flex: 1; color: var(--ink); }
+  .task-text.done { text-decoration: line-through; color: var(--muted); }
+  .task-del { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 14px; padding: 0 2px; }
+  .task-del:hover { color: var(--accent); }
+
+  /* EVENTS */
+  .event-item { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .event-item:last-child { border-bottom: none; }
+  .event-cat { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+  .event-title { font-family: 'Playfair Display', serif; font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; color: var(--ink); }
+  .event-desc { font-size: 0.85rem; font-style: italic; color: var(--muted); }
+
+  /* FULL-WIDTH PANELS */
+  .panel.full { grid-column: 1 / -1; border-right: none; }
+  .panel.two-thirds { grid-column: span 2; }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: var(--bg);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    padding: 6px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    text-transform: uppercase;
+    border-top: 2px solid var(--ink);
+  }
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s infinite; }
+
+  .col-rule { border: none; border-top: 1px solid var(--rule); margin: 12px 0; }
+  .no-data { font-style: italic; color: var(--muted); font-size: 0.9rem; padding: 8px 0; }
+  .loading-shimmer {
+    background: linear-gradient(90deg, var(--bg) 25%, var(--rule) 50%, var(--bg) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    height: 14px; border-radius: 2px; margin: 4px 0;
+  }
+
+  /* Permission / info box */
+  .permission-box { background: var(--bg); padding: 4px 0; text-align: center; }
+  .permission-box p { font-style: italic; color: var(--muted); margin-bottom: 10px; font-size: 0.9rem; }
+  .perm-btn {
+    background: var(--accent);
+    color: var(--on-accent);
+    border: none;
+    padding: 8px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .perm-btn:hover { opacity: 0.85; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:none;} }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-8px);} to { opacity:1; transform:none;} }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr 1fr; }
+    .panel.two-thirds { grid-column: span 2; }
+    .clock-strip { flex-wrap: wrap; }
+    .clock-cell { min-width: 130px; border-right: none; border-bottom: 1px solid var(--rule); padding: 8px 10px; }
+  }
+  @media (max-width: 600px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .panel { border-right: none; }
+    .panel.two-thirds { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETTINGS GEAR BUTTON -->
+<button class="settings-btn" id="settings-btn" onclick="toggleSettings()" title="Settings" aria-label="Settings">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.03c.04-.32.07-.65.07-.97s-.03-.66-.07-1l2.14-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
+  </svg>
+</button>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-panel-header">Settings</div>
+  <div class="settings-section">
+    <div class="settings-section-label">Theme</div>
+    <div class="theme-toggle">
+      <button class="theme-opt active" id="theme-light" onclick="setTheme('light')">
+        <span>&#9728;</span> Light
+      </button>
+      <button class="theme-opt" id="theme-dark" onclick="setTheme('dark')">
+        <span>&#9790;</span> Dark
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-top">
+    <span id="header-date">—</span>
+    <span>The Daily Compendium</span>
+    <span id="header-location">Locating…</span>
+  </div>
+  <h1>THE DAILY BRIEF</h1>
+  <div class="masthead-sub">Your personal morning intelligence &middot; Est. every dawn</div>
+</header>
+<div class="edition-bar">&#10022; &nbsp; All the intelligence that matters to your day &nbsp; &#10022;</div>
+
+<!-- CLOCK STRIP -->
+<div class="clock-strip">
+  <div class="clock-cell">
+    <div class="clock-label">Local Time</div>
+    <div class="clock-time" id="local-time">—</div>
+    <div class="clock-date" id="local-tz">—</div>
+  </div>
+  <div class="clock-cell">
+    <div class="clock-label">CST / CDT</div>
+    <div class="clock-time" id="cst-time">—</div>
+    <div class="clock-date" id="cst-label">Central Time</div>
+  </div>
+  <div class="clock-cell">
+    <div class="clock-label">UTC / GMT</div>
+    <div class="clock-time" id="utc-time">—</div>
+    <div class="clock-date">Coordinated Universal Time</div>
+  </div>
+  <div class="clock-cell">
+    <div class="clock-label">Day of Year</div>
+    <div class="clock-time" id="day-of-year">—</div>
+    <div class="clock-date" id="week-num">—</div>
+  </div>
+  <div class="clock-cell">
+    <div class="clock-label">Until Midnight</div>
+    <div class="clock-time" id="countdown">—</div>
+    <div class="clock-date">hours remaining</div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+
+  <!-- WEATHER PANEL -->
+  <div class="panel" style="animation-delay:0.05s">
+    <div class="panel-header">
+      <div class="panel-title">Weather</div>
+      <div class="panel-eyebrow" id="weather-location-label">—</div>
+    </div>
+    <div id="weather-content">
+      <div class="permission-box" id="weather-permission">
+        <p>Enter a zip code or city name, or allow location access for local weather.</p>
+
+        <!-- ZIP / CITY INPUT -->
+        <input
+          type="text"
+          class="location-input"
+          id="location-text-input"
+          placeholder="ZIP code or city name…"
+          maxlength="80"
+          oninput="onLocationInput()"
+          onkeydown="if(event.key==='Enter') searchByLocation()"
+          style="width:100%;margin-bottom:8px;"
+        >
+        <button class="perm-btn" id="location-go-btn" onclick="searchByLocation()" style="display:none;margin-bottom:8px;">Search This Location</button>
+        <div class="location-error" id="location-error">Location not found. Try a different zip or city.</div>
+        <div class="location-or-divider" id="loc-or-divider">or</div>
+        <button class="perm-btn" id="use-location-btn" onclick="requestWeatherByGPS()">Use My Location</button>
+      </div>
+    </div>
+    <div class="wu-attribution">Source: Open-Meteo &amp; Nominatim</div>
+  </div>
+
+  <!-- SUN & DAYLIGHT PANEL -->
+  <div class="panel" style="animation-delay:0.1s">
+    <div class="panel-header">
+      <div class="panel-title">Sun &amp; Daylight</div>
+      <div class="panel-eyebrow" id="sun-date-label">Today</div>
+    </div>
+    <div class="sun-row">
+      <div class="sun-box">
+        <div class="sun-icon">🌅</div>
+        <div class="sun-label">Sunrise</div>
+        <div class="sun-time" id="sunrise-time">—</div>
+      </div>
+      <div class="sun-box">
+        <div class="sun-icon">🌇</div>
+        <div class="sun-label">Sunset</div>
+        <div class="sun-time" id="sunset-time">—</div>
+      </div>
+      <div class="sun-box">
+        <div class="sun-icon">☀️</div>
+        <div class="sun-label">Daylight</div>
+        <div class="sun-time" id="daylight-hours">—</div>
+      </div>
+    </div>
+    <div class="daylight-bar-wrap">
+      <div class="daylight-bar-label">
+        <span>Sunrise</span><span id="sun-progress-pct">—% elapsed</span><span>Sunset</span>
+      </div>
+      <div class="daylight-bar">
+        <div class="daylight-bar-fill" id="daylight-fill" style="width:0%"></div>
+        <div class="daylight-cursor" id="sun-cursor" style="left:0%"></div>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div class="ws-label">Daylight Saving Time</div>
+      <div id="dst-info" style="margin-top:4px;font-size:0.95rem;">Calculating…</div>
+      <div id="dst-badge-wrap"></div>
+      <hr class="col-rule">
+      <div class="ws-label">Solar Noon</div>
+      <div class="ws-value" id="solar-noon">—</div>
+      <div style="margin-top:8px;">
+        <div class="ws-label">Golden Hour (Morning)</div>
+        <div class="ws-value" id="golden-morning">—</div>
+      </div>
+      <div style="margin-top:8px;">
+        <div class="ws-label">Golden Hour (Evening)</div>
+        <div class="ws-value" id="golden-evening">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY IN HISTORY PANEL -->
+  <div class="panel no-right" style="animation-delay:0.15s">
+    <div class="panel-header">
+      <div class="panel-title">Today in History</div>
+      <div class="panel-eyebrow" id="events-date">—</div>
+    </div>
+    <div id="events-list">
+      <div class="loading-shimmer" style="width:80%"></div>
+      <div class="loading-shimmer" style="width:60%"></div>
+      <div class="loading-shimmer" style="width:72%"></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR PANEL -->
+  <div class="panel two-thirds" style="animation-delay:0.2s">
+    <div class="panel-header">
+      <div class="panel-title">Calendar &amp; Events</div>
+      <div class="panel-eyebrow">Device Calendar</div>
+    </div>
+    <div class="permission-box">
+      <p>Calendar access requires device permissions — shown below are today's time blocks.</p>
+      <div id="calendar-events-list" style="text-align:left;margin-top:10px;"></div>
+    </div>
+    <hr class="col-rule">
+    <div class="panel-header" style="margin-top:10px;">
+      <div class="panel-title" style="font-size:0.9rem;">🎂 Upcoming Birthdays</div>
+      <div class="panel-eyebrow">From Contacts</div>
+    </div>
+    <div id="birthday-list">
+      <p class="no-data">Birthday sync requires native calendar/contacts access.</p>
+    </div>
+  </div>
+
+  <!-- TASKS PANEL -->
+  <div class="panel no-right" style="animation-delay:0.25s">
+    <div class="panel-header">
+      <div class="panel-title">Tasks</div>
+      <div class="panel-eyebrow" id="task-count">0 remaining</div>
+    </div>
+    <div class="task-input-row">
+      <input type="text" class="task-input" id="task-input" placeholder="Add a task for today…" onkeydown="if(event.key==='Enter')addTask()">
+      <button class="task-add-btn" onclick="addTask()">+ Add</button>
+    </div>
+    <ul class="task-list" id="task-list"></ul>
+    <div id="no-tasks" class="no-data" style="display:none;">No tasks yet. Add something above.</div>
+  </div>
+
+  <!-- DAILY INTELLIGENCE PANEL -->
+  <div class="panel full" style="animation-delay:0.3s">
+    <div class="panel-header">
+      <div class="panel-title">Daily Intelligence</div>
+      <div class="panel-eyebrow">Miscellany &amp; Reference</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;">
+      <div><div class="ws-label">Moon Phase</div><div class="ws-value" id="moon-phase">—</div></div>
+      <div><div class="ws-label">Day of Week</div><div class="ws-value" id="day-of-week">—</div></div>
+      <div><div class="ws-label">Quarter</div><div class="ws-value" id="quarter-info">—</div></div>
+      <div><div class="ws-label">Days Until Weekend</div><div class="ws-value" id="days-weekend">—</div></div>
+      <div><div class="ws-label">Year Progress</div><div class="ws-value" id="year-progress">—</div></div>
+      <div><div class="ws-label">US Season</div><div class="ws-value" id="season">—</div></div>
+      <div><div class="ws-label">Next Holiday</div><div class="ws-value" id="next-holiday">—</div></div>
+      <div><div class="ws-label">Air Quality Index</div><div class="ws-value" id="aqi-value">—</div></div>
+    </div>
+    <div class="daylight-bar-wrap" style="margin-top:14px;">
+      <div class="daylight-bar-label">
+        <span>Year Progress — Jan 1</span>
+        <span id="year-progress-pct">—</span>
+        <span>Dec 31</span>
+      </div>
+      <div class="daylight-bar">
+        <div class="daylight-bar-fill" id="year-fill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span><span class="status-dot"></span>Live · Updates every 5 min</span>
+  <span id="last-updated">Loading…</span>
+  <span>The Daily Brief &copy; <span id="footer-year"></span></span>
+</div>
+
+<script>
+// ── SETTINGS ────────────────────────────────────────────────────────────────
+let settingsOpen = false;
+
+function toggleSettings() {
+  settingsOpen = !settingsOpen;
+  document.getElementById('settings-panel').classList.toggle('open', settingsOpen);
+}
+
+document.addEventListener('click', e => {
+  if (settingsOpen && !e.target.closest('#settings-panel') && !e.target.closest('#settings-btn')) {
+    settingsOpen = false;
+    document.getElementById('settings-panel').classList.remove('open');
+  }
+});
+
+function setTheme(theme) {
+  document.body.classList.toggle('dark', theme === 'dark');
+  document.getElementById('theme-light').classList.toggle('active', theme === 'light');
+  document.getElementById('theme-dark').classList.toggle('active', theme === 'dark');
+  try { localStorage.setItem('dashboard-theme', theme); } catch(e) {}
+}
+
+(function() {
+  try { if (localStorage.getItem('dashboard-theme') === 'dark') setTheme('dark'); } catch(e) {}
+})();
+
+// ── UTILITIES ────────────────────────────────────────────────────────────────
+const pad = n => String(n).padStart(2,'0');
+const fmtTime12 = d => {
+  let h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${pad(m)} ${ap}`;
+};
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClocks() {
+  const now = new Date();
+
+  document.getElementById('local-time').textContent = fmtTime12(now);
+  document.getElementById('local-tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  document.getElementById('cst-time').textContent = now.toLocaleString('en-US', {timeZone:'America/Chicago', hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true});
+  document.getElementById('cst-label').textContent = isDST_inZone('America/Chicago') ? 'CDT — Central Daylight Time' : 'CST — Central Standard Time';
+
+  const utcH = now.getUTCHours(), utcM = now.getUTCMinutes(), utcS = now.getUTCSeconds();
+  document.getElementById('utc-time').textContent = `${utcH % 12 || 12}:${pad(utcM)}:${pad(utcS)} ${utcH >= 12 ? 'PM' : 'AM'}`;
+
+  const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  document.getElementById('day-of-year').textContent = `Day ${doy}`;
+  document.getElementById('week-num').textContent = `Week ${Math.ceil(doy / 7)} of 52`;
+
+  const endOfDay = new Date(now); endOfDay.setHours(23,59,59,999);
+  const rem = endOfDay - now;
+  document.getElementById('countdown').textContent = `${Math.floor(rem/3600000)}h ${Math.floor((rem%3600000)/60000)}m`;
+
+  document.getElementById('header-date').textContent = `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  document.getElementById('day-of-week').textContent = DAYS[now.getDay()];
+  document.getElementById('quarter-info').textContent = `Q${Math.ceil((now.getMonth()+1)/3)} ${now.getFullYear()}`;
+
+  const dow = now.getDay(), daysToFri = dow===0?6:dow===6?0:5-dow;
+  document.getElementById('days-weekend').textContent = daysToFri===0 ? "It's the weekend!" : `${daysToFri} day${daysToFri!==1?'s':''}`;
+
+  document.getElementById('season').textContent = getSeason(now);
+  document.getElementById('moon-phase').textContent = getMoonPhase(now);
+
+  const yearDays = isLeapYear(now.getFullYear()) ? 366 : 365;
+  const yearPct = Math.round((doy / yearDays) * 100);
+  document.getElementById('year-progress').textContent = `${yearPct}% complete`;
+  document.getElementById('year-progress-pct').textContent = `${yearPct}% elapsed`;
+  document.getElementById('year-fill').style.width = yearPct + '%';
+  document.getElementById('events-date').textContent = `${MONTHS_SHORT[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById('sun-date-label').textContent = `${MONTHS[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById('footer-year').textContent = now.getFullYear();
+  document.getElementById('last-updated').textContent = `Last updated: ${fmtTime12(now)}`;
+
+  updateDST(now);
+  updateDaylightBar(now);
+  updateNextHoliday(now);
+}
+
+function isDST_inZone(tz) {
+  const now = new Date();
+  const getOff = d => { const s = d.toLocaleString('en-US',{timeZone:tz,timeZoneName:'short'}); const m = s.match(/GMT([+-]\d+)/); return m?parseInt(m[1]):0; };
+  return Math.max(getOff(new Date(now.getFullYear(),0,1)), getOff(new Date(now.getFullYear(),6,1))) === getOff(now);
+}
+
+function updateDST(now) {
+  const isDST = isDST_inZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const yr = now.getFullYear();
+  const dstStart = nthSunday(yr, 2, 2), dstEnd = nthSunday(yr, 10, 1);
+  const el = document.getElementById('dst-info'), bw = document.getElementById('dst-badge-wrap');
+  if (isDST) {
+    const d = Math.ceil((dstEnd - now) / 86400000);
+    el.textContent = `Daylight Saving Time active. Clocks fall back in ${d} day${d!==1?'s':''} on ${MONTHS[dstEnd.getMonth()]} ${dstEnd.getDate()}.`;
+    bw.innerHTML = '<div class="dst-badge">DST Active</div>';
+  } else {
+    const d = Math.ceil((dstStart - now) / 86400000);
+    el.textContent = d > 0
+      ? `Standard Time active. Clocks spring forward in ${d} day${d!==1?'s':''} on ${MONTHS[dstStart.getMonth()]} ${dstStart.getDate()}.`
+      : 'Standard Time is currently active.';
+    bw.innerHTML = '<div class="dst-badge">Standard Time</div>';
+  }
+}
+
+function nthSunday(year, month, n) {
+  let d = new Date(year, month, 1);
+  while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() + (n-1)*7);
+  d.setHours(2,0,0,0);
+  return d;
+}
+
+function getSeason(d) {
+  const m = d.getMonth()+1, day = d.getDate();
+  if ((m===3&&day>=20)||m===4||m===5||(m===6&&day<21)) return '🌸 Spring';
+  if ((m===6&&day>=21)||m===7||m===8||(m===9&&day<22)) return '☀️ Summer';
+  if ((m===9&&day>=22)||m===10||m===11||(m===12&&day<21)) return '🍂 Autumn';
+  return '❄️ Winter';
+}
+
+function getMoonPhase(date) {
+  const known = new Date('2000-01-06T18:14:00Z');
+  const cycle = 29.530588853 * 24 * 3600 * 1000;
+  const pct = (((date - known) % cycle) + cycle) % cycle / cycle;
+  if (pct < 0.0625) return '🌑 New Moon';
+  if (pct < 0.1875) return '🌒 Waxing Crescent';
+  if (pct < 0.3125) return '🌓 First Quarter';
+  if (pct < 0.4375) return '🌔 Waxing Gibbous';
+  if (pct < 0.5625) return '🌕 Full Moon';
+  if (pct < 0.6875) return '🌖 Waning Gibbous';
+  if (pct < 0.8125) return '🌗 Last Quarter';
+  if (pct < 0.9375) return '🌘 Waning Crescent';
+  return '🌑 New Moon';
+}
+
+function isLeapYear(y) { return (y%4===0&&y%100!==0)||y%400===0; }
+
+// ── DAYLIGHT BAR ─────────────────────────────────────────────────────────────
+let srMs = null, ssMs = null;
+
+function updateDaylightBar(now) {
+  if (srMs===null||ssMs===null) return;
+  const nowMs = now.getHours()*3600000 + now.getMinutes()*60000 + now.getSeconds()*1000;
+  const pct = Math.max(0, Math.min(100, Math.round(((nowMs-srMs)/(ssMs-srMs))*100)));
+  document.getElementById('daylight-fill').style.width = pct + '%';
+  document.getElementById('sun-cursor').style.left = pct + '%';
+  document.getElementById('sun-progress-pct').textContent = `${pct}% elapsed`;
+}
+
+// ── SUN TIMES ────────────────────────────────────────────────────────────────
+async function loadSunTimes(lat, lng) {
+  try {
+    const d = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset&timezone=auto&forecast_days=1`).then(r=>r.json());
+    if (!d.daily) return;
+    const sr = new Date(d.daily.sunrise[0]), ss = new Date(d.daily.sunset[0]);
+    const fmt = t => { let h=t.getHours(),m=t.getMinutes(),ap=h>=12?'PM':'AM'; h=h%12||12; return `${h}:${pad(m)} ${ap}`; };
+    document.getElementById('sunrise-time').textContent = fmt(sr);
+    document.getElementById('sunset-time').textContent = fmt(ss);
+    const dm = Math.round((ss-sr)/60000);
+    document.getElementById('daylight-hours').textContent = `${Math.floor(dm/60)}h ${dm%60}m`;
+    srMs = sr.getHours()*3600000 + sr.getMinutes()*60000;
+    ssMs = ss.getHours()*3600000 + ss.getMinutes()*60000;
+    const noon = new Date((sr.getTime()+ss.getTime())/2);
+    document.getElementById('solar-noon').textContent = fmt(noon);
+    document.getElementById('golden-morning').textContent = `${fmt(sr)} – ${fmt(new Date(sr.getTime()+3600000))}`;
+    document.getElementById('golden-evening').textContent = `${fmt(new Date(ss.getTime()-3600000))} – ${fmt(ss)}`;
+    updateDaylightBar(new Date());
+  } catch(e) { document.getElementById('sunrise-time').textContent = 'Error'; }
+}
+
+// ── WEATHER ──────────────────────────────────────────────────────────────────
+let weatherLoaded = false, userLat = null, userLng = null;
+
+// Show/hide GO button based on input
+function onLocationInput() {
+  const val = document.getElementById('location-text-input').value.trim();
+  const goBtn = document.getElementById('location-go-btn');
+  const useBtn = document.getElementById('use-location-btn');
+  const orDiv = document.getElementById('loc-or-divider');
+  if (goBtn) goBtn.style.display = val ? 'block' : 'none';
+  if (useBtn) useBtn.style.display = val ? 'none' : 'block';
+  if (orDiv) orDiv.style.display = val ? 'none' : 'flex';
+}
+
+// Search by typed zip code or city name
+async function searchByLocation() {
+  const input = document.getElementById('location-text-input').value.trim();
+  const errEl = document.getElementById('location-error');
+  errEl.style.display = 'none';
+  if (!input) return;
+
+  const goBtn = document.getElementById('location-go-btn');
+  goBtn.textContent = '...';
+  goBtn.disabled = true;
+
+  let lat = null, lng = null, cityLabel = null;
+
+  try {
+    // 1) Open-Meteo geocoding - good for city names
+    const omUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(input) + '&count=1&language=en&format=json';
+    const omData = await fetch(omUrl).then(r => r.json());
+    if (omData.results && omData.results.length > 0) {
+      const r = omData.results[0];
+      lat = r.latitude;
+      lng = r.longitude;
+      cityLabel = [r.name, r.admin1, r.country_code].filter(Boolean).join(', ');
+    }
+  } catch(e) {}
+
+  // 2) Fallback to Nominatim - better for zip/postal codes
+  if (lat === null) {
+    try {
+      const nUrl = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(input) + '&format=json&limit=1&addressdetails=1';
+      const nResults = await fetch(nUrl, { headers: { 'Accept-Language': 'en' } }).then(r => r.json());
+      if (nResults && nResults.length > 0) {
+        const n = nResults[0];
+        lat = parseFloat(n.lat);
+        lng = parseFloat(n.lon);
+        const a = n.address || {};
+        cityLabel = [a.city || a.town || a.village || a.county, a.state || a.country].filter(Boolean).join(', ')
+                    || n.display_name.split(',').slice(0,2).join(',').trim();
+      }
+    } catch(e) {}
+  }
+
+  if (lat === null) {
+    document.getElementById('location-error').style.display = 'block';
+    goBtn.textContent = 'Go';
+    goBtn.disabled = false;
+    return;
+  }
+
+  userLat = lat;
+  userLng = lng;
+  document.getElementById('weather-location-label').textContent = '📍 ' + cityLabel;
+  document.getElementById('header-location').textContent = '📍 ' + cityLabel;
+
+  await loadWeather(userLat, userLng, cityLabel);
+  await loadSunTimes(userLat, userLng);
+  await loadAQI(userLat, userLng);
+
+  goBtn.textContent = 'Go';
+  goBtn.disabled = false;
+}
+
+// Use GPS/browser geolocation
+async function requestWeatherByGPS() {
+  if (!navigator.geolocation) {
+    document.getElementById('weather-content').innerHTML = '<p class="no-data">Geolocation not supported.</p>';
+    document.getElementById('header-location').textContent = 'Location unavailable';
+    return;
+  }
+  document.getElementById('weather-permission').innerHTML = '<p style="color:var(--muted);font-style:italic;padding:8px 0;">Requesting location…</p>';
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      document.getElementById('header-location').textContent = '📍 ' + userLat.toFixed(2) + ', ' + userLng.toFixed(2);
+      await loadWeather(userLat, userLng);
+      await loadSunTimes(userLat, userLng);
+      await loadAQI(userLat, userLng);
+    },
+    err => {
+      const msg = err.code === 1 ? 'Location denied' : 'Location unavailable';
+      document.getElementById('weather-content').innerHTML = `<p class="no-data">${msg}. Enter a zip or city above, or enable location.</p>`;
+      document.getElementById('header-location').textContent = msg;
+      document.getElementById('weather-location-label').textContent = msg;
+    },
+    { timeout: 10000 }
+  );
+}
+
+async function loadWeather(lat, lng, labelOverride) {
+  try {
+    let city = labelOverride || `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+    if (!labelOverride) {
+      try {
+        const g = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`).then(r=>r.json());
+        city = g.address?.city || g.address?.town || g.address?.village || g.address?.county || city;
+      } catch(e) {}
+      document.getElementById('weather-location-label').textContent = `📍 ${city}`;
+      document.getElementById('header-location').textContent = `📍 ${city}`;
+    }
+
+    const c = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,uv_index,visibility,pressure_msl,dew_point_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto`).then(r=>r.json()).then(d=>d.current);
+
+    document.getElementById('weather-content').innerHTML = `
+      <div class="weather-hero">
+        <div class="weather-icon">${weatherIcon(c.weather_code)}</div>
+        <div class="weather-temp-block">
+          <div class="temp-main">${Math.round(c.temperature_2m)}°F</div>
+          <div class="temp-desc">${weatherDesc(c.weather_code)}</div>
+        </div>
+      </div>
+      <div class="weather-grid">
+        <div class="weather-stat"><div class="ws-label">Feels Like</div><div class="ws-value">${Math.round(c.apparent_temperature)}°F</div></div>
+        <div class="weather-stat"><div class="ws-label">Humidity</div><div class="ws-value">${c.relative_humidity_2m}%</div></div>
+        <div class="weather-stat"><div class="ws-label">Wind</div><div class="ws-value">${Math.round(c.wind_speed_10m)} mph ${degToCompass(c.wind_direction_10m)}</div></div>
+        <div class="weather-stat"><div class="ws-label">UV Index</div><div class="ws-value">${c.uv_index} — ${uvLabel(c.uv_index)}</div></div>
+        <div class="weather-stat"><div class="ws-label">Pressure</div><div class="ws-value">${c.pressure_msl} hPa</div></div>
+        <div class="weather-stat"><div class="ws-label">Cloud Cover</div><div class="ws-value">${c.cloud_cover}%</div></div>
+        <div class="weather-stat"><div class="ws-label">Visibility</div><div class="ws-value">${(c.visibility/1609).toFixed(1)} mi</div></div>
+        <div class="weather-stat"><div class="ws-label">Dew Point</div><div class="ws-value">${Math.round(c.dew_point_2m)}°F</div></div>
+        <div class="weather-stat"><div class="ws-label">Precipitation</div><div class="ws-value">${c.precipitation}" today</div></div>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="location-go-btn" style="font-size:9px;padding:5px 12px;" onclick="resetWeather()">Change Location</button>
+      </div>`;
+    weatherLoaded = true;
+  } catch(e) {
+    document.getElementById('weather-content').innerHTML = '<p class="no-data">Weather data unavailable.</p>';
+  }
+}
+
+// Allow the user to search a new location after weather is loaded
+function resetWeather() {
+  weatherLoaded = false;
+  document.getElementById('weather-content').innerHTML = `
+    <div class="permission-box" id="weather-permission">
+      <p>Enter a zip code or city name, or allow location access for local weather.</p>
+      <input type="text" class="location-input" id="location-text-input" placeholder="ZIP code or city name…" maxlength="80" oninput="onLocationInput()" onkeydown="if(event.key==='Enter') searchByLocation()" style="width:100%;margin-bottom:8px;">
+      <button class="perm-btn" id="location-go-btn" onclick="searchByLocation()" style="display:none;margin-bottom:8px;">Search This Location</button>
+      <div class="location-error" id="location-error">Location not found. Try a different zip or city.</div>
+      <div class="location-or-divider" id="loc-or-divider">or</div>
+      <button class="perm-btn" id="use-location-btn" onclick="requestWeatherByGPS()">Use My Location</button>
+    </div>`;
+  document.getElementById('weather-location-label').textContent = '—';
+  document.getElementById('header-location').textContent = '—';
+}
+
+async function loadAQI(lat, lng) {
+  try {
+    const d = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=us_aqi`).then(r=>r.json());
+    const aqi = d.current?.us_aqi;
+    if (aqi !== undefined) document.getElementById('aqi-value').textContent = `${aqi} — ${aqiLabel(aqi)}`;
+  } catch(e) {}
+}
+
+function aqiLabel(v) { return v<=50?'Good':v<=100?'Moderate':v<=150?'Unhealthy (sensitive)':v<=200?'Unhealthy':v<=300?'Very Unhealthy':'Hazardous'; }
+function weatherIcon(c) {
+  if(c===0)return'☀️';if(c===1)return'🌤️';if(c===2)return'⛅';if(c===3)return'☁️';
+  if([45,48].includes(c))return'🌫️';if([51,53,55,56,57].includes(c))return'🌦️';
+  if([61,63,65].includes(c))return'🌧️';if([66,67].includes(c))return'🌨️';
+  if([71,73,75,77].includes(c))return'❄️';if([80,81,82].includes(c))return'🌦️';
+  if([85,86].includes(c))return'🌨️';if([95,96,99].includes(c))return'⛈️';return'🌡️';
+}
+function weatherDesc(c) {
+  return {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',56:'Light freezing drizzle',57:'Heavy freezing drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',66:'Light freezing rain',67:'Heavy freezing rain',71:'Light snow',73:'Moderate snow',75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Moderate showers',82:'Heavy showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm with hail',99:'Heavy thunderstorm with hail'}[c] || 'Unknown';
+}
+function degToCompass(d) { return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16]; }
+function uvLabel(u) { return u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme'; }
+
+// ── TODAY IN HISTORY ─────────────────────────────────────────────────────────
+const HIST = {
+  '1-1': [{cat:'Culture',title:'New Year Celebrated Globally',desc:'Billions mark the start of another year.'},{cat:'History',title:'1863 – Emancipation Proclamation',desc:"Lincoln's order freed enslaved people in Confederate states."},{cat:'Science',title:'1801 – Ceres Discovered',desc:'Giuseppe Piazzi spotted the first known asteroid.'}],
+  '1-15':[{cat:'History',title:'1929 – Martin Luther King Jr. Born',desc:'The civil rights leader was born in Atlanta, Georgia.'},{cat:'Tech',title:'2001 – Wikipedia Launched',desc:'The free online encyclopedia went live.'}],
+  '2-14':[{cat:'Culture',title:"Valentine's Day",desc:'A day dedicated to love and affection.'},{cat:'History',title:'1876 – Telephone Patent Filed',desc:'Alexander Graham Bell filed his telephone patent.'}],
+  '3-3': [{cat:'History',title:'1847 – Alexander Graham Bell Born',desc:'The inventor of the telephone was born in Edinburgh.'},{cat:'History',title:'1931 – Star-Spangled Banner Becomes US Anthem',desc:'President Hoover signed the bill.'},{cat:'Science',title:'1969 – Apollo 9 Splashdown',desc:'The crew returned after testing the lunar module.'}],
+  '3-14':[{cat:'Science',title:'Pi Day',desc:'Celebrated every March 14th (3.14) worldwide.'},{cat:'History',title:'1879 – Albert Einstein Born',desc:'The theoretical physicist was born in Ulm, Germany.'}],
+  '4-22':[{cat:'Environment',title:'Earth Day',desc:'Annual event for environmental awareness since 1970.'},{cat:'History',title:'1970 – First Earth Day',desc:'20 million Americans participated.'}],
+  '7-4': [{cat:'History',title:'1776 – Declaration of Independence',desc:'The US declared independence from Britain.'},{cat:'Culture',title:'Independence Day (USA)',desc:'National holiday with fireworks and celebrations.'}],
+  '9-11':[{cat:'History',title:'2001 – September 11 Attacks',desc:'Terrorist attacks killed nearly 3,000 people.'},{cat:'Memorial',title:'National Day of Service',desc:'A day of remembrance and community service.'}],
+  '10-31':[{cat:'Culture',title:'Halloween',desc:'Annual holiday with costumes and trick-or-treating.'},{cat:'History',title:"1517 – Martin Luther's 95 Theses",desc:'Luther sparked the Protestant Reformation.'}],
+  '11-11':[{cat:'History',title:"Veteran's Day / Remembrance Day",desc:'Honoring all who served in the armed forces.'},{cat:'History',title:'1918 – World War I Ended',desc:'The Armistice was signed, ending the Great War.'}],
+  '12-25':[{cat:'Culture',title:'Christmas Day',desc:'Celebrated by billions worldwide.'},{cat:'History',title:'800 – Charlemagne Crowned',desc:'Pope Leo III crowned Charlemagne Emperor.'}],
+  '12-31':[{cat:'Culture',title:"New Year's Eve",desc:'The world prepares to ring in the new year.'},{cat:'History',title:'1879 – Edison Demonstrates Light Bulb',desc:'Thomas Edison publicly demonstrated incandescent lighting.'}],
+};
+
+function loadHistoricalEvents() {
+  const now = new Date(), key = `${now.getMonth()+1}-${now.getDate()}`;
+  const events = HIST[key] || [{cat:'Daily',title:`${DAYS[now.getDay()]} — Make it count`,desc:'Every day is a new opportunity.'},{cat:'Reference',title:`Day ${getDOY(now)} of ${isLeapYear(now.getFullYear())?366:365}`,desc:`${365-getDOY(now)} days remain in ${now.getFullYear()}.`}];
+  document.getElementById('events-list').innerHTML = events.map(e=>`<div class="event-item"><div class="event-cat">${e.cat}</div><div class="event-title">${e.title}</div><div class="event-desc">${e.desc}</div></div>`).join('');
+}
+function getDOY(d) { return Math.floor((d - new Date(d.getFullYear(),0,0)) / 86400000); }
+
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+function loadCalendar() {
+  const slots = [
+    {time:'Morning',  title:'Morning Routine', color:'#2563eb'},
+    {time:'Midday',   title:'Lunch / Break',   color:'#6b6b6b'},
+    {time:'Afternoon',title:'Work Block',       color:'#000000'},
+    {time:'Evening',  title:'Personal Time',    color:'#3b82f6'},
+  ];
+  document.getElementById('calendar-events-list').innerHTML =
+    `<p style="font-size:0.82rem;font-style:italic;color:var(--muted);margin-bottom:10px;">Showing placeholder time blocks for today:</p>` +
+    slots.map(s=>`<div class="cal-event"><div class="cal-time">${s.time}</div><div class="cal-dot" style="background:${s.color}"></div><div class="cal-text"><div class="title">${s.title}</div></div></div>`).join('');
+}
+
+// ── TASKS ────────────────────────────────────────────────────────────────────
+let tasks = [];
+const TASK_KEY = 'dailybrieftasks_' + new Date().toDateString();
+
+function loadTasks() {
+  try { const s = localStorage.getItem(TASK_KEY); if (s) tasks = JSON.parse(s); } catch(e) {}
+  renderTasks();
+}
+function saveTasks() { try { localStorage.setItem(TASK_KEY, JSON.stringify(tasks)); } catch(e) {} }
+function addTask() {
+  const inp = document.getElementById('task-input'), text = inp.value.trim();
+  if (!text) return;
+  tasks.unshift({id:Date.now(), text, done:false});
+  inp.value = ''; saveTasks(); renderTasks();
+}
+function toggleTask(id) { tasks = tasks.map(t=>t.id===id?{...t,done:!t.done}:t); saveTasks(); renderTasks(); }
+function deleteTask(id) { tasks = tasks.filter(t=>t.id!==id); saveTasks(); renderTasks(); }
+function renderTasks() {
+  const ul = document.getElementById('task-list'), noT = document.getElementById('no-tasks');
+  const rem = tasks.filter(t=>!t.done).length;
+  document.getElementById('task-count').textContent = `${rem} remaining`;
+  if (!tasks.length) { ul.innerHTML=''; noT.style.display='block'; return; }
+  noT.style.display = 'none';
+  ul.innerHTML = [...tasks].sort((a,b)=>a.done-b.done).map(t=>`
+    <li class="task-item">
+      <input type="checkbox" class="task-check" ${t.done?'checked':''} onclick="toggleTask(${t.id})">
+      <span class="task-text ${t.done?'done':''}">${esc(t.text)}</span>
+      <button class="task-del" onclick="deleteTask(${t.id})">✕</button>
+    </li>`).join('');
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── HOLIDAYS ─────────────────────────────────────────────────────────────────
+const HOLIDAYS = [
+  {m:1,d:1,name:"New Year's Day"},{m:2,d:14,name:"Valentine's Day"},{m:3,d:17,name:"St. Patrick's Day"},
+  {m:4,d:22,name:"Earth Day"},{m:5,d:26,name:"Memorial Day"},{m:6,d:19,name:"Juneteenth"},
+  {m:7,d:4,name:"Independence Day"},{m:9,d:1,name:"Labor Day"},{m:10,d:31,name:"Halloween"},
+  {m:11,d:11,name:"Veterans Day"},{m:11,d:27,name:"Thanksgiving"},{m:12,d:24,name:"Christmas Eve"},
+  {m:12,d:25,name:"Christmas Day"},{m:12,d:31,name:"New Year's Eve"},
+];
+function updateNextHoliday(now) {
+  const m=now.getMonth()+1, d=now.getDate();
+  let next=null, min=Infinity;
+  for (const h of HOLIDAYS) {
+    let diff=(h.m-m)*31+(h.d-d); if(diff<0)diff+=365;
+    if(diff<min){min=diff;next=h;}
+  }
+  if(next) document.getElementById('next-holiday').textContent = min===0?`🎉 Today: ${next.name}`:`${next.name} (in ${min}d)`;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+updateClocks();
+loadTasks();
+loadHistoricalEvents();
+loadCalendar();
+
+if (navigator.permissions) {
+  navigator.permissions.query({name:'geolocation'}).then(r => { if (r.state==='granted') requestWeatherByGPS(); });
+}
+
+setInterval(updateClocks, 1000);
+setInterval(() => { if (weatherLoaded && userLat) { loadWeather(userLat, userLng); loadAQI(userLat, userLng); } }, 300000);
+</script>
+
+</body>
+</html>
