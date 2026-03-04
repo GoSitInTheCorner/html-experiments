@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horizons — Life Goals</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --border-active: rgba(255,255,255,0.15);
+    --text: #e8e6df;
+    --text-muted: #6b7080;
+    --text-dim: #9a9fac;
+    --accent1: #c8a96e; /* gold */
+    --accent2: #6e9fc8; /* blue */
+    --accent3: #8fc88a; /* green */
+    --accent4: #c87b8a; /* rose */
+    --accent5: #a88ec8; /* purple */
+    --y1: #c8a96e;
+    --y3: #6e9fc8;
+    --y5: #8fc88a;
+    --y10: #c87b8a;
+    --yx: #a88ec8;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 32px rgba(0,0,0,0.4);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; height: 100vh; position: relative; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 10;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  .logo-mark span { color: var(--accent1); }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .sidebar-nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+  .nav-section-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 8px 12px 6px;
+    font-weight: 600;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 400;
+    position: relative;
+    border: 1px solid transparent;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active {
+    background: var(--bg3);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--nav-color, var(--accent1));
+  }
+  .nav-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--nav-color, var(--accent1));
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+  .nav-count {
+    margin-left: auto;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text-muted);
+    padding: 1px 7px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .progress-overview { padding: 4px 0 12px; }
+  .progress-overview-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .mini-progress { display: flex; flex-direction: column; gap: 6px; }
+  .mini-prog-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .mini-prog-label { width: 24px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .mini-prog-bar { flex: 1; height: 3px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+  .mini-prog-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+  .mini-prog-pct { width: 28px; text-align: right; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  .btn-add-goal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px;
+    background: linear-gradient(135deg, var(--accent1) 0%, #b8924a 100%);
+    color: #1a1200;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .btn-add-goal:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-add-goal:active { transform: translateY(0); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg2);
+    z-index: 5;
+  }
+  .topbar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .topbar-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .topbar-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: text;
+    transition: border-color 0.2s;
+    min-width: 180px;
+  }
+  .topbar-search input {
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    width: 100%;
+  }
+  .topbar-search input::placeholder { color: var(--text-muted); }
+  .topbar-search:focus-within { border-color: var(--border-active); }
+  .btn-icon {
+    width: 36px; height: 36px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    font-size: 16px;
+  }
+  .btn-icon:hover { border-color: var(--border-active); color: var(--text); }
+
+  /* ── CONTENT ── */
+  .content { flex: 1; overflow-y: auto; padding: 32px; }
+  .content::-webkit-scrollbar { width: 6px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  /* ── DASHBOARD VIEW ── */
+  .dash-greeting {
+    margin-bottom: 32px;
+  }
+  .dash-greeting h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .dash-greeting h2 em {
+    font-style: italic;
+    color: var(--accent1);
+  }
+  .dash-greeting p { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border-active); }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--text); font-weight: 400; line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .stat-accent { color: var(--stat-color, var(--accent1)); }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .section-link {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .section-link:hover { color: var(--accent1); }
+
+  /* ── HORIZON BANDS ── */
+  .horizon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .horizon-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .horizon-card:hover { border-color: var(--border-active); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .horizon-card-top {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .horizon-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    background: var(--h-bg, rgba(200,169,110,0.1));
+  }
+  .horizon-info { flex: 1; }
+  .horizon-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--h-color, var(--accent1));
+    margin-bottom: 3px;
+    font-weight: 600;
+  }
+  .horizon-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .horizon-goals-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .horizon-prog-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--h-bg, rgba(200,169,110,0.1));
+    color: var(--h-color, var(--accent1));
+    border: 1px solid var(--h-border, rgba(200,169,110,0.2));
+  }
+  .horizon-card-bottom { padding: 14px 20px; }
+  .progress-bar-track {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--h-color, var(--accent1));
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 8px;
+    height: 100%;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+  }
+  .horizon-task-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .task-chip {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--bg3);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .task-chip.done { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
+  .task-chip.more { color: var(--text-muted); }
+
+  /* ── GOAL VIEW ── */
+  .view-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .view-header-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .view-header-info { flex: 1; }
+  .view-horizon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .view-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  .view-desc { font-size: 14px; color: var(--text-muted); margin-top: 6px; line-height: 1.6; }
+  .view-meta { display: flex; gap: 20px; margin-top: 12px; flex-wrap: wrap; }
+  .meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+  .meta-item svg, .meta-item span.icon { font-size: 14px; }
+
+  .view-actions { display: flex; gap: 8px; margin-left: auto; }
+  .btn { 
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; border: none;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary { background: var(--accent1); color: #1a1200; }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--border-active); background: var(--bg2); }
+  .btn-danger { background: rgba(200,80,80,0.1); color: #e07070; border: 1px solid rgba(200,80,80,0.2); }
+  .btn-danger:hover { background: rgba(200,80,80,0.18); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+  /* ── TASKS SECTION ── */
+  .tasks-container { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .tasks-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tasks-title { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; }
+  .tasks-stats { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .task-list { list-style: none; }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    group: true;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-item:hover { background: var(--bg3); }
+  .task-check {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border-active);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .task-check:hover { border-color: var(--h-color, var(--accent1)); }
+  .task-check.checked {
+    background: var(--h-color, var(--accent1));
+    border-color: var(--h-color, var(--accent1));
+  }
+  .task-check.checked::after {
+    content: '';
+    width: 10px; height: 7px;
+    border-left: 2px solid #1a1200;
+    border-bottom: 2px solid #1a1200;
+    transform: rotate(-45deg) translate(1px, -1px);
+    display: block;
+  }
+  .task-text {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: text;
+    outline: none;
+    color: var(--text);
+    min-width: 0;
+  }
+  .task-text.done { text-decoration: line-through; color: var(--text-muted); }
+  .task-priority {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .priority-high { background: rgba(200,80,80,0.12); color: #e07070; border: 1px solid rgba(200,80,80,0.2); }
+  .priority-med { background: rgba(200,169,110,0.12); color: var(--accent1); border: 1px solid rgba(200,169,110,0.2); }
+  .priority-low { background: rgba(143,200,138,0.12); color: var(--accent3); border: 1px solid rgba(143,200,138,0.2); }
+  .task-delete {
+    opacity: 0;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    background: none;
+    border: none;
+    line-height: 1;
+  }
+  .task-item:hover .task-delete { opacity: 1; }
+  .task-delete:hover { color: #e07070; background: rgba(200,80,80,0.1); }
+
+  .add-task-row {
+    padding: 12px 20px;
+    background: var(--bg3);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .add-task-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .add-task-input::placeholder { color: var(--text-muted); }
+  .priority-select {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+  }
+  .priority-select option { background: var(--bg2); }
+  .add-task-btn {
+    background: var(--accent1);
+    color: #1a1200;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .add-task-btn:hover { opacity: 0.85; }
+
+  /* ── GOALS LIST VIEW ── */
+  .goals-list { display: flex; flex-direction: column; gap: 12px; }
+  .goal-row {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .goal-row:hover { border-color: var(--border-active); background: var(--bg3); transform: translateX(2px); }
+  .goal-row-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .goal-row-info { flex: 1; min-width: 0; }
+  .goal-row-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .goal-row-meta { font-size: 12px; color: var(--text-muted); }
+  .goal-row-right { display: flex; align-items: center; gap: 12px; }
+  .goal-row-prog {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .goal-row-bar { width: 80px; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .goal-row-fill { height: 100%; border-radius: 2px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border-active);
+    border-radius: 16px;
+    width: 540px;
+    max-width: 95vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header {
+    padding: 24px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 500; }
+  .modal-close {
+    width: 32px; height: 32px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--border-active); }
+  .modal-body { padding: 20px 24px 24px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent1); }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+  .form-select option { background: var(--bg2); }
+  .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+  .emoji-btn {
+    width: 38px; height: 38px;
+    background: var(--bg3);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .emoji-btn:hover { border-color: var(--border-active); background: var(--bg); }
+  .emoji-btn.selected { border-color: var(--accent1); background: rgba(200,169,110,0.1); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer {
+    padding: 0 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* ── HORIZON PICKER ── */
+  .horizon-picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .horizon-btn {
+    padding: 10px 6px;
+    background: var(--bg3);
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .horizon-btn .h-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin: 0 auto 6px;
+  }
+  .horizon-btn:hover { border-color: var(--border-active); color: var(--text); }
+  .horizon-btn.selected { border-color: var(--h-c); color: var(--h-c); background: rgba(255,255,255,0.03); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-dim); margin-bottom: 8px; }
+  .empty-text { font-size: 14px; line-height: 1.6; max-width: 320px; }
+
+  /* ── TIMELINE VIEW ── */
+  .timeline { position: relative; padding-left: 32px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+  .timeline-group { margin-bottom: 32px; }
+  .timeline-horizon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .timeline-horizon::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--h-c, var(--accent1));
+    background: var(--bg);
+  }
+  .timeline-h-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--h-c, var(--accent1));
+  }
+  .timeline-h-bar { flex: 1; height: 1px; background: var(--border); }
+  .timeline-goals { display: flex; flex-direction: column; gap: 8px; }
+  .timeline-goal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 3px solid var(--h-c, var(--accent1));
+  }
+  .timeline-goal:hover { border-color: var(--border-active); background: var(--bg3); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .view-content { animation: fadeIn 0.25s ease; }
+
+  /* ── MOBILE ── */
+  .hamburger { display: none; }
+  @media (max-width: 768px) {
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      transform: translateX(-100%);
+      z-index: 200;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .hamburger {
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer; color: var(--text);
+      font-size: 18px;
+    }
+    .content { padding: 20px 16px; }
+    .topbar { padding: 14px 16px; }
+    .horizon-grid { grid-template-columns: 1fr; }
+    .horizon-picker { grid-template-columns: repeat(3, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+  }
+
+  /* ── CONFETTI ── */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confettiFall 1.2s ease-in forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Scrollbar */
+  .sidebar-nav::-webkit-scrollbar { width: 3px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--bg3);
+    border: 1px solid var(--border-active);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: var(--shadow);
+    animation: toastIn 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  @keyframes toastIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">Hori<span>z</span>ons</div>
+      <div class="logo-sub">Life Goals Tracker</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" data-view="dashboard" onclick="showView('dashboard')" style="--nav-color:#c8a96e">
+        <div class="nav-dot" style="background:#c8a96e"></div> Dashboard
+      </div>
+      <div class="nav-item" data-view="timeline" onclick="showView('timeline')" style="--nav-color:#6e9fc8">
+        <div class="nav-dot" style="background:#6e9fc8"></div> Timeline
+      </div>
+      <div class="nav-item" data-view="all-goals" onclick="showView('all-goals')" style="--nav-color:#8fc88a">
+        <div class="nav-dot" style="background:#8fc88a"></div> All Goals
+        <span class="nav-count" id="nav-count-all">0</span>
+      </div>
+      <div class="nav-section-label" style="margin-top:12px">By Horizon</div>
+      <div class="nav-item" data-view="h-1" onclick="showHorizonView('1')" style="--nav-color:var(--y1)">
+        <div class="nav-dot" style="background:var(--y1)"></div> 1 Year
+        <span class="nav-count" id="nav-count-1">0</span>
+      </div>
+      <div class="nav-item" data-view="h-3" onclick="showHorizonView('3')" style="--nav-color:var(--y3)">
+        <div class="nav-dot" style="background:var(--y3)"></div> 3 Years
+        <span class="nav-count" id="nav-count-3">0</span>
+      </div>
+      <div class="nav-item" data-view="h-5" onclick="showHorizonView('5')" style="--nav-color:var(--y5)">
+        <div class="nav-dot" style="background:var(--y5)"></div> 5 Years
+        <span class="nav-count" id="nav-count-5">0</span>
+      </div>
+      <div class="nav-item" data-view="h-10" onclick="showHorizonView('10')" style="--nav-color:var(--y10)">
+        <div class="nav-dot" style="background:var(--y10)"></div> 10 Years
+        <span class="nav-count" id="nav-count-10">0</span>
+      </div>
+      <div class="nav-item" data-view="h-x" onclick="showHorizonView('x')" style="--nav-color:var(--yx)">
+        <div class="nav-dot" style="background:var(--yx)"></div> Lifetime
+        <span class="nav-count" id="nav-count-x">0</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="progress-overview">
+        <div class="progress-overview-label">Overall Progress</div>
+        <div class="mini-progress" id="mini-progress"></div>
+      </div>
+      <button class="btn-add-goal" onclick="openModal()">＋ &nbsp;New Goal</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-subtitle" id="topbar-subtitle">Your life at a glance</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-search">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="7"/><path d="m15 15 3 3"/></svg>
+          <input type="text" placeholder="Search goals…" id="search-input" oninput="handleSearch(this.value)">
+        </div>
+      </div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New Goal</div>
+      <div class="modal-close" onclick="closeModal()">✕</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-goal-id">
+      <div class="form-group">
+        <label class="form-label">Choose an Icon</label>
+        <div class="emoji-picker" id="emoji-picker"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Goal Name</label>
+        <input type="text" class="form-input" id="goal-name-input" placeholder="e.g. Learn Spanish fluently">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (optional)</label>
+        <textarea class="form-textarea" id="goal-desc-input" rows="2" placeholder="Why is this goal important to you?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time Horizon</label>
+        <div class="horizon-picker" id="horizon-picker"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Target Date (optional)</label>
+          <input type="date" class="form-input" id="goal-date-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="goal-category-input">
+            <option value="career">💼 Career</option>
+            <option value="health">💪 Health</option>
+            <option value="finance">💰 Finance</option>
+            <option value="learning">📚 Learning</option>
+            <option value="relationships">❤️ Relationships</option>
+            <option value="travel">✈️ Travel</option>
+            <option value="creative">🎨 Creative</option>
+            <option value="spiritual">🌿 Spiritual</option>
+            <option value="other">⭐ Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGoal()">Save Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA LAYER
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY = 'horizons_goals_v2';
+const HORIZONS = {
+  '1':  { label: '1 Year',   color: '#c8a96e', bg: 'rgba(200,169,110,0.12)', border: 'rgba(200,169,110,0.22)', emoji: '🌱' },
+  '3':  { label: '3 Years',  color: '#6e9fc8', bg: 'rgba(110,159,200,0.12)', border: 'rgba(110,159,200,0.22)', emoji: '🌊' },
+  '5':  { label: '5 Years',  color: '#8fc88a', bg: 'rgba(143,200,138,0.12)', border: 'rgba(143,200,138,0.22)', emoji: '🌳' },
+  '10': { label: '10 Years', color: '#c87b8a', bg: 'rgba(200,123,138,0.12)', border: 'rgba(200,123,138,0.22)', emoji: '🏔️' },
+  'x':  { label: 'Lifetime', color: '#a88ec8', bg: 'rgba(168,142,200,0.12)', border: 'rgba(168,142,200,0.22)', emoji: '✨' },
+};
+const EMOJIS = ['🎯','🚀','💡','🏆','❤️','🌟','📚','💪','💰','🌍','🎨','🎵','🧘','🤝','🏠','🌱','⚡','🔥','🎭','🦋','🌈','🧠','🏋️','✈️','🌊','🎸','📝','🔬','🌿','💎'];
+
+let goals = [];
+let currentView = 'dashboard';
+let currentGoalId = null;
+let selectedEmoji = '🎯';
+let selectedHorizon = '1';
+let editingGoalId = null;
+
+function load() {
+  try { goals = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { goals = []; }
+  if (!goals.length) seedDefaults();
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
+  updateNavCounts();
+  updateMiniProgress();
+}
+function seedDefaults() {
+  goals = [
+    { id: uid(), name: 'Run a half marathon', desc: 'Build endurance and complete a 13.1 mile race.', horizon: '1', emoji: '🏋️', category: 'health', date: '', tasks: [
+      { id: uid(), text: 'Sign up for a race', done: true, priority: 'high' },
+      { id: uid(), text: 'Run 3 times per week', done: true, priority: 'high' },
+      { id: uid(), text: 'Complete a 10K first', done: false, priority: 'med' },
+      { id: uid(), text: 'Reach 10 mile long run', done: false, priority: 'med' },
+    ]},
+    { id: uid(), name: 'Launch a side project', desc: 'Ship a product that generates real revenue.', horizon: '1', emoji: '🚀', category: 'career', date: '', tasks: [
+      { id: uid(), text: 'Validate the idea with 10 users', done: true, priority: 'high' },
+      { id: uid(), text: 'Build MVP in a weekend', done: false, priority: 'high' },
+      { id: uid(), text: 'Get first paying customer', done: false, priority: 'high' },
+    ]},
+    { id: uid(), name: 'Learn to speak Spanish', desc: 'Achieve conversational fluency.', horizon: '3', emoji: '📚', category: 'learning', date: '', tasks: [
+      { id: uid(), text: 'Complete Duolingo streak (100 days)', done: true, priority: 'med' },
+      { id: uid(), text: 'Finish A1 course', done: false, priority: 'high' },
+      { id: uid(), text: 'Find a language exchange partner', done: false, priority: 'med' },
+      { id: uid(), text: 'Travel to a Spanish-speaking country', done: false, priority: 'low' },
+    ]},
+    { id: uid(), name: 'Own a home', desc: 'Buy a house in a city I love.', horizon: '5', emoji: '🏠', category: 'finance', date: '', tasks: [
+      { id: uid(), text: 'Save 20% down payment', done: false, priority: 'high' },
+      { id: uid(), text: 'Improve credit score to 750+', done: true, priority: 'high' },
+      { id: uid(), text: 'Research neighborhoods', done: false, priority: 'med' },
+    ]},
+    { id: uid(), name: 'Achieve financial independence', desc: 'Build enough passive income to cover all expenses.', horizon: '10', emoji: '💰', category: 'finance', date: '', tasks: [
+      { id: uid(), text: 'Max out retirement accounts annually', done: false, priority: 'high' },
+      { id: uid(), text: 'Build investment portfolio', done: true, priority: 'high' },
+      { id: uid(), text: 'Develop multiple income streams', done: false, priority: 'med' },
+    ]},
+    { id: uid(), name: 'Leave a lasting legacy', desc: 'Create something that outlives me and positively impacts others.', horizon: 'x', emoji: '✨', category: 'other', date: '', tasks: [
+      { id: uid(), text: 'Define my personal values', done: true, priority: 'high' },
+      { id: uid(), text: 'Start mentoring others', done: false, priority: 'med' },
+      { id: uid(), text: 'Write a book or create art', done: false, priority: 'low' },
+    ]},
+  ];
+  save();
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ═══════════════════════════════════════════════════════
+// NAV & VIEWS
+// ═══════════════════════════════════════════════════════
+function updateNavCounts() {
+  document.getElementById('nav-count-all').textContent = goals.length;
+  for (const h of Object.keys(HORIZONS)) {
+    const el = document.getElementById('nav-count-' + h);
+    if (el) el.textContent = goals.filter(g => g.horizon === h).length;
+  }
+}
+function setActiveNav(view) {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === view);
+  });
+}
+function showView(view) {
+  currentView = view;
+  currentGoalId = null;
+  closeSidebar();
+  const titles = {
+    dashboard: ['Dashboard', 'Your life at a glance'],
+    timeline: ['Timeline', 'Your journey across time'],
+    'all-goals': ['All Goals', 'Every goal in one place'],
+  };
+  const [title, sub] = titles[view] || ['Goals', ''];
+  document.getElementById('topbar-title').textContent = title;
+  document.getElementById('topbar-subtitle').textContent = sub;
+  setActiveNav(view);
+  renderView();
+}
+function showHorizonView(h) {
+  currentView = 'h-' + h;
+  currentGoalId = null;
+  closeSidebar();
+  const hz = HORIZONS[h];
+  document.getElementById('topbar-title').textContent = hz.label + ' Goals';
+  document.getElementById('topbar-subtitle').textContent = `Goals planned for the next ${h === 'x' ? 'lifetime' : h + ' year' + (h > 1 ? 's' : '')}`;
+  setActiveNav('h-' + h);
+  renderView();
+}
+function showGoalView(id) {
+  currentGoalId = id;
+  currentView = 'goal';
+  const g = goals.find(x => x.id === id);
+  if (!g) return;
+  const hz = HORIZONS[g.horizon];
+  document.getElementById('topbar-title').textContent = g.name;
+  document.getElementById('topbar-subtitle').textContent = hz.label + ' Goal';
+  renderView();
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════════════════════════════
+function renderView() {
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'view-content';
+  if (currentView === 'dashboard') wrapper.innerHTML = renderDashboard();
+  else if (currentView === 'timeline') wrapper.innerHTML = renderTimeline();
+  else if (currentView === 'all-goals') wrapper.innerHTML = renderAllGoals();
+  else if (currentView.startsWith('h-')) wrapper.innerHTML = renderHorizonGoals(currentView.slice(2));
+  else if (currentView === 'goal' && currentGoalId) wrapper.innerHTML = renderGoalDetail(currentGoalId);
+  else if (currentView === 'search') wrapper.innerHTML = renderSearchResults();
+  content.appendChild(wrapper);
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const totalGoals = goals.length;
+  const totalTasks = goals.reduce((s, g) => s + g.tasks.length, 0);
+  const doneTasks = goals.reduce((s, g) => s + g.tasks.filter(t => t.done).length, 0);
+  const overallPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+
+  const now = new Date().getHours();
+  const greeting = now < 12 ? 'Good morning' : now < 18 ? 'Good afternoon' : 'Good evening';
+
+  let html = `
+  <div class="dash-greeting">
+    <h2>${greeting}, <em>visionary.</em></h2>
+    <p>You have ${totalGoals} goals set across ${Object.keys(HORIZONS).filter(h => goals.some(g => g.horizon === h)).length} time horizons. Keep going.</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Goals</div>
+      <div class="stat-value">${totalGoals}</div>
+      <div class="stat-sub">across all horizons</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tasks Done</div>
+      <div class="stat-value"><span class="stat-accent">${doneTasks}</span></div>
+      <div class="stat-sub">of ${totalTasks} total tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Overall Progress</div>
+      <div class="stat-value"><span class="stat-accent">${overallPct}%</span></div>
+      <div class="stat-sub">average completion</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Horizons Active</div>
+      <div class="stat-value">${Object.keys(HORIZONS).filter(h => goals.some(g => g.horizon === h)).length}</div>
+      <div class="stat-sub">of 5 time horizons</div>
+    </div>
+  </div>
+  <div class="section-header">
+    <div class="section-title">Your Horizons</div>
+    <div class="section-link" onclick="openModal()">+ New Goal</div>
+  </div>
+  <div class="horizon-grid">`;
+
+  for (const [h, hz] of Object.entries(HORIZONS)) {
+    const hGoals = goals.filter(g => g.horizon === h);
+    const hTasks = hGoals.reduce((s, g) => s + g.tasks.length, 0);
+    const hDone = hGoals.reduce((s, g) => s + g.tasks.filter(t => t.done).length, 0);
+    const pct = hTasks ? Math.round(hDone / hTasks * 100) : 0;
+    const recentTasks = hGoals.flatMap(g => g.tasks).slice(0, 4);
+
+    html += `
+    <div class="horizon-card" onclick="showHorizonView('${h}')" style="--h-color:${hz.color};--h-bg:${hz.bg};--h-border:${hz.border}">
+      <div class="horizon-card-top">
+        <div class="horizon-icon" style="background:${hz.bg}">${hz.emoji}</div>
+        <div class="horizon-info">
+          <div class="horizon-label">${hz.label}</div>
+          <div class="horizon-name">${hGoals.length === 0 ? 'No goals yet' : hGoals[0].name + (hGoals.length > 1 ? ' +' + (hGoals.length - 1) : '')}</div>
+          <div class="horizon-goals-count">${hGoals.length} goal${hGoals.length !== 1 ? 's' : ''} · ${hDone}/${hTasks} tasks</div>
+        </div>
+        <div class="horizon-prog-pill" style="--h-color:${hz.color};--h-bg:${hz.bg};--h-border:${hz.border}">${pct}%</div>
+      </div>
+      <div class="horizon-card-bottom">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width:${pct}%;background:${hz.color}"></div>
+        </div>
+        <div class="horizon-task-preview">
+          ${recentTasks.slice(0, 3).map(t => `<span class="task-chip ${t.done ? 'done' : ''}">${t.text}</span>`).join('')}
+          ${recentTasks.length > 3 ? `<span class="task-chip more">+${recentTasks.length - 3} more</span>` : ''}
+          ${recentTasks.length === 0 ? '<span class="task-chip more">No tasks yet</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+// ── TIMELINE ──
+function renderTimeline() {
+  let html = `<div class="timeline">`;
+  let hasAny = false;
+  for (const [h, hz] of Object.entries(HORIZONS)) {
+    const hGoals = goals.filter(g => g.horizon === h);
+    if (!hGoals.length) continue;
+    hasAny = true;
+    html += `
+    <div class="timeline-group">
+      <div class="timeline-horizon" style="--h-c:${hz.color}">
+        <div class="timeline-h-label">${hz.label}</div>
+        <div class="timeline-h-bar"></div>
+      </div>
+      <div class="timeline-goals">`;
+    for (const g of hGoals) {
+      const pct = g.tasks.length ? Math.round(g.tasks.filter(t => t.done).length / g.tasks.length * 100) : 0;
+      html += `
+      <div class="timeline-goal" onclick="showGoalView('${g.id}')" style="--h-c:${hz.color};border-left-color:${hz.color}">
+        <span style="font-size:20px">${g.emoji}</span>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;margin-bottom:2px">${g.name}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${g.tasks.filter(t=>t.done).length}/${g.tasks.length} tasks complete</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:60px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${hz.color};border-radius:2px"></div>
+          </div>
+          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted)">${pct}%</span>
+        </div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+  if (!hasAny) html += `<div class="empty-state"><div class="empty-icon">🗺️</div><div class="empty-title">Your timeline awaits</div><div class="empty-text">Add your first goal to see your life's journey laid out across time.</div><button class="btn btn-primary" onclick="openModal()" style="margin-top:20px">＋ Create Your First Goal</button></div>`;
+  html += `</div>`;
+  return html;
+}
+
+// ── ALL GOALS ──
+function renderAllGoals() {
+  if (!goals.length) return `<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">No goals yet</div><div class="empty-text">Start by creating your first goal. Dream big — every journey starts with a single step.</div><button class="btn btn-primary" onclick="openModal()" style="margin-top:20px">＋ Create Your First Goal</button></div>`;
+  let html = `<div class="goals-list">`;
+  for (const g of goals) {
+    const hz = HORIZONS[g.horizon];
+    const pct = g.tasks.length ? Math.round(g.tasks.filter(t => t.done).length / g.tasks.length * 100) : 0;
+    html += `
+    <div class="goal-row" onclick="showGoalView('${g.id}')">
+      <div class="goal-row-icon" style="background:${hz.bg}">${g.emoji}</div>
+      <div class="goal-row-info">
+        <div class="goal-row-name">${g.name}</div>
+        <div class="goal-row-meta">${hz.label} · ${g.tasks.filter(t=>t.done).length}/${g.tasks.length} tasks</div>
+      </div>
+      <div class="goal-row-right">
+        <div class="goal-row-prog">${pct}%</div>
+        <div class="goal-row-bar">
+          <div class="goal-row-fill" style="width:${pct}%;background:${hz.color}"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+// ── HORIZON GOALS ──
+function renderHorizonGoals(h) {
+  const hz = HORIZONS[h];
+  const hGoals = goals.filter(g => g.horizon === h);
+  let html = `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:12px;background:${hz.bg};display:flex;align-items:center;justify-content:center;font-size:22px">${hz.emoji}</div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:500">${hz.label} Goals</div>
+        <div style="font-size:13px;color:var(--text-muted)">${hGoals.length} goal${hGoals.length !== 1 ? 's' : ''} · ${hGoals.reduce((s,g)=>s+g.tasks.filter(t=>t.done).length,0)}/${hGoals.reduce((s,g)=>s+g.tasks.length,0)} tasks done</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('${h}')">＋ Add Goal</button>
+  </div>`;
+  if (!hGoals.length) {
+    html += `<div class="empty-state"><div class="empty-icon">${hz.emoji}</div><div class="empty-title">No ${hz.label.toLowerCase()} goals yet</div><div class="empty-text">What do you want to achieve in the next ${h === 'x' ? 'lifetime' : h + ' year' + (h > 1 ? 's' : '')}?</div><button class="btn btn-primary" onclick="openModal('${h}')" style="margin-top:20px">＋ Create Goal</button></div>`;
+    return html;
+  }
+  html += `<div class="goals-list">`;
+  for (const g of hGoals) {
+    const pct = g.tasks.length ? Math.round(g.tasks.filter(t => t.done).length / g.tasks.length * 100) : 0;
+    html += `
+    <div class="goal-row" onclick="showGoalView('${g.id}')">
+      <div class="goal-row-icon" style="background:${hz.bg}">${g.emoji}</div>
+      <div class="goal-row-info">
+        <div class="goal-row-name">${g.name}</div>
+        <div class="goal-row-meta">${g.desc || 'No description'} · ${g.tasks.filter(t=>t.done).length}/${g.tasks.length} tasks</div>
+      </div>
+      <div class="goal-row-right">
+        <div class="goal-row-prog">${pct}%</div>
+        <div class="goal-row-bar">
+          <div class="goal-row-fill" style="width:${pct}%;background:${hz.color}"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+// ── GOAL DETAIL ──
+function renderGoalDetail(id) {
+  const g = goals.find(x => x.id === id);
+  if (!g) return '';
+  const hz = HORIZONS[g.horizon];
+  const doneTasks = g.tasks.filter(t => t.done).length;
+  const pct = g.tasks.length ? Math.round(doneTasks / g.tasks.length * 100) : 0;
+  const highPrio = g.tasks.filter(t => !t.done && t.priority === 'high');
+
+  let html = `
+  <div class="view-header">
+    <div class="view-header-icon" style="background:${hz.bg}">${g.emoji}</div>
+    <div class="view-header-info">
+      <div class="view-horizon-badge" style="background:${hz.bg};color:${hz.color};border:1px solid ${hz.border}">
+        <span>●</span> ${hz.label}
+      </div>
+      <div class="view-title">${g.name}</div>
+      ${g.desc ? `<div class="view-desc">${g.desc}</div>` : ''}
+      <div class="view-meta">
+        <div class="meta-item">📋 ${g.tasks.length} tasks</div>
+        <div class="meta-item">✅ ${doneTasks} done</div>
+        <div class="meta-item">📊 ${pct}% complete</div>
+        ${g.date ? `<div class="meta-item">📅 Target: ${new Date(g.date + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}</div>` : ''}
+      </div>
+    </div>
+    <div class="view-actions">
+      <button class="btn btn-secondary btn-sm" onclick="openEditModal('${g.id}')">✏️ Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteGoal('${g.id}')">🗑️</button>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.04em">Goal Progress</div>
+      <div style="font-family:'DM Mono',monospace;font-size:14px;color:${hz.color}">${pct}%</div>
+    </div>
+    <div class="progress-bar-track" style="height:8px">
+      <div class="progress-bar-fill" style="width:${pct}%;background:${hz.color}"></div>
+    </div>
+    ${highPrio.length ? `<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">🔥 ${highPrio.length} high-priority task${highPrio.length > 1 ? 's' : ''} remaining</div>` : doneTasks === g.tasks.length && g.tasks.length > 0 ? `<div style="margin-top:12px;font-size:12px;color:${hz.color}">🎉 All tasks complete — well done!</div>` : ''}
+  </div>
+
+  <!-- TASKS -->
+  <div class="section-header">
+    <div class="section-title">Tasks</div>
+    <span style="font-size:12px;color:var(--text-muted);font-family:'DM Mono',monospace">${doneTasks}/${g.tasks.length}</span>
+  </div>
+  <div class="tasks-container" style="--h-color:${hz.color}">
+    <ul class="task-list" id="task-list-${g.id}">`;
+
+  for (const t of g.tasks) {
+    html += renderTaskItem(t, g.id, hz.color);
+  }
+
+  html += `
+    </ul>
+    <div class="add-task-row">
+      <input class="add-task-input" id="new-task-input-${g.id}" placeholder="Add a task… (press Enter)" 
+        onkeydown="if(event.key==='Enter')addTask('${g.id}')">
+      <select class="priority-select" id="new-task-priority-${g.id}">
+        <option value="med">Med</option>
+        <option value="high">High</option>
+        <option value="low">Low</option>
+      </select>
+      <button class="add-task-btn" onclick="addTask('${g.id}')">Add</button>
+    </div>
+  </div>`;
+
+  return html;
+}
+
+function renderTaskItem(t, goalId, color) {
+  const prioClass = { high: 'priority-high', med: 'priority-med', low: 'priority-low' }[t.priority] || 'priority-med';
+  const prioLabel = { high: 'High', med: 'Med', low: 'Low' }[t.priority] || 'Med';
+  return `
+  <li class="task-item" id="task-${t.id}">
+    <div class="task-check ${t.done ? 'checked' : ''}" style="--h-color:${color}" onclick="toggleTask('${goalId}','${t.id}')"></div>
+    <div class="task-text ${t.done ? 'done' : ''}" contenteditable="true" 
+      onblur="updateTaskText('${goalId}','${t.id}',this.textContent)"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+    >${escHtml(t.text)}</div>
+    <span class="task-priority ${prioClass}">${prioLabel}</span>
+    <button class="task-delete" onclick="deleteTask('${goalId}','${t.id}')">×</button>
+  </li>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── SEARCH ──
+let searchResults = [];
+function handleSearch(q) {
+  if (!q.trim()) { renderView(); return; }
+  q = q.toLowerCase();
+  searchResults = goals.filter(g => g.name.toLowerCase().includes(q) || (g.desc||'').toLowerCase().includes(q) || g.tasks.some(t => t.text.toLowerCase().includes(q)));
+  currentView = 'search';
+  renderView();
+}
+function renderSearchResults() {
+  if (!searchResults.length) return `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results found</div><div class="empty-text">Try a different search term.</div></div>`;
+  let html = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">${searchResults.length} result${searchResults.length > 1 ? 's' : ''} found</div><div class="goals-list">`;
+  for (const g of searchResults) {
+    const hz = HORIZONS[g.horizon];
+    const pct = g.tasks.length ? Math.round(g.tasks.filter(t => t.done).length / g.tasks.length * 100) : 0;
+    html += `
+    <div class="goal-row" onclick="showGoalView('${g.id}')">
+      <div class="goal-row-icon" style="background:${hz.bg}">${g.emoji}</div>
+      <div class="goal-row-info">
+        <div class="goal-row-name">${g.name}</div>
+        <div class="goal-row-meta">${hz.label} · ${g.tasks.filter(t=>t.done).length}/${g.tasks.length} tasks</div>
+      </div>
+      <div class="goal-row-right">
+        <div class="goal-row-prog">${pct}%</div>
+        <div class="goal-row-bar"><div class="goal-row-fill" style="width:${pct}%;background:${hz.color}"></div></div>
+      </div>
+    </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// TASK ACTIONS
+// ═══════════════════════════════════════════════════════
+function toggleTask(goalId, taskId) {
+  const g = goals.find(x => x.id === goalId);
+  const t = g.tasks.find(x => x.id === taskId);
+  t.done = !t.done;
+  save();
+  // Update DOM without full re-render
+  const checkEl = document.querySelector(`#task-${taskId} .task-check`);
+  const textEl = document.querySelector(`#task-${taskId} .task-text`);
+  if (checkEl) checkEl.classList.toggle('checked', t.done);
+  if (textEl) textEl.classList.toggle('done', t.done);
+  // Re-render progress
+  if (currentView === 'goal') {
+    const pct = g.tasks.length ? Math.round(g.tasks.filter(x => x.done).length / g.tasks.length * 100) : 0;
+    const bar = document.querySelector('.progress-bar-fill');
+    if (bar) bar.style.width = pct + '%';
+    const pctEl = document.querySelector('.view-header-info');
+    // Re-render full detail for freshness
+    document.querySelector('.view-content').innerHTML = renderGoalDetail(goalId);
+    if (t.done) confetti();
+  }
+  updateMiniProgress();
+}
+function addTask(goalId) {
+  const input = document.getElementById('new-task-input-' + goalId);
+  const prio = document.getElementById('new-task-priority-' + goalId);
+  const text = input.value.trim();
+  if (!text) return;
+  const g = goals.find(x => x.id === goalId);
+  g.tasks.push({ id: uid(), text, done: false, priority: prio.value });
+  input.value = '';
+  save();
+  document.querySelector('.view-content').innerHTML = renderGoalDetail(goalId);
+  toast('Task added');
+}
+function deleteTask(goalId, taskId) {
+  const g = goals.find(x => x.id === goalId);
+  g.tasks = g.tasks.filter(t => t.id !== taskId);
+  save();
+  document.querySelector('.view-content').innerHTML = renderGoalDetail(goalId);
+  toast('Task removed');
+}
+function updateTaskText(goalId, taskId, text) {
+  const g = goals.find(x => x.id === goalId);
+  const t = g.tasks.find(x => x.id === taskId);
+  if (t) t.text = text.trim();
+  save();
+}
+
+// ═══════════════════════════════════════════════════════
+// GOAL ACTIONS
+// ═══════════════════════════════════════════════════════
+function deleteGoal(id) {
+  if (!confirm('Delete this goal and all its tasks?')) return;
+  goals = goals.filter(g => g.id !== id);
+  save();
+  toast('Goal deleted');
+  showView('all-goals');
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════
+function buildModal() {
+  // Emoji picker
+  const ep = document.getElementById('emoji-picker');
+  ep.innerHTML = EMOJIS.map(e => `<div class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}',this)">${e}</div>`).join('');
+  // Horizon picker
+  const hp = document.getElementById('horizon-picker');
+  hp.innerHTML = Object.entries(HORIZONS).map(([h, hz]) => `
+    <div class="horizon-btn ${h === selectedHorizon ? 'selected' : ''}" style="--h-c:${hz.color}" onclick="selectHorizon('${h}',this)">
+      <div class="h-dot" style="background:${hz.color}"></div>${hz.label}
+    </div>`).join('');
+}
+function selectEmoji(e, el) {
+  selectedEmoji = e;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectHorizon(h, el) {
+  selectedHorizon = h;
+  document.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function openModal(defaultHorizon) {
+  editingGoalId = null;
+  selectedEmoji = '🎯';
+  selectedHorizon = defaultHorizon || '1';
+  document.getElementById('modal-title').textContent = 'New Goal';
+  document.getElementById('goal-name-input').value = '';
+  document.getElementById('goal-desc-input').value = '';
+  document.getElementById('goal-date-input').value = '';
+  document.getElementById('goal-category-input').value = 'other';
+  buildModal();
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('goal-name-input').focus(), 200);
+}
+function openEditModal(id) {
+  const g = goals.find(x => x.id === id);
+  if (!g) return;
+  editingGoalId = id;
+  selectedEmoji = g.emoji;
+  selectedHorizon = g.horizon;
+  document.getElementById('modal-title').textContent = 'Edit Goal';
+  document.getElementById('goal-name-input').value = g.name;
+  document.getElementById('goal-desc-input').value = g.desc || '';
+  document.getElementById('goal-date-input').value = g.date || '';
+  document.getElementById('goal-category-input').value = g.category || 'other';
+  buildModal();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+function saveGoal() {
+  const name = document.getElementById('goal-name-input').value.trim();
+  if (!name) { document.getElementById('goal-name-input').style.borderColor = '#e07070'; document.getElementById('goal-name-input').focus(); return; }
+  document.getElementById('goal-name-input').style.borderColor = '';
+  if (editingGoalId) {
+    const g = goals.find(x => x.id === editingGoalId);
+    g.name = name;
+    g.desc = document.getElementById('goal-desc-input').value.trim();
+    g.emoji = selectedEmoji;
+    g.horizon = selectedHorizon;
+    g.date = document.getElementById('goal-date-input').value;
+    g.category = document.getElementById('goal-category-input').value;
+    toast('Goal updated ✓');
+  } else {
+    goals.push({
+      id: uid(), name,
+      desc: document.getElementById('goal-desc-input').value.trim(),
+      horizon: selectedHorizon, emoji: selectedEmoji,
+      category: document.getElementById('goal-category-input').value,
+      date: document.getElementById('goal-date-input').value,
+      tasks: []
+    });
+    toast('Goal created! 🎉');
+  }
+  save();
+  closeModal();
+  renderView();
+}
+
+// ═══════════════════════════════════════════════════════
+// MINI PROGRESS SIDEBAR
+// ═══════════════════════════════════════════════════════
+function updateMiniProgress() {
+  const container = document.getElementById('mini-progress');
+  if (!container) return;
+  container.innerHTML = Object.entries(HORIZONS).map(([h, hz]) => {
+    const hGoals = goals.filter(g => g.horizon === h);
+    const t = hGoals.reduce((s, g) => s + g.tasks.length, 0);
+    const d = hGoals.reduce((s, g) => s + g.tasks.filter(x => x.done).length, 0);
+    const pct = t ? Math.round(d / t * 100) : 0;
+    return `
+    <div class="mini-prog-row">
+      <span class="mini-prog-label">${hz.label.replace(' Years','y').replace(' Year','y').replace('Lifetime','∞')}</span>
+      <div class="mini-prog-bar"><div class="mini-prog-fill" style="width:${pct}%;background:${hz.color}"></div></div>
+      <span class="mini-prog-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function toast(msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+function confetti() {
+  const colors = ['#c8a96e','#6e9fc8','#8fc88a','#c87b8a','#a88ec8','#ffffff'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `left:${20+Math.random()*60}%;top:${Math.random()*40}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*0.4}s;animation-duration:${0.8+Math.random()*0.6}s;width:${4+Math.random()*8}px;height:${4+Math.random()*8}px`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1500);
+  }
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// Keyboard shortcut: N = new goal
+document.addEventListener('keydown', e => {
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && !document.activeElement.contentEditable === 'true') {
+    openModal();
+  }
+  if (e.key === 'Escape') closeModal();
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+load();
+updateNavCounts();
+updateMiniProgress();
+showView('dashboard');
+</script>
+</body>
+</html>
