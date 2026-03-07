@@ -335,16 +335,16 @@ const ED={
   troll: {name:'Troll',hp:350,spd:.5,dmg:28,rng:18},
 };
 const BD={
-  tc:    {name:'Town Center', hp:1800,w:72,h:72,cost:{},      trains:['villager'],provides:10},
-  house: {name:'House',       hp:450, w:44,h:44,cost:{wood:25},trains:[],provides:5},
-  bks:   {name:'Barracks',    hp:900, w:60,h:50,cost:{wood:175},trains:['militia','horseman'],provides:0},
-  range: {name:'Archery Range',hp:650,w:60,h:50,cost:{wood:175},trains:['archer'],provides:0},
+  tc:    {name:'Town Center', hp:1800,w:72,h:72,cost:{wood:200,stone:150}, trains:['villager'],provides:10},
+  house: {name:'House',       hp:450, w:44,h:44,cost:{wood:25},  trains:[],provides:5},
+  bks:   {name:'Barracks',    hp:900, w:60,h:50,cost:{wood:175}, trains:['militia','horseman'],provides:0},
+  range: {name:'Archery Range',hp:650,w:60,h:50,cost:{wood:175}, trains:['archer'],provides:0},
   stable:{name:'Stable',      hp:750, w:60,h:50,cost:{wood:200,stone:50},trains:['horseman'],provides:0},
   siege: {name:'Siege Works', hp:550, w:60,h:50,cost:{wood:200,gold:100},trains:['catapult'],provides:0},
-  farm:  {name:'Farm',        hp:220, w:44,h:44,cost:{wood:60},trains:[],provides:0,gen:{food:.07}},
-  mine:  {name:'Mine',        hp:320, w:44,h:44,cost:{stone:50},trains:[],provides:0,gen:{gold:.05}},
+  farm:  {name:'Farm',        hp:220, w:44,h:44,cost:{wood:60},  trains:[],provides:0,gen:{food:.07}},
+  mine:  {name:'Mine',        hp:320, w:44,h:44,cost:{stone:50}, trains:[],provides:0,gen:{gold:.05}},
   tower: {name:'Guard Tower', hp:650, w:36,h:54,cost:{stone:125},trains:[],provides:0,dmg:10,rng:130},
-  wall:  {name:'Wall',        hp:900, w:36,h:36,cost:{stone:25},trains:[],provides:0},
+  wall:  {name:'Wall',        hp:900, w:36,h:36,cost:{stone:25}, trains:[],provides:0},
 };
 
 // ── Entity classes ────────────────────────────────────
@@ -387,11 +387,17 @@ function mkUnit(t,x,y,enemy=false){const u=new Ent(t,x,y,enemy);G.ents.push(u);r
 
 // ── Init ─────────────────────────────────────────────
 genTerrain();placeRes();
-mkBld('tc',320,290);
+// Player start – TC + villagers + scout
+mkBld('tc',320,290,true,false);
 mkUnit('villager',260,360);mkUnit('villager',340,360);mkUnit('villager',390,320);
 mkUnit('militia',245,310);
 pop();
-mkBld('tc',1340,960,true,true); // enemy town center, built but passive
+// Enemy start – TC + workers + scout (top-right of map)
+mkBld('tc',1340,960,true,true);
+mkUnit('villager',1280,1020,true);mkUnit('villager',1360,1020,true);mkUnit('villager',1400,970,true);
+mkUnit('goblin',1300,950,true);
+// Enemy gets starting resources
+G.eRes={food:500,wood:500,gold:300,stone:200};
 
 // ── AI ───────────────────────────────────────────────
 function nearestFoe(e,r){let b=null,bd=r;for(const f of G.ents){if(!f.dead&&f.enemy!==e.enemy){const d=dist(e,f);if(d<bd){bd=d;b=f;}}}return b;}
@@ -447,14 +453,40 @@ function aiGood(e){
 }
 
 function aiEvil(e){
-  // Enemy only fights back if player attacked them, or is in range AND player attacked first
+  // Enemy villagers gather and build (always active)
+  if(e.type==='villager'){
+    if(e.task==='build'&&e.tgt){
+      const b=e.tgt;if(b.dead||b.built){e.task=null;return;}
+      if(dist(e,b)>46)moveto(e,b.x,b.y,42);
+      else{b.hp=Math.min(b.mhp,b.hp+0.9);if(b.hp>=b.mhp){b.built=true;e.task=null;}}
+      return;
+    }
+    if(e.task==='gath'&&e.tgt){
+      const r=e.tgt;if(r.hp<=0){e.task=null;e.tgt=null;return;}
+      if(e.ca>=50){const tc=eDropoff(e);if(!tc)return;if(dist(e,tc)<46){G.eRes[e.cr]=(G.eRes[e.cr]||0)+e.ca;e.ca=0;e.cr=null;}else moveto(e,tc.x,tc.y,42);return;}
+      if(dist(e,r)>28)moveto(e,r.x,r.y,25);
+      else if(e.gcool<=0){const a=Math.min(5,r.hp);r.hp-=a;e.cr=r.type==='tree'?'wood':r.type==='deer'?'food':r.type;e.ca+=a;e.gcool=46;}
+      return;
+    }
+    if(e.task==='atk'&&e.tgt&&!e.tgt.dead){
+      const t=e.tgt;if(dist(e,t)>e.rng)moveto(e,t.x,t.y,e.rng-5);
+      else if(e.acool<=0){hit(t,e.dmg);e.acool=66;addFx(t.x,t.y,'#ff3000');}
+      return;
+    }
+    // Auto-train from enemy TCs
+    e.idle--;if(e.idle>0)return;e.idle=130;
+    eVilIdle(e);
+    return;
+  }
+  // Combat units
   if(e.task==='atk'&&e.tgt&&!e.tgt.dead){
     const t=e.tgt;
     if(dist(e,t)>e.rng)moveto(e,t.x,t.y,e.rng-5);
     else if(e.acool<=0){hit(t,e.dmg);e.acool=66;addFx(t.x,t.y,'#ff3000');}
     return;
   }
-  // Only seek targets if player has attacked first
+  e.task=null;e.tgt=null;
+  // Only seek targets if player attacked first
   if(G.playerAttacked){
     let near=null,nd=9e9;
     for(const f of G.ents){if(!f.dead&&!f.enemy){const d=dist(e,f);if(d<nd){nd=d;near=f;}}}
@@ -465,14 +497,97 @@ function aiEvil(e){
 function deerWalk(r){r.wt++;if(r.wt>rand(100,260)){r.wt=0;r.ang+=rand(-.9,.9);r.vx=Math.cos(r.ang)*.38;r.vy=Math.sin(r.ang)*.38;}r.x=cl(r.x+r.vx,0,G.MW);r.y=cl(r.y+r.vy,0,G.MH);}
 
 function hit(e,d){if(e.dead)return;e.hp-=d;if(e.hp<=0){e.dead=true;winCheck();}}
-function winCheck(){pop();if(!G.over&&!G.ents.some(f=>!f.dead&&!f.enemy&&f.type==='tc')){G.over=true;G.win=false;endScreen();}if(!G.over&&!G.ents.some(f=>!f.dead&&f.enemy)){G.over=true;G.win=true;endScreen();}}
+function winCheck(){
+  pop();
+  const playerTCs=G.ents.filter(f=>!f.dead&&!f.enemy&&f.type==='tc');
+  const enemyTCs =G.ents.filter(f=>!f.dead&&f.enemy &&f.type==='tc');
+  if(!G.over&&playerTCs.length===0){G.over=true;G.win=false;endScreen();}
+  if(!G.over&&enemyTCs.length===0 &&G.ents.some(f=>!f.dead&&f.enemy)){
+    // Enemy still has units but no TC – keep fighting
+  }
+  if(!G.over&&enemyTCs.length===0 &&!G.ents.some(f=>!f.dead&&f.enemy)){G.over=true;G.win=true;endScreen();}
+}
+
+// Enemy resource pool helper
+function eAfford(c){for(const[k,v]of Object.entries(c||{}))if((G.eRes[k]||0)<v)return false;return true;}
+function eSpend(c){for(const[k,v]of Object.entries(c||{}))G.eRes[k]=(G.eRes[k]||0)-v;}
+
+// Enemy villager dropoff
+function eDropoff(e){let b=null,bd=9e9;for(const f of G.ents){if(!f.dead&&f.enemy&&f.bld&&f.built&&f.type==='tc'){const d=dist(e,f);if(d<bd){bd=d;b=f;}}}return b;}
+
+function eVilIdle(e){
+  // Self-defense
+  const ne=nearestFoe(e,120);if(ne){e.task='atk';e.tgt=ne;return;}
+  // Drop off carried resources
+  if(e.ca>0){const tc=eDropoff(e);if(!tc)return;if(dist(e,tc)<46){G.eRes[e.cr]=(G.eRes[e.cr]||0)+e.ca;e.ca=0;e.cr=null;}else moveto(e,tc.x,tc.y,42);return;}
+  // Help build unfinished enemy buildings
+  const ub=G.ents.find(b=>b.bld&&!b.dead&&!b.built&&b.enemy&&dist(e,b)<400);
+  if(ub){e.task='build';e.tgt=ub;return;}
+  // Gather nearest resource
+  let bestR=null,bd=9e9;
+  const need=(G.eRes.food||0)<300?'deer':(G.eRes.wood||0)<300?'tree':'gold';
+  for(const r of RMAP){
+    if(r.hp<=0)continue;
+    const ok=(need==='gold'&&(r.type==='gold'||r.type==='stone'))||(need==='tree'&&r.type==='tree')||(need==='deer'&&r.type==='deer');
+    if(!ok)continue;
+    const d=dist(e,r);if(d<bd){bd=d;bestR=r;}
+  }
+  if(!bestR)for(const r of RMAP){if(r.hp<=0)continue;const d=dist(e,r);if(d<bd){bd=d;bestR=r;}}
+  if(bestR){e.task='gath';e.tgt=bestR;}
+}
+
+// Enemy build AI: periodically decide to build structures
+function enemyBuildAI(){
+  if(G.tick%480!==0)return;
+  const eTCs=G.ents.filter(e=>!e.dead&&e.enemy&&e.type==='tc'&&e.built);
+  if(!eTCs.length)return;
+  const anchor=eTCs[Math.floor(Math.random()*eTCs.length)];
+  const eVils=G.ents.filter(e=>!e.dead&&e.enemy&&e.type==='villager'&&!e.task);
+  if(!eVils.length)return;
+  const vil=eVils[0];
+
+  // Priority build logic
+  const eHouses=G.ents.filter(e=>!e.dead&&e.enemy&&e.bld&&e.built&&e.type==='house').length;
+  const eBks=G.ents.filter(e=>!e.dead&&e.enemy&&e.bld&&e.built&&(e.type==='bks'||e.type==='range')).length;
+  const eExtraTCs=G.ents.filter(e=>!e.dead&&e.enemy&&e.type==='tc').length;
+
+  let btype=null;
+  if(eHouses<3 && eAfford(BD.house.cost))btype='house';
+  else if(eBks<2 && eAfford(BD.bks.cost))btype='bks';
+  else if(eExtraTCs<2 && eAfford(BD.tc.cost))btype='tc';
+  else if(eAfford(BD.farm.cost))btype='farm';
+
+  if(!btype)return;
+  eSpend(BD[btype].cost);
+  const bx=anchor.x+rand(-200,200),by=anchor.y+rand(-200,200);
+  const b=mkBld(btype,cl(bx,80,G.MW-80),cl(by,80,G.MH-80),false,true);
+  vil.task='build';vil.tgt=b;vil.mtgt=null;
+}
 
 function tickEnts(){
   for(const e of G.ents){
     if(e.dead)continue;
     if(e.bld){
       if(!e.built)continue;
-      if(e.tq.length>0){e.tt++;const d=UD[e.tq[0]];if(d&&e.tt>=d.tt){if(G.pop<G.popCap){mkUnit(e.tq[0],e.x+rand(-38,38),e.y+e.h/2+16);notify(d.name+' trained!');pop();}else notify('Population full! Build houses.');e.tq.shift();e.tt=0;}}
+      if(e.tq.length>0){
+        e.tt++;
+        const d=UD[e.tq[0]];
+        if(d&&e.tt>=d.tt){
+          if(!e.enemy){
+            if(G.pop<G.popCap){mkUnit(e.tq[0],e.x+rand(-38,38),e.y+e.h/2+16);notify(d.name+' trained!');pop();}
+            else notify('Population full! Build houses.');
+          } else {
+            // Enemy TC trains villagers automatically
+            mkUnit(e.tq[0],e.x+rand(-38,38),e.y+e.h/2+16,true);
+          }
+          e.tq.shift();e.tt=0;
+        }
+      }
+      // Enemy TCs auto-queue villagers
+      if(e.enemy&&e.type==='tc'&&e.tq.length===0&&G.tick%360===0){
+        const eVilCount=G.ents.filter(u=>!u.dead&&u.enemy&&u.type==='villager').length;
+        if(eVilCount<6)e.tq.push('villager');
+      }
       if(e.gen)for(const[k,v]of Object.entries(e.gen))G.res[k]+=v;
       if(e.dmg&&e.rng){e.acool--;if(e.acool<=0){const t=nearestFoe(e,e.rng);if(t){hit(t,e.dmg);e.acool=64;}}}
       continue;
@@ -487,6 +602,7 @@ function tickEnts(){
     }else e.mv=false;
   }
   for(const r of RMAP)if(r.type==='deer')deerWalk(r);
+  enemyBuildAI();
   for(let i=G.ents.length-1;i>=0;i--)if(G.ents[i].dead)G.ents.splice(i,1);
 }
 
@@ -1239,9 +1355,229 @@ const CMD_STATE={cmdMode:false};
   });
 })();
 
-// ── Camera ────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  INPUT  –  Mouse & Touch
+// ══════════════════════════════════════════════════════
 const mouse={x:-999,y:-999};
-const ghost={x:0,y:0}; // build placement ghost position (world coords)
+const ghost={x:400,y:400}; // build ghost world-coords
+
+// Convert screen (sx,sy) → world (wx,wy), accounting for topH offset
+function screenToWorld(sx,sy){ return {x:sx+G.cam.x, y:(sy-L.topH)+G.cam.y}; }
+
+// ── Core action functions ──────────────────────────────
+function doSelect(sx,sy){
+  const {x:wx,y:wy}=screenToWorld(sx,sy);
+  for(const e of G.ents) e.sel=false;
+  G.sel=[];
+  for(let i=G.ents.length-1;i>=0;i--){
+    const e=G.ents[i]; if(e.dead) continue;
+    const h=(e.w||26)/2+8;
+    if(Math.abs(e.x-wx)<h&&Math.abs(e.y-wy)<h){
+      if(!e.enemy){e.sel=true;G.sel=[e];}
+      break;
+    }
+  }
+  updSel();
+}
+
+function doCommand(sx,sy){
+  // Right-click / long-press: command selected units
+  if(G.bmode){ doPlace(sx,sy); return; }
+  if(!G.sel.length) return;
+  const {x:wx,y:wy}=screenToWorld(sx,sy);
+  let tE=null,tR=null;
+  for(const e of G.ents){
+    if(e.dead) continue;
+    const h=(e.w||26)/2+8;
+    if(Math.abs(e.x-wx)<h&&Math.abs(e.y-wy)<h){tE=e;break;}
+  }
+  if(!tE) for(const r of RMAP){
+    if(r.hp>0&&Math.abs(r.x-wx)<28&&Math.abs(r.y-wy)<28){tR=r;break;}
+  }
+  for(const e of G.sel){
+    if(e.bld){e.rallyX=wx;e.rallyY=wy;continue;}
+    if(tE&&tE.enemy){e.task='atk';e.tgt=tE;e.mtgt=null;G.playerAttacked=true;}
+    else if(tR&&e.type==='villager'){e.task='gath';e.tgt=tR;e.mtgt=null;e.cr=null;}
+    else{e.task='move';e.mtgt={x:wx+rand(-22,22),y:wy+rand(-22,22)};e.tgt=null;}
+  }
+}
+
+function doPlace(sx,sy){
+  if(!G.bmode) return;
+  const d=BD[G.bmode];
+  if(!d){G.bmode=null;updAct();return;}
+  if(!afford(d.cost)){notify('Not enough resources!');G.bmode=null;updAct();return;}
+  const vils=G.sel.filter(e=>e.type==='villager'&&!e.enemy);
+  if(!vils.length){notify('Select a villager first, then choose a building!');G.bmode=null;updAct();return;}
+  const {x:wx,y:wy}=screenToWorld(sx,sy);
+  spend(d.cost);
+  const b=mkBld(G.bmode,wx,wy,false);
+  for(const v of vils){v.task='build';v.tgt=b;v.mtgt=null;}
+  notify(d.name+' placed!');
+  G.bmode=null;
+  updAct();
+}
+
+function doDragSel(){
+  const sx=Math.min(G.ds.x,G.de.x)+G.cam.x, sy=Math.min(G.ds.y,G.de.y)-L.topH+G.cam.y;
+  const ex=Math.max(G.ds.x,G.de.x)+G.cam.x, ey=Math.max(G.ds.y,G.de.y)-L.topH+G.cam.y;
+  G.sel=[];
+  for(const e of G.ents){
+    e.sel=false;
+    if(e.dead||e.enemy||e.bld)continue;
+    if(e.x>=sx&&e.x<=ex&&e.y>=sy&&e.y<=ey){G.sel.push(e);e.sel=true;}
+  }
+  updSel();
+}
+
+function updSelBox(){
+  const sb=document.getElementById('selBox');
+  sb.style.display='block';
+  sb.style.left=Math.min(G.ds.x,G.de.x)+'px';
+  sb.style.top=Math.min(G.ds.y,G.de.y)+'px';
+  sb.style.width=Math.abs(G.de.x-G.ds.x)+'px';
+  sb.style.height=Math.abs(G.de.y-G.ds.y)+'px';
+}
+
+// Keep old names as aliases for backward compat
+function leftClick(sx,sy){doSelect(sx,sy);}
+function rightClick(sx,sy){doCommand(sx,sy);}
+function placeB(sx,sy){doPlace(sx,sy);}
+
+// ── Mouse ─────────────────────────────────────────────
+const tip=document.getElementById('tip');
+canvas.addEventListener('mousemove',ev=>{
+  mouse.x=ev.clientX; mouse.y=ev.clientY;
+  if(G.drag){ G.de.x=ev.clientX; G.de.y=ev.clientY; updSelBox(); }
+  const w=screenToWorld(ev.clientX,ev.clientY);
+  ghost.x=w.x; ghost.y=w.y;
+  let found=null;
+  for(const e of G.ents){
+    if(e.dead) continue;
+    const h=(e.w||26)/2+6;
+    if(Math.abs(e.x-w.x)<h&&Math.abs(e.y-w.y)<h){found=e;break;}
+  }
+  if(found){
+    tip.style.display='block';
+    tip.style.left=(ev.clientX+14)+'px';
+    tip.style.top=Math.max(L.topH+4,ev.clientY-36)+'px';
+    tip.innerHTML=`<b>${found.name}</b>HP: ${Math.ceil(found.hp)}/${found.mhp}${found.task?`<br>${found.task}`:''}${found.ca>0?`<br>Carrying ${found.ca} ${found.cr}`:''}`.replace(/undefined/g,'');
+  } else tip.style.display='none';
+});
+canvas.addEventListener('mousedown',ev=>{
+  if(ev.button!==0) return;
+  // Don't start drag if in build mode — placement handled on mouseup
+  if(G.bmode) return;
+  G.drag=true;
+  G.ds.x=ev.clientX; G.ds.y=ev.clientY;
+  G.de.x=ev.clientX; G.de.y=ev.clientY;
+});
+canvas.addEventListener('mouseup',ev=>{
+  if(ev.button!==0) return;
+  if(G.bmode){ doPlace(ev.clientX,ev.clientY); return; }
+  if(!G.drag) return;
+  G.drag=false;
+  document.getElementById('selBox').style.display='none';
+  const dx=Math.abs(G.de.x-G.ds.x), dy=Math.abs(G.de.y-G.ds.y);
+  if(dx<6&&dy<6) doSelect(ev.clientX,ev.clientY);
+  else doDragSel();
+});
+canvas.addEventListener('contextmenu',ev=>{
+  ev.preventDefault();
+  if(G.bmode){G.bmode=null;updAct();return;}
+  doCommand(ev.clientX,ev.clientY);
+});
+
+// ── Touch ─────────────────────────────────────────────
+(function initCanvasTouch(){
+  const active={};
+  let panRef=null;
+
+  canvas.addEventListener('touchstart',ev=>{
+    ev.preventDefault();
+    for(const t of ev.changedTouches){
+      const id=t.identifier;
+      active[id]={x:t.clientX,y:t.clientY,sx:t.clientX,sy:t.clientY,
+                  t:Date.now(),moved:false,longPressed:false,longTimer:null};
+      // Long-press (500ms) → command / place
+      active[id].longTimer=setTimeout(()=>{
+        if(!active[id]||active[id].moved) return;
+        active[id].longPressed=true;
+        tapRing(active[id].sx,active[id].sy,true);
+        if(G.bmode) doPlace(active[id].sx,active[id].sy);
+        else doCommand(active[id].sx,active[id].sy);
+      },500);
+    }
+    if(Object.keys(active).length===1)
+      panRef=ev.changedTouches[0].identifier;
+  },{passive:false});
+
+  canvas.addEventListener('touchmove',ev=>{
+    ev.preventDefault();
+    const cnt=ev.touches.length;
+    for(const t of ev.changedTouches){
+      const a=active[t.identifier]; if(!a) continue;
+      const ddx=t.clientX-a.x, ddy=t.clientY-a.y;
+      if(Math.abs(t.clientX-a.sx)>7||Math.abs(t.clientY-a.sy)>7){
+        a.moved=true;
+        clearTimeout(a.longTimer);
+      }
+      // Update ghost position while finger moves
+      const w=screenToWorld(t.clientX,t.clientY);
+      ghost.x=w.x; ghost.y=w.y;
+      // Pan: single finger when not in build mode
+      if(cnt===1&&!G.bmode&&!CMD_STATE.cmdMode&&t.identifier===panRef&&a.moved){
+        G.cam.x=cl(G.cam.x-ddx,0,Math.max(0,G.MW-L.W));
+        G.cam.y=cl(G.cam.y-ddy,0,Math.max(0,G.MH-L.gameH));
+      }
+      // Two-finger pan always works
+      if(cnt===2&&a.moved){
+        G.cam.x=cl(G.cam.x-ddx/2,0,Math.max(0,G.MW-L.W));
+        G.cam.y=cl(G.cam.y-ddy/2,0,Math.max(0,G.MH-L.gameH));
+      }
+      a.x=t.clientX; a.y=t.clientY;
+    }
+  },{passive:false});
+
+  canvas.addEventListener('touchend',ev=>{
+    ev.preventDefault();
+    for(const t of ev.changedTouches){
+      const a=active[t.identifier];
+      if(!a){delete active[t.identifier];continue;}
+      clearTimeout(a.longTimer);
+      const quick=Date.now()-a.t<450;
+      if(quick&&!a.moved&&!a.longPressed){
+        // Quick tap
+        if(G.bmode){
+          tapRing(a.sx,a.sy,false);
+          doPlace(a.sx,a.sy);
+        } else if(CMD_STATE.cmdMode){
+          tapRing(a.sx,a.sy,true);
+          doCommand(a.sx,a.sy);
+          // exit CMD mode
+          CMD_STATE.cmdMode=false;
+          const btn=document.getElementById('cmdBtn');
+          btn.classList.remove('active');
+          btn.querySelector('.ci').textContent='⚔';
+          btn.querySelector('.cl').textContent='CMD';
+        } else {
+          tapRing(a.sx,a.sy,false);
+          doSelect(a.sx,a.sy);
+        }
+      }
+      delete active[t.identifier];
+      if(t.identifier===panRef) panRef=null;
+    }
+  },{passive:false});
+
+  canvas.addEventListener('touchcancel',ev=>{
+    for(const t of ev.changedTouches){
+      clearTimeout((active[t.identifier]||{}).longTimer);
+      delete active[t.identifier];
+    }
+    panRef=null;
+  });
+})();
 function camUpdate(){
   const spd=8, mg=50;
   if((keys['ArrowLeft']||keys['a'])&&!keys['Meta']) G.cam.x-=spd;
@@ -1268,174 +1604,6 @@ function tapRing(x,y,red=false){
   r.style.left=x+'px'; r.style.top=y+'px';
   document.body.appendChild(r);
   setTimeout(()=>r.remove(),450);
-}
-
-// ── Mouse events ──────────────────────────────────────
-const tip=document.getElementById('tip');
-canvas.addEventListener('mousemove',ev=>{
-  mouse.x=ev.clientX; mouse.y=ev.clientY;
-  if(G.drag){ G.de.x=ev.clientX; G.de.y=ev.clientY; updSelBox(); }
-  const wx=ev.clientX+G.cam.x, wy=(ev.clientY-L.topH)+G.cam.y;
-  let found=null;
-  for(const e of G.ents){ if(e.dead) continue; const h=(e.w||26)/2+5; if(Math.abs(e.x-wx)<h&&Math.abs(e.y-wy)<h){found=e;break;} }
-  // Update build ghost position
-  if(G.bmode){ ghost.x=wx; ghost.y=wy; }
-  if(found){
-    tip.style.display='block'; tip.style.left=(ev.clientX+16)+'px'; tip.style.top=(ev.clientY-34)+'px';
-    tip.innerHTML=`<b>${found.name}</b>HP: ${Math.ceil(found.hp)}/${found.mhp}${found.task?`<br>Task: ${found.task}`:''}${found.tq&&found.tq.length?`<br>Training: ${found.tq[0]}`:''}${found.ca>0?`<br>Carrying ${found.ca} ${found.cr}`:''}`.replace(/undefined/g,'');
-  } else tip.style.display='none';
-});
-canvas.addEventListener('mousedown',ev=>{
-  if(ev.button===0){
-    if(G.bmode){ placeB(ev.clientX,ev.clientY); return; }
-    G.drag=true; G.ds.x=ev.clientX; G.ds.y=ev.clientY; G.de.x=ev.clientX; G.de.y=ev.clientY;
-  }
-});
-canvas.addEventListener('mouseup',ev=>{
-  if(ev.button===0&&G.drag){
-    G.drag=false; document.getElementById('selBox').style.display='none';
-    const dx=Math.abs(G.de.x-G.ds.x), dy=Math.abs(G.de.y-G.ds.y);
-    if(dx<5&&dy<5) leftClick(ev.clientX,ev.clientY); else dragSel();
-  }
-});
-canvas.addEventListener('contextmenu',ev=>{
-  ev.preventDefault();
-  if(G.bmode){ G.bmode=null; updAct(); return; }
-  rightClick(ev.clientX,ev.clientY);
-});
-
-// ── Touch events on canvas ─────────────────────────────
-(function initCanvasTouch(){
-  const active={}; // identifier -> {x,y,sx,sy,t,moved,longTimer,panned}
-  let panRef=null;  // identifier currently used for single-finger pan
-
-  canvas.addEventListener('touchstart',ev=>{
-    ev.preventDefault();
-    for(const t of ev.changedTouches){
-      active[t.identifier]={x:t.clientX,y:t.clientY,sx:t.clientX,sy:t.clientY,t:Date.now(),moved:false,panned:false,longTimer:null};
-      // Long-press timer (500ms) = right-click / command
-      const id=t.identifier, tx=t.clientX, ty=t.clientY;
-      active[id].longTimer=setTimeout(()=>{
-        if(active[id]&&!active[id].moved){
-          tapRing(tx,ty,true);
-          if(G.bmode) placeB(tx,ty);
-          else rightClick(tx,ty);
-          active[id].longPressed=true;
-        }
-      },500);
-    }
-    // Track first finger for panning (only when not in cmd mode)
-    if(Object.keys(active).length===1 && !CMD_STATE.cmdMode){
-      panRef=ev.changedTouches[0].identifier;
-    }
-  },{passive:false});
-
-  canvas.addEventListener('touchmove',ev=>{
-    ev.preventDefault();
-    const cnt=Object.keys(active).length;
-    for(const t of ev.changedTouches){
-      const a=active[t.identifier];
-      if(!a) continue;
-      const ddx=t.clientX-a.x, ddy=t.clientY-a.y;
-      if(Math.abs(t.clientX-a.sx)>8||Math.abs(t.clientY-a.sy)>8){ a.moved=true; clearTimeout(a.longTimer); }
-      // Single-finger pan (only when NOT in cmd mode)
-      if(cnt===1 && !CMD_STATE.cmdMode && t.identifier===panRef && a.moved){
-        G.cam.x=cl(G.cam.x-ddx,0,Math.max(0,G.MW-L.W));
-        G.cam.y=cl(G.cam.y-ddy,0,Math.max(0,G.MH-L.gameH));
-        a.panned=true;
-      }
-      // Two-finger pan
-      if(cnt===2 && a.moved){
-        G.cam.x=cl(G.cam.x-ddx/2,0,Math.max(0,G.MW-L.W));
-        G.cam.y=cl(G.cam.y-ddy/2,0,Math.max(0,G.MH-L.gameH));
-      }
-      a.x=t.clientX; a.y=t.clientY;
-    }
-  },{passive:false});
-
-  canvas.addEventListener('touchend',ev=>{
-    ev.preventDefault();
-    for(const t of ev.changedTouches){
-      const a=active[t.identifier];
-      if(!a){ delete active[t.identifier]; continue; }
-      clearTimeout(a.longTimer);
-      const quick=Date.now()-a.t<500;
-      if(quick && !a.moved && !a.longPressed){
-        if(CMD_STATE.cmdMode){
-          // CMD mode: tap = right-click command
-          tapRing(a.sx,a.sy,true);
-          if(G.bmode) placeB(a.sx,a.sy);
-          else rightClick(a.sx,a.sy);
-          // auto-exit cmd mode
-          CMD_STATE.cmdMode=false;
-          const btn=document.getElementById('cmdBtn');
-          btn.classList.remove('active');
-          btn.querySelector('.ci').textContent='⚔';
-          btn.querySelector('.cl').textContent='CMD';
-        } else {
-          // Normal tap = select
-          tapRing(a.sx,a.sy,false);
-          leftClick(a.sx,a.sy);
-        }
-      }
-      delete active[t.identifier];
-      if(t.identifier===panRef) panRef=null;
-    }
-  },{passive:false});
-
-  canvas.addEventListener('touchcancel',ev=>{
-    for(const t of ev.changedTouches){ clearTimeout((active[t.identifier]||{}).longTimer); delete active[t.identifier]; }
-    panRef=null;
-  });
-})();
-
-function updSelBox(){
-  const sb=document.getElementById('selBox');
-  sb.style.display='block';
-  sb.style.left=Math.min(G.ds.x,G.de.x)+'px';
-  sb.style.top=Math.min(G.ds.y,G.de.y)+'px';
-  sb.style.width=Math.abs(G.de.x-G.ds.x)+'px';
-  sb.style.height=Math.abs(G.de.y-G.ds.y)+'px';
-}
-function leftClick(sx,sy){
-  const gy=sy-L.topH; // adjust for top bar offset
-  const wx=sx+G.cam.x,wy=gy+G.cam.y;
-  for(const e of G.ents)e.sel=false;G.sel=[];
-  let found=null;for(let i=G.ents.length-1;i>=0;i--){const e=G.ents[i];if(e.dead)continue;const h=(e.w||26)/2+5;if(Math.abs(e.x-wx)<h&&Math.abs(e.y-wy)<h){found=e;break;}}
-  if(found&&!found.enemy){found.sel=true;G.sel=[found];}
-  updSel();
-}
-function dragSel(){
-  const sx=Math.min(G.ds.x,G.de.x)+G.cam.x,sy=Math.min(G.ds.y,G.de.y)-L.topH+G.cam.y;
-  const ex=Math.max(G.ds.x,G.de.x)+G.cam.x,ey=Math.max(G.ds.y,G.de.y)-L.topH+G.cam.y;
-  G.sel=[];for(const e of G.ents){e.sel=false;if(e.dead||e.enemy||e.bld)continue;if(e.x>=sx&&e.x<=ex&&e.y>=sy&&e.y<=ey){G.sel.push(e);e.sel=true;}}
-  updSel();
-}
-function rightClick(sx,sy){
-  if(!G.sel.length)return;
-  const gy=sy-L.topH;
-  const wx=sx+G.cam.x,wy=gy+G.cam.y;
-  let tE=null,tR=null;
-  for(const e of G.ents){if(e.dead)continue;const h=(e.w||26)/2+5;if(Math.abs(e.x-wx)<h&&Math.abs(e.y-wy)<h){tE=e;break;}}
-  if(!tE)for(const r of RMAP){if(r.hp>0&&Math.abs(r.x-wx)<26&&Math.abs(r.y-wy)<26){tR=r;break;}}
-  for(const e of G.sel){
-    if(e.bld){e.rallyX=wx;e.rallyY=wy;continue;}
-    if(tE&&tE.enemy){
-      e.task='atk';e.tgt=tE;e.mtgt=null;
-      G.playerAttacked=true;
-    }else if(tR&&e.type==='villager'){e.task='gath';e.tgt=tR;e.mtgt=null;e.cr=null;}
-    else{e.task='move';e.mtgt={x:wx+rand(-24,24),y:wy+rand(-24,24)};e.tgt=null;}
-  }
-}
-function placeB(sx,sy){
-  const gy=sy-L.topH;
-  const wx=sx+G.cam.x,wy=gy+G.cam.y,d=BD[G.bmode];
-  if(!afford(d.cost)){notify('Not enough resources!');G.bmode=null;updAct();return;}
-  const vils=G.sel.filter(e=>e.type==='villager');
-  if(!vils.length){notify('Select villagers first!');G.bmode=null;updAct();return;}
-  spend(d.cost);const b=mkBld(G.bmode,wx,wy,false);
-  for(const v of vils){v.task='build';v.tgt=b;v.mtgt=null;}
-  G.bmode=null;updAct();
 }
 
 // ── UI ────────────────────────────────────────────────
@@ -1481,14 +1649,16 @@ function mkBtn(ico,name,cb,cost=''){
 }
 function updAct(){
   const p=document.getElementById('actPanel');
-  p.innerHTML='';
+  // Clear only .aBtn children so the joystick div (if present) is preserved
+  Array.from(p.querySelectorAll('.aBtn')).forEach(b=>b.remove());
+
   if(G.bmode){
     const b=mkBtn('✕','Cancel',()=>{G.bmode=null;updAct();});
     b.style.fontSize='18px';p.appendChild(b);return;
   }
   if(!G.sel.length)return;
   const e=G.sel[0];
-  if(e.bld&&e.built){
+  if(e.bld&&e.built&&!e.enemy){
     for(const ut of(e.trains||[])){
       const d=UD[ut];if(!d)continue;
       const cs=Object.entries(d.cost).map(([k,v])=>`${rIco(k)}${v}`).join(' ');
@@ -1501,11 +1671,12 @@ function updAct(){
     }
     return;
   }
-  const isV=G.sel.some(e=>e.type==='villager');
+  const isV=G.sel.some(e=>e.type==='villager'&&!e.enemy);
   if(isV){
-    [['house','🏠'],['farm','🌾'],['bks','⚔'],['range','🏹'],['stable','🐴'],['mine','⛏'],['tower','🗼'],['wall','🧱'],['siege','🔩']].forEach(([t,ic])=>{
+    // Include TC in the build menu
+    [['tc','🏰'],['house','🏠'],['farm','🌾'],['bks','⚔'],['range','🏹'],['stable','🐴'],['mine','⛏'],['tower','🗼'],['wall','🧱'],['siege','🔩']].forEach(([t,ic])=>{
       const d=BD[t],cs=Object.entries(d.cost).map(([k,v])=>`${rIco(k)}${v}`).join(' ')||'Free';
-      p.appendChild(mkBtn(ic,d.name,()=>{G.bmode=t;notify('Place '+d.name);},cs));
+      p.appendChild(mkBtn(ic,d.name,()=>{G.bmode=t;notify('Place '+d.name+' – tap/click on the map');updAct();},cs));
     });
   }
   p.appendChild(mkBtn('✋','Stop',()=>{for(const e of G.sel){e.task=null;e.mtgt=null;e.tgt=null;}}));
