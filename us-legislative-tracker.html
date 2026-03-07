@@ -798,9 +798,34 @@
   .tag-infrastructure { background: rgba(100,150,255,0.08); border-color: rgba(100,150,255,0.2); color: #6496ff; }
   .tag-finance   { background: rgba(255,200,50,0.08); border-color: rgba(255,200,50,0.2); color: #ffc832; }
   .tag-other     { background: var(--surface2); border-color: var(--border); color: var(--text-dim); }
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 9999;
+    background: rgba(17,22,32,0.85);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 6px 12px 6px 8px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(6px);
+    transition: border-color .15s, color .15s;
+    text-decoration: none;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
+
+<a class="back-btn" onclick="goBack()">&#8592; Back</a>
 
 <!-- HEADER -->
 <header>
@@ -1587,6 +1612,13 @@ document.addEventListener('keydown', e => {
 loadData();
 updateLocationFields();
 refresh();
+</script>
+
+<script>
+function goBack() {
+  const screen = sessionStorage.getItem('lastScreen') || 'projects';
+  window.location.href = 'index.html#' + screen;
+}
 </script>
 </body>
 </html>

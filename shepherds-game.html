@@ -274,12 +274,37 @@ body{
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 9999;
+    background: rgba(15,21,37,0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 11px 5px 8px;
+    color: var(--text2);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    backdrop-filter: blur(6px);
+    transition: border-color .15s, color .15s;
+    text-decoration: none;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent2); }
 </style>
 </head>
 <body>
 
 <!-- TOP BAR -->
 <div class="topbar">
+  <a class="back-btn" onclick="goBack()">&#8592; Back</a>
   <div class="topbar-logo">⚑ Shepherds</div>
   <div class="topbar-right">
     <div class="xp-pill">⭐ 24,750 XP</div>
@@ -807,6 +832,13 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add('show');
   clearTimeout(showToast._t);
   showToast._t = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+</script>
+
+<script>
+function goBack() {
+  const screen = sessionStorage.getItem('lastScreen') || 'projects';
+  window.location.href = 'index.html#' + screen;
 }
 </script>
 </body>
