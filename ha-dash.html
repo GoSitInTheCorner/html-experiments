@@ -122,7 +122,7 @@ select.mi option{background:var(--s2)}
 <body>
 
 <div id="topbar">
-  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <button id="back-btn" onclick="goBack()">&#8592; Back</button>
   <div id="title">Home <span>Assistant</span></div>
   <div class="ha-status"><div class="ha-dot"></div>Simulated</div>
 </div>
@@ -527,6 +527,9 @@ function updateSensors(){
 renderAll();
 updateSensors();
 setInterval(updateSensors, 8000);
+</script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
 </script>
 </body>
 </html>

@@ -250,9 +250,15 @@ td.td-warn { font-family:var(--mono); font-size:11px; color:var(--warning); }
 .fab { display:none; position:fixed; bottom:18px; right:18px; width:50px; height:50px; background:var(--accent); border:none; border-radius:50%; color:#fff; font-size:22px; cursor:pointer; z-index:90; box-shadow:0 4px 20px var(--accent-glow); align-items:center; justify-content:center; transition:transform 0.15s; }
 .fab:hover { transform:scale(1.08); background:var(--accent2); }
 @media(max-width:640px){ .fab { display:flex; } }
+.back-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg,#0e0e10);border-bottom:1px solid var(--border,#2e2e38);flex-shrink:0}
+.back-btn{background:transparent;border:1px solid var(--border,#2e2e38);border-radius:8px;color:var(--muted,#888898);font-size:.75rem;padding:5px 11px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.back-btn:hover{border-color:var(--accent,#60aaff);color:var(--accent,#60aaff)}
 </style>
 </head>
 <body>
+<div class="back-bar">
+  <a class="back-btn" onclick="goBack()">&#8592; Back</a>
+</div>
 
 <header>
   <div class="header-inner">
@@ -678,6 +684,9 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeForm();closeD
 
 setView('grid');
 render();
+</script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
 </script>
 </body>
 </html>

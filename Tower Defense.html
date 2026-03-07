@@ -406,5 +406,8 @@ function gDrawParts(){gParts.forEach(p=>{gctx.save();gctx.globalAlpha=p.life/p.m
 window.addEventListener('resize', gResizeCanvas);
 setTimeout(()=>{gResizeCanvas();gBuildTowerBtns()}, 100);
 </script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
+</script>
 </body>
 </html>

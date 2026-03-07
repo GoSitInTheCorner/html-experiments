@@ -126,7 +126,7 @@ select.modal-input option{background:var(--s2)}
 <body>
 
 <div id="topbar">
-  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <button id="back-btn" onclick="goBack()">&#8592; Back</button>
   <div id="title"><span>&#9889;</span> TESLA</div>
   <button id="add-btn" onclick="openModal()">+ Charge</button>
 </div>
@@ -726,6 +726,9 @@ function renderAll(){ renderDash(); renderLog(); renderVsGas(); }
 loadSettings();
 renderAll();
 window.addEventListener('resize', renderAll);
+</script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
 </script>
 </body>
 </html>

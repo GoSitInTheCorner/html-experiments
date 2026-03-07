@@ -124,7 +124,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <body>
 
 <div id="topbar">
-  <button id="back-btn" onclick="history.back()">&#8592; Hub</button>
+  <button id="back-btn" onclick="goBack()">&#8592; Back</button>
   <div id="title-wrap">
     <div id="title">VENTURE ANALYST</div>
     <div id="title-sub">Business Viability Scorer</div>
@@ -654,6 +654,9 @@ function deleteIdea(idx){
 // ── INIT ──────────────────────────────────────────
 renderHistory();
 if(D.ideas.length>0) renderReport(D.ideas[0]);
+</script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
 </script>
 </body>
 </html>

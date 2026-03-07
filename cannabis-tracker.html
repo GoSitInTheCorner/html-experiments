@@ -1521,6 +1521,9 @@
     main { padding: 0.5rem; }
   }
 
+.back-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg,#0e0e10);border-bottom:1px solid var(--border,#2e2e38);flex-shrink:0}
+.back-btn{background:transparent;border:1px solid var(--border,#2e2e38);border-radius:8px;color:var(--muted,#888898);font-size:.75rem;padding:5px 11px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.back-btn:hover{border-color:var(--accent,#60aaff);color:var(--accent,#60aaff)}
 </style>
 </head>
 <body>
@@ -2870,6 +2873,9 @@ setTimeout(renderAllNotes, 100);
   document.getElementById('newlist-modal')?.addEventListener('click', function(e){ if(e.target===this)closeNewListModal(); });
 })();
 
+</script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
 </script>
 </body>
 </html>

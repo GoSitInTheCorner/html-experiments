@@ -594,5 +594,8 @@ setInterval(tickCountdown,1000);
 // ── Init ──
 render();
 </script>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
+</script>
 </body>
 </html>
