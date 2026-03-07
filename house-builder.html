@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuildCraft</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:#0f1117;color:#e2e8f0;font-family:'DM Sans',system-ui,sans-serif;font-size:13px;}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#2e3350;border-radius:3px}
+#app{display:flex;flex-direction:column;height:100%;}
+#hdr{height:46px;flex-shrink:0;background:#1a1d27;border-bottom:1px solid #2e3350;display:flex;align-items:center;padding:0 14px;gap:8px;}
+.back-btn{background:transparent;border:1px solid #2e3350;border-radius:7px;color:#64748b;font-size:11px;padding:4px 10px;cursor:pointer;font-family:inherit;}
+.back-btn:hover{border-color:#f59e0b;color:#f59e0b;}
+.app-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#f59e0b;white-space:nowrap;margin-right:4px;}
+.tab-btn{background:transparent;border:none;color:#64748b;padding:4px 10px;font-size:12px;cursor:pointer;border-radius:5px;font-family:inherit;}
+.tab-btn.active{background:#f59e0b;color:#000;font-weight:600;}
+.tab-btn:hover:not(.active){color:#e2e8f0;}
+#loc-sel{background:#22263a;border:1px solid #2e3350;color:#e2e8f0;padding:4px 8px;border-radius:5px;font-size:11px;height:28px;margin-left:auto;}
+#body{flex:1;min-height:0;display:flex;overflow:hidden;}
+#sidebar{width:215px;flex-shrink:0;background:#1a1d27;border-right:1px solid #2e3350;display:flex;flex-direction:column;overflow:hidden;}
+#sb-scroll{flex:1;overflow-y:auto;}
+.sec-hd{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:8px 12px 5px;border-bottom:1px solid #2e3350;margin-top:4px;display:flex;justify-content:space-between;align-items:center;}
+.plan-card{border:1px solid #2e3350;border-radius:6px;padding:9px 11px;cursor:pointer;margin:4px 10px;background:#22263a;}
+.plan-card:hover,.plan-card.sel{border-color:#f59e0b;background:rgba(245,158,11,.08);}
+.room-row{padding:5px 10px 3px;cursor:pointer;border:1px solid transparent;border-radius:5px;margin:2px 8px;}
+.room-row:hover{background:rgba(255,255,255,.04);}
+.room-row.sel{border-color:#f59e0b;background:rgba(245,158,11,.08);}
+.ri{background:#22263a;border:1px solid #2e3350;color:#e2e8f0;padding:5px 9px;border-radius:5px;font-size:12px;width:100%;outline:none;font-family:inherit;}
+.ri:focus{border-color:#f59e0b;}
+lbl{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:3px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
+.btn{padding:5px 12px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;}
+.bp{background:#f59e0b;color:#000;}.bp:hover{background:#d97706;}
+.bg{background:#22263a;color:#e2e8f0;border:1px solid #2e3350;}.bg:hover{border-color:#f59e0b;color:#f59e0b;}
+.bd{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);}.bd:hover{background:#ef4444;color:#fff;}
+.bs{background:#10b981;color:#000;}
+#cvs-panel{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+#cvs-toolbar{height:36px;flex-shrink:0;padding:0 12px;border-bottom:1px solid #2e3350;background:#1a1d27;display:flex;align-items:center;gap:8px;}
+#cvs-wrap{flex:1;min-height:0;overflow:auto;}
+canvas{display:block;cursor:crosshair;}
+#empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#64748b;gap:10px;}
+/* Materials */
+#tab-mat{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.stats-strip{display:flex;background:#1a1d27;border-bottom:1px solid #2e3350;flex-shrink:0;}
+.sc{flex:1;padding:10px 14px;border-right:1px solid #2e3350;}.sc:last-child{border-right:none;}
+.sk{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.sv{font-weight:700;font-size:16px;}
+.fbar{padding:7px 10px;border-bottom:1px solid #2e3350;background:#1a1d27;display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+#bom-wrap{flex:1;overflow:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:7px 10px;border-bottom:1px solid #2e3350;background:#1a1d27;position:sticky;top:0;z-index:1;}
+td{padding:6px 10px;border-bottom:1px solid rgba(46,51,80,.3);}
+tr:hover td{background:rgba(46,51,80,.2);}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+/* Permits, Saves */
+#tab-codes,#tab-saves{flex:1;overflow:auto;padding:18px 20px;}
+.pcard{background:#1a1d27;border:1px solid #2e3350;border-radius:8px;padding:14px;margin-bottom:12px;}
+.scard{background:#1a1d27;border:1px solid #2e3350;border-radius:8px;padding:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;}
+/* Modal */
+#modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;}
+#modal-bg.show{display:flex;}
+#modal{background:#1a1d27;border:1px solid #2e3350;border-radius:10px;padding:18px;width:300px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <button class="back-btn" onclick="goBack()">&#8592; Back</button>
+    <span class="app-title">&#127968; BuildCraft</span>
+    <button class="tab-btn active" data-tab="design" onclick="setTab('design')">&#128679; Design</button>
+    <button class="tab-btn" data-tab="materials" onclick="setTab('materials')">&#128230; Materials</button>
+    <button class="tab-btn" data-tab="codes" onclick="setTab('codes')">&#128203; Permits</button>
+    <button class="tab-btn" data-tab="saves" onclick="setTab('saves')">&#128190; Saves</button>
+    <select id="loc-sel" onchange="setLoc(this.value)"></select>
+  </div>
+  <div id="body">
+    <div id="tab-design" style="display:flex;flex:1;min-width:0;overflow:hidden;">
+      <div id="sidebar">
+        <div id="sb-scroll">
+          <div class="sec-hd">Floor Plans</div>
+          <div id="plan-list"></div>
+          <div id="rooms-sec" style="display:none">
+            <div class="sec-hd">Rooms <button class="btn bg" onclick="openModal()" style="padding:1px 7px;font-size:10px;margin-right:0">+ Add</button></div>
+            <div id="room-list"></div>
+            <div id="edit-sec" style="display:none">
+              <div class="sec-hd">Edit Room</div>
+              <div style="padding:6px 10px 4px">
+                <div style="margin-bottom:6px"><lbl>Name</lbl><input class="ri" id="e-name" oninput="upRoom('name',this.value)"></div>
+                <div class="g2">
+                  <div><lbl>Width ft</lbl><input class="ri" id="e-w" type="number" min="4" max="80" oninput="upRoom('w',+this.value)"></div>
+                  <div><lbl>Depth ft</lbl><input class="ri" id="e-h" type="number" min="4" max="80" oninput="upRoom('h',+this.value)"></div>
+                </div>
+                <div style="background:rgba(245,158,11,.12);border-radius:5px;padding:5px 9px;display:flex;justify-content:space-between;margin-bottom:6px">
+                  <span style="color:#64748b;font-size:11px">Area</span><span id="e-area" style="font-weight:700;color:#f59e0b;font-size:12px"></span>
+                </div>
+                <button class="btn bd" style="width:100%;font-size:11px" onclick="delRoom()">&#128465; Delete Room</button>
+              </div>
+            </div>
+            <div class="sec-hd">Summary</div>
+            <div id="summary" style="padding:5px 10px"></div>
+            <div class="sec-hd">Save Build</div>
+            <div style="padding:6px 10px 12px">
+              <input class="ri" id="save-name" placeholder="Project name..." style="margin-bottom:5px">
+              <button class="btn bp" id="save-btn" style="width:100%;font-size:12px" onclick="saveProj()">&#128190; Save Project</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="cvs-panel">
+        <div id="cvs-toolbar">
+          <span style="color:#64748b;font-size:11px">Zoom:</span>
+          <button class="btn bg" style="padding:2px 8px;font-size:11px" onclick="chZoom(-0.1)">&#8722;</button>
+          <span id="zoom-lbl" style="font-size:11px;min-width:34px;text-align:center">80%</span>
+          <button class="btn bg" style="padding:2px 8px;font-size:11px" onclick="chZoom(0.1)">+</button>
+          <button class="btn bg" style="padding:2px 8px;font-size:11px" onclick="rsZoom()">Reset</button>
+          <span style="margin-left:auto;color:#64748b;font-size:11px">&#x1F7E1; Door &middot; &#x1F535; Window &middot; Click=select &middot; Drag=move &middot; Corner&#9644;=resize</span>
+        </div>
+        <div id="cvs-wrap">
+          <div id="empty"><div style="font-size:52px">&#127968;</div><div style="font-size:17px;font-family:'Playfair Display',serif;color:#e2e8f0">Choose a Floor Plan</div><div style="font-size:12px">Select a template from the sidebar to begin</div></div>
+          <canvas id="cv"></canvas>
+        </div>
+      </div>
+    </div>
+    <div id="tab-mat" style="display:none">
+      <div id="mat-empty" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#64748b;gap:12px"><div style="font-size:44px">&#128230;</div><div>Load a floor plan first</div></div>
+      <div id="mat-content" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+        <div class="stats-strip" id="mat-stats"></div>
+        <div class="fbar" id="bom-filters"></div>
+        <div id="bom-wrap"><table><thead id="bom-head"></thead><tbody id="bom-body"></tbody><tfoot id="bom-foot"></tfoot></table><div style="padding:8px 10px;color:#64748b;font-size:11px;border-top:1px solid #2e3350">&#x26A0;&#xFE0F; Estimates only. Consult local contractors for accurate quotes.</div></div>
+      </div>
+    </div>
+    <div id="tab-codes" style="display:none">
+      <div style="max-width:740px;margin:0 auto">
+        <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:3px">Building Codes &amp; Permits</div>
+        <div style="color:#64748b;font-size:12px;margin-bottom:14px">Look up local requirements, permits, and fees for your location</div>
+        <div style="display:flex;gap:10px;margin-bottom:18px;align-items:flex-end">
+          <div style="flex:1"><lbl>Location</lbl><select class="ri" id="codes-loc" style="height:34px"></select></div>
+          <button class="btn bp" style="height:34px" onclick="lookupCodes()">&#128269; Look Up Codes</button>
+        </div>
+        <div id="codes-result"></div>
+        <div id="codes-empty" style="text-align:center;padding:50px 0;color:#64748b"><div style="font-size:40px;margin-bottom:10px">&#128203;</div><div>Select your location above and click "Look Up Codes"</div></div>
+      </div>
+    </div>
+    <div id="tab-saves" style="display:none">
+      <div style="max-width:680px;margin:0 auto">
+        <div style="font-family:'Playfair Display',serif;font-size:19px;margin-bottom:14px">Saved Builds</div>
+        <div id="saves-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="modal-bg">
+  <div id="modal">
+    <div style="font-weight:700;font-size:14px;margin-bottom:12px">Add New Room</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div><lbl>Room Name</lbl><input class="ri" id="m-name" value="New Room"></div>
+      <div><lbl>Room Type</lbl>
+        <select class="ri" id="m-type">
+          <option>living</option><option>bedroom</option><option>kitchen</option><option>bath</option><option>dining</option><option>garage</option><option>utility</option><option>foyer</option>
+        </select>
+      </div>
+      <div class="g2">
+        <div><lbl>Width (ft)</lbl><input class="ri" type="number" id="m-w" value="12" min="4" max="80"></div>
+        <div><lbl>Depth (ft)</lbl><input class="ri" type="number" id="m-h" value="10" min="4" max="80"></div>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:2px">
+        <button class="btn bp" style="flex:1" onclick="addRoom()">Add Room</button>
+        <button class="btn bg" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function goBack(){var s=sessionStorage.getItem('lastScreen')||'projects';window.location.href='index.html#'+s;}
+
+const C={accent:'#f59e0b',accent2:'#3b82f6',accent3:'#10b981',red:'#ef4444',text:'#e2e8f0',muted:'#64748b'};
+const GRID=20;
+const LOCS={'National Average':1.0,'Atlanta, GA':1.1,'Austin, TX':1.2,'Boston, MA':1.6,'Chicago, IL':1.3,'Denver, CO':1.25,'Houston, TX':1.1,'Los Angeles, CA':1.6,'Miami, FL':1.25,'New York, NY':1.8,'Phoenix, AZ':1.1,'San Francisco, CA':1.9,'Seattle, WA':1.5};
+const PLANS={
+  studio:{name:'Studio Apartment',sqft:500,rooms:[{id:1,name:'Living/Bedroom',x:1,y:1,w:20,h:20,color:'#3b82f620',type:'living'},{id:2,name:'Kitchen',x:21,y:1,w:10,h:10,color:'#f59e0b20',type:'kitchen'},{id:3,name:'Bathroom',x:21,y:11,w:10,h:10,color:'#10b98120',type:'bath'}],doors:[{x:10,y:21,dir:'h'},{x:21,y:5,dir:'v'},{x:21,y:15,dir:'v'}],windows:[{x:5,y:1,dir:'h'},{x:15,y:1,dir:'h'},{x:31,y:1,dir:'h'}]},
+  cottage:{name:'2BR Cottage',sqft:900,rooms:[{id:1,name:'Living Room',x:1,y:1,w:20,h:15,color:'#3b82f620',type:'living'},{id:2,name:'Kitchen',x:21,y:1,w:12,h:10,color:'#f59e0b20',type:'kitchen'},{id:3,name:'Dining',x:21,y:11,w:12,h:5,color:'#a78bfa20',type:'dining'},{id:4,name:'Bedroom 1',x:1,y:16,w:15,h:12,color:'#f4724720',type:'bedroom'},{id:5,name:'Bedroom 2',x:16,y:16,w:17,h:12,color:'#f4724720',type:'bedroom'},{id:6,name:'Bathroom',x:1,y:28,w:10,h:8,color:'#10b98120',type:'bath'}],doors:[{x:15,y:16,dir:'v'},{x:16,y:16,dir:'h'},{x:21,y:8,dir:'v'},{x:5,y:28,dir:'h'}],windows:[{x:8,y:1,dir:'h'},{x:25,y:1,dir:'h'},{x:1,y:22,dir:'v'},{x:27,y:16,dir:'v'}]},
+  ranch:{name:'3BR Ranch',sqft:1500,rooms:[{id:1,name:'Living Room',x:1,y:1,w:22,h:18,color:'#3b82f620',type:'living'},{id:2,name:'Kitchen',x:23,y:1,w:16,h:12,color:'#f59e0b20',type:'kitchen'},{id:3,name:'Dining Room',x:23,y:13,w:16,h:6,color:'#a78bfa20',type:'dining'},{id:4,name:'Master Bedroom',x:1,y:19,w:20,h:14,color:'#f4724720',type:'bedroom'},{id:5,name:'Bedroom 2',x:21,y:19,w:14,h:10,color:'#f4724720',type:'bedroom'},{id:6,name:'Bedroom 3',x:21,y:29,w:14,h:8,color:'#f4724720',type:'bedroom'},{id:7,name:'Master Bath',x:1,y:33,w:10,h:8,color:'#10b98120',type:'bath'},{id:8,name:'Bathroom 2',x:11,y:33,w:10,h:8,color:'#10b98120',type:'bath'},{id:9,name:'Garage',x:35,y:1,w:22,h:22,color:'#64748b20',type:'garage'}],doors:[{x:20,y:19,dir:'v'},{x:21,y:19,dir:'h'},{x:30,y:19,dir:'v'},{x:5,y:33,dir:'h'},{x:15,y:33,dir:'h'},{x:35,y:12,dir:'v'}],windows:[{x:8,y:1,dir:'h'},{x:29,y:1,dir:'h'},{x:1,y:25,dir:'v'},{x:28,y:19,dir:'v'},{x:42,y:1,dir:'h'}]},
+  colonial:{name:'4BR Colonial',sqft:2400,rooms:[{id:1,name:'Foyer',x:18,y:1,w:10,h:8,color:'#fbbf2420',type:'foyer'},{id:2,name:'Living Room',x:1,y:1,w:17,h:18,color:'#3b82f620',type:'living'},{id:3,name:'Dining Room',x:28,y:1,w:16,h:18,color:'#a78bfa20',type:'dining'},{id:4,name:'Kitchen',x:18,y:9,w:10,h:10,color:'#f59e0b20',type:'kitchen'},{id:5,name:'Family Room',x:1,y:19,w:25,h:15,color:'#3b82f625',type:'living'},{id:6,name:'Laundry',x:26,y:19,w:18,h:8,color:'#64748b20',type:'utility'},{id:7,name:'Master Bedroom',x:1,y:34,w:22,h:14,color:'#f4724720',type:'bedroom'},{id:8,name:'Master Bath',x:23,y:34,w:12,h:14,color:'#10b98120',type:'bath'},{id:9,name:'Bedroom 2',x:1,y:48,w:16,h:12,color:'#f4724720',type:'bedroom'},{id:10,name:'Bedroom 3',x:17,y:48,w:16,h:12,color:'#f4724720',type:'bedroom'},{id:11,name:'Bedroom 4',x:35,y:34,w:15,h:14,color:'#f4724720',type:'bedroom'},{id:12,name:'Bathroom 2',x:35,y:48,w:15,h:12,color:'#10b98120',type:'bath'},{id:13,name:'Garage',x:26,y:27,w:24,h:20,color:'#64748b20',type:'garage'}],doors:[{x:18,y:8,dir:'h'},{x:22,y:19,dir:'h'},{x:22,y:34,dir:'v'},{x:8,y:48,dir:'h'},{x:24,y:48,dir:'h'},{x:38,y:34,dir:'h'}],windows:[{x:7,y:1,dir:'h'},{x:33,y:1,dir:'h'},{x:1,y:10,dir:'v'},{x:1,y:25,dir:'v'},{x:1,y:40,dir:'v'},{x:40,y:34,dir:'v'}]}
+};
+const CODES={'New York, NY':{code:'NYC Building Code 2022',permits:[{name:'Building Permit',fee:'$0.035/SF + $3,000 base',req:true},{name:'Zoning Compliance',fee:'$1,500',req:true},{name:'Electrical Permit',fee:'$500-$2,000',req:true},{name:'Plumbing Permit',fee:'$400-$1,500',req:true},{name:'Environmental Review',fee:'$800',req:true}],notes:['Min ceiling height: 8ft','Fire sprinklers required for 4+ units','Energy Code: NY Stretch Code','Min lot setbacks: 25ft front, 5ft sides']},'Austin, TX':{code:'Austin Land Development Code + IBC 2021',permits:[{name:'Building Permit',fee:'$0.02/SF + $1,000 base',req:true},{name:'Site Plan Approval',fee:'$750',req:true},{name:'Electrical Permit',fee:'$250-$800',req:true},{name:'Plumbing Permit',fee:'$200-$600',req:true}],notes:['Min ceiling height: 7ft-6in','Impervious cover limits apply','Energy Code: Texas ECAD','Minimum 1,400 SF for single-family']},'National Average':{code:'International Building Code (IBC) 2021',permits:[{name:'Building Permit',fee:'$0.015-0.04/SF',req:true},{name:'Electrical Permit',fee:'$150-$600',req:true},{name:'Plumbing Permit',fee:'$150-$500',req:true},{name:'HVAC Permit',fee:'$100-$400',req:true},{name:'Certificate of Occupancy',fee:'$100-$300',req:true}],notes:['Min ceiling height: 7ft (IBC)','Smoke detectors required in all bedrooms','GFCI outlets near water sources','Min 1 accessible entrance required','Energy compliance: IECC 2021']}};
+
+let S={plan:null,rooms:[],doors:[],windows:[],sel:null,zoom:0.8,loc:'National Average',saves:[],bomF:'All'};
+try{S.saves=JSON.parse(localStorage.getItem('houseBuilds')||'[]');}catch{}
+
+Object.keys(LOCS).forEach(l=>{
+  ['loc-sel','codes-loc'].forEach(id=>{const o=document.createElement('option');o.textContent=l;document.getElementById(id).appendChild(o);});
+});
+
+function setTab(t){
+  ['design','mat','codes','saves'].forEach(n=>document.getElementById('tab-'+n).style.display='none');
+  document.getElementById('tab-'+t).style.display='flex';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  if(t==='mat')renderMat();
+  if(t==='saves')renderSaves();
+}
+function setLoc(l){S.loc=l;document.getElementById('loc-sel').value=l;document.getElementById('codes-loc').value=l;if(document.getElementById('tab-mat').style.display!=='none')renderMat();}
+
+function loadPlan(k){
+  const p=PLANS[k];S.plan=k;S.rooms=p.rooms.map(r=>({...r}));S.doors=p.doors.map(d=>({...d}));S.windows=p.windows.map(w=>({...w}));S.sel=null;
+  document.getElementById('save-name').value=p.name;
+  renderPlanList();renderSidebar();drawCanvas();
+}
+function renderPlanList(){
+  document.getElementById('plan-list').innerHTML=Object.entries(PLANS).map(([k,p])=>`<div class="plan-card${S.plan===k?' sel':''}" onclick="loadPlan('${k}')"><div style="font-weight:600;font-size:12px">${p.name}</div><div style="color:#64748b;font-size:10px">${p.sqft.toLocaleString()} SF &middot; ${p.rooms.length} rooms</div></div>`).join('');
+}
+function renderSidebar(){
+  const has=S.rooms.length>0;
+  document.getElementById('rooms-sec').style.display=has?'block':'none';
+  if(!has)return;
+  document.getElementById('room-list').innerHTML=S.rooms.map(r=>{
+    const dot=r.color.replace('20','cc');
+    return `<div class="room-row${S.sel===r.id?' sel':''}" onclick="selRoom(${r.id})"><div style="display:flex;justify-content:space-between;align-items:center;font-weight:500;font-size:12px">${r.name}<div style="width:8px;height:8px;border-radius:2px;background:${dot};flex-shrink:0;margin-left:4px"></div></div><div style="color:#64748b;font-size:10px">${r.w}' x ${r.h}' = ${r.w*r.h} SF</div></div>`;
+  }).join('');
+  const sr=S.rooms.find(r=>r.id===S.sel);
+  document.getElementById('edit-sec').style.display=sr?'block':'none';
+  if(sr){document.getElementById('e-name').value=sr.name;document.getElementById('e-w').value=sr.w;document.getElementById('e-h').value=sr.h;document.getElementById('e-area').textContent=sr.w*sr.h+' SF';}
+  const sqft=S.rooms.reduce((s,r)=>s+r.w*r.h,0);
+  const mult=LOCS[S.loc]||1;const bom=calcBOM();const tc=bom.reduce((s,i)=>s+i.qty*i.unitCost*mult,0);
+  document.getElementById('summary').innerHTML=[['Total Area',sqft.toLocaleString()+' SF'],['Rooms',S.rooms.length],['Est. Cost','$'+Math.round(tc).toLocaleString()],['Cost/SF','$'+Math.round(tc/(sqft||1))]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:#64748b;font-size:11px">${k}</span><span style="font-weight:600;font-size:12px;color:${k==='Est. Cost'?C.accent3:C.text}">${v}</span></div>`).join('');
+}
+function selRoom(id){S.sel=S.sel===id?null:id;renderSidebar();drawCanvas();}
+function upRoom(f,v){const r=S.rooms.find(r=>r.id===S.sel);if(!r)return;r[f]=f==='name'?v:Math.max(4,Math.min(80,v));document.getElementById('e-area').textContent=r.w*r.h+' SF';renderSidebar();drawCanvas();}
+function delRoom(){S.rooms=S.rooms.filter(r=>r.id!==S.sel);S.sel=null;renderSidebar();drawCanvas();}
+function openModal(){document.getElementById('modal-bg').classList.add('show');}
+function closeModal(){document.getElementById('modal-bg').classList.remove('show');}
+function addRoom(){
+  const t=document.getElementById('m-type').value;
+  const cols={living:'#3b82f620',kitchen:'#f59e0b20',bedroom:'#f4724720',bath:'#10b98120',dining:'#a78bfa20',garage:'#64748b20',utility:'#64748b20',foyer:'#fbbf2420'};
+  const id=Math.max(0,...S.rooms.map(r=>r.id))+1;
+  S.rooms.push({id,name:document.getElementById('m-name').value||'New Room',x:2,y:2,w:+document.getElementById('m-w').value||12,h:+document.getElementById('m-h').value||10,color:cols[t]||'#3b82f620',type:t});
+  closeModal();renderSidebar();drawCanvas();
+}
+function saveProj(){
+  const name=document.getElementById('save-name').value.trim();if(!name)return;
+  S.saves=[{name,date:new Date().toLocaleDateString(),plan:S.plan,rooms:S.rooms,doors:S.doors,windows:S.windows,location:S.loc},...S.saves.filter(s=>s.name!==name)].slice(0,20);
+  try{localStorage.setItem('houseBuilds',JSON.stringify(S.saves));}catch{}
+  const b=document.getElementById('save-btn');b.textContent='Saved!';setTimeout(()=>b.textContent='Save Project',2000);
+}
+function calcBOM(){
+  const r=S.rooms;if(!r.length)return[];
+  const sq=r.reduce((s,x)=>s+x.w*x.h,0),per=Math.sqrt(sq)*4;
+  const ba=r.filter(x=>x.type==='bath'),ki=r.filter(x=>x.type==='kitchen');
+  return[{category:'Foundation',item:'Concrete',qty:Math.ceil(sq*.1),unit:'CY',unitCost:125},{category:'Foundation',item:'Rebar',qty:Math.ceil(per*2),unit:'LF',unitCost:1.2},{category:'Framing',item:'Lumber (2x6)',qty:Math.ceil(per*8*.75),unit:'LF',unitCost:.85},{category:'Framing',item:'OSB Sheathing',qty:Math.ceil(per*8/32),unit:'Sheets',unitCost:42},{category:'Framing',item:'Roof Trusses',qty:Math.ceil(sq/24),unit:'EA',unitCost:180},{category:'Roofing',item:'Asphalt Shingles',qty:Math.ceil((sq*1.15)/100),unit:'Squares',unitCost:110},{category:'Exterior',item:'Vinyl Siding',qty:Math.ceil(per*8/100),unit:'Squares',unitCost:95},{category:'Exterior',item:'Windows',qty:Math.max(8,Math.ceil(sq/100)),unit:'EA',unitCost:650},{category:'Exterior',item:'Exterior Doors',qty:Math.max(2,Math.ceil(r.length/5)),unit:'EA',unitCost:850},{category:'Insulation',item:'Batt Insulation',qty:Math.ceil(sq*1.1),unit:'SF',unitCost:1.2},{category:'Drywall',item:'Drywall Sheets',qty:Math.ceil((sq*2.1)/32),unit:'Sheets',unitCost:18},{category:'Flooring',item:'LVP Flooring',qty:Math.ceil(sq*1.1),unit:'SF',unitCost:4.5},{category:'Flooring',item:'Tile (Baths)',qty:Math.ceil(ba.reduce((s,x)=>s+x.w*x.h,0)*1.15),unit:'SF',unitCost:6},{category:'Plumbing',item:'Rough-in Plumbing',qty:ba.length+ki.length,unit:'Fixtures',unitCost:1800},{category:'Plumbing',item:'Water Heater',qty:Math.max(1,Math.ceil(sq/2000)),unit:'EA',unitCost:1200},{category:'Electrical',item:'Electrical Panel',qty:1,unit:'EA',unitCost:2500},{category:'Electrical',item:'Wiring (romex)',qty:Math.ceil(sq*3),unit:'LF',unitCost:.45},{category:'Electrical',item:'Outlets & Switches',qty:Math.ceil(sq/25),unit:'EA',unitCost:35},{category:'HVAC',item:'HVAC System',qty:Math.ceil(sq/600),unit:'Tons',unitCost:3800},{category:'HVAC',item:'Ductwork',qty:Math.ceil(sq*1.5),unit:'LF',unitCost:2.5},{category:'Interior',item:'Interior Doors',qty:Math.max(4,r.length-1),unit:'EA',unitCost:280},{category:'Interior',item:'Interior Paint',qty:Math.ceil(sq*2/400),unit:'Gallons',unitCost:45},{category:'Labor',item:'General Contractor',qty:1,unit:'Project',unitCost:sq*45},{category:'Labor',item:'Site Cleanup',qty:1,unit:'Project',unitCost:sq*1.5}].filter(i=>i.qty>0);
+}
+function renderMat(){
+  const has=S.rooms.length>0;
+  document.getElementById('mat-empty').style.display=has?'none':'flex';
+  document.getElementById('mat-content').style.display=has?'flex':'none';
+  if(!has)return;
+  const bom=calcBOM(),mult=LOCS[S.loc]||1,sq=S.rooms.reduce((s,r)=>s+r.w*r.h,0),tc=bom.reduce((s,i)=>s+i.qty*i.unitCost*mult,0);
+  document.getElementById('mat-stats').innerHTML=[['Total Area',sq.toLocaleString()+' SF',C.accent2],['Materials (est.)','$'+Math.round(tc*.55).toLocaleString(),C.accent],['Labor (est.)','$'+Math.round(tc*.45).toLocaleString(),C.accent3],['Total Estimate','$'+Math.round(tc).toLocaleString(),'#f59e0b']].map((s,i)=>`<div class="sc"><div class="sk">${s[0]}</div><div class="sv" style="color:${s[2]}">${s[1]}</div>${i===3?`<div style="color:#64748b;font-size:10px;margin-top:1px">📍 ${S.loc} &middot; x${mult.toFixed(2)}</div>`:''}</div>`).join('');
+  const cats=['All',...new Set(bom.map(i=>i.category))];
+  document.getElementById('bom-filters').innerHTML=cats.map(c=>`<button class="btn ${S.bomF===c?'bp':'bg'}" style="font-size:11px;padding:3px 9px" onclick="setBF('${c}')">${c}</button>`).join('');
+  const fil=S.bomF==='All'?bom:bom.filter(i=>i.category===S.bomF),ft=fil.reduce((s,i)=>s+i.qty*i.unitCost*mult,0);
+  document.getElementById('bom-head').innerHTML=`<tr><th>Category</th><th>Item</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Subtotal</th><th>Adjusted (x${mult.toFixed(2)})</th></tr>`;
+  document.getElementById('bom-body').innerHTML=fil.map(item=>`<tr><td><span class="tag" style="background:${C.accent2}20;color:${C.accent2}">${item.category}</span></td><td style="font-weight:500">${item.item}</td><td>${item.qty.toLocaleString()}</td><td style="color:#64748b">${item.unit}</td><td>$${item.unitCost.toLocaleString()}</td><td>$${(item.qty*item.unitCost).toLocaleString()}</td><td style="font-weight:600;color:${C.accent3}">$${Math.round(item.qty*item.unitCost*mult).toLocaleString()}</td></tr>`).join('');
+  document.getElementById('bom-foot').innerHTML=`<tr style="background:rgba(245,158,11,.06)"><td colspan="6" style="font-weight:700;text-align:right;color:${C.accent};padding:9px 10px">TOTAL (${S.loc})</td><td style="font-weight:700;color:${C.accent};font-size:14px;padding:9px 10px">$${Math.round(ft).toLocaleString()}</td></tr>`;
+}
+function setBF(f){S.bomF=f;renderMat();}
+function lookupCodes(){
+  const l=document.getElementById('codes-loc').value,d=CODES[l]||CODES['National Average'];
+  document.getElementById('codes-empty').style.display='none';
+  document.getElementById('codes-result').innerHTML=`<div class="pcard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div><div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.08em">Applicable Code</div><div style="font-size:14px;font-weight:600;color:${C.accent};margin-top:2px">${d.code}</div></div><span class="tag" style="background:${C.accent3}20;color:${C.accent3}">&#128205; ${l}</span></div><div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Required Permits &amp; Fees</div><table><thead><tr><th>Permit</th><th>Estimated Fee</th><th>Status</th></tr></thead><tbody>${d.permits.map(p=>`<tr><td style="font-weight:500">${p.name}</td><td style="color:${C.accent}">${p.fee}</td><td><span class="tag" style="background:${p.req?C.red+'20':C.accent3+'20'};color:${p.req?C.red:C.accent3}">${p.req?'Required':'Optional'}</span></td></tr>`).join('')}</tbody></table></div><div class="pcard"><div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">Key Code Requirements</div>${d.notes.map(n=>`<div style="display:flex;gap:9px;margin-bottom:7px"><span style="color:${C.accent};flex-shrink:0">&#9658;</span><span style="font-size:13px;line-height:1.5">${n}</span></div>`).join('')}</div>`;
+}
+function renderSaves(){
+  const el=document.getElementById('saves-list');
+  if(!S.saves.length){el.innerHTML=`<div style="text-align:center;padding:50px 0;color:#64748b"><div style="font-size:40px;margin-bottom:10px">&#128190;</div><div>No saved builds yet!</div></div>`;return;}
+  el.innerHTML=S.saves.map((s,i)=>`<div class="scard"><div><div style="font-weight:600;font-size:14px">${s.name}</div><div style="color:#64748b;font-size:11px;margin-top:2px">${(s.rooms||[]).length} rooms &middot; ${((s.rooms||[]).reduce((a,r)=>a+r.w*r.h,0)||0).toLocaleString()} SF &middot; ${s.date}</div></div><div style="display:flex;gap:7px;flex-shrink:0"><button class="btn bs" style="font-size:12px" onclick="loadSv(${i})">Load</button><button class="btn bd" style="font-size:12px" onclick="delSv(${i})">Delete</button></div></div>`).join('');
+}
+function loadSv(i){const s=S.saves[i];S.plan=s.plan;S.rooms=s.rooms;S.doors=s.doors;S.windows=s.windows;S.loc=s.location||'National Average';S.sel=null;document.getElementById('loc-sel').value=S.loc;document.getElementById('save-name').value=s.name;setTab('design');renderPlanList();renderSidebar();drawCanvas();}
+function delSv(i){S.saves.splice(i,1);try{localStorage.setItem('houseBuilds',JSON.stringify(S.saves));}catch{}renderSaves();}
+
+// Canvas
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let drag=null,rsz=null;
+function CELL(){return GRID*S.zoom;}
+function chZoom(d){S.zoom=Math.max(.3,Math.min(2.5,+(S.zoom+d).toFixed(1)));document.getElementById('zoom-lbl').textContent=Math.round(S.zoom*100)+'%';drawCanvas();}
+function rsZoom(){S.zoom=.8;document.getElementById('zoom-lbl').textContent='80%';drawCanvas();}
+function drawCanvas(){
+  const has=S.rooms.length>0;
+  document.getElementById('empty').style.display=has?'none':'flex';
+  cv.style.display=has?'block':'none';
+  if(!has)return;
+  const CL=CELL(),mx=Math.max(...S.rooms.map(r=>r.x+r.w))+2,my=Math.max(...S.rooms.map(r=>r.y+r.h))+2;
+  cv.width=mx*CL;cv.height=my*CL;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#1e2235';ctx.lineWidth=.5;
+  for(let x=0;x<cv.width;x+=CL){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cv.height);ctx.stroke();}
+  for(let y=0;y<cv.height;y+=CL){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cv.width,y);ctx.stroke();}
+  S.rooms.forEach(r=>{
+    const rx=r.x*CL,ry=r.y*CL,rw=r.w*CL,rh=r.h*CL,isSel=S.sel===r.id;
+    ctx.fillStyle=isSel?'rgba(245,158,11,.15)':r.color;ctx.fillRect(rx,ry,rw,rh);
+    ctx.strokeStyle=isSel?C.accent:'#3b82f6';ctx.lineWidth=isSel?2.5:1.5;ctx.strokeRect(rx,ry,rw,rh);
+    const ls=Math.max(8,Math.min(13,CL*.5));
+    ctx.fillStyle=isSel?C.accent:'#94a3b8';ctx.font=`bold ${ls}px DM Sans,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(r.name,rx+rw/2,ry+rh/2-CL*.28);
+    ctx.font=`${Math.max(7,Math.min(10,CL*.38))}px DM Sans,sans-serif`;ctx.fillStyle='#64748b';
+    ctx.fillText(r.w+"' x "+r.h+"'",rx+rw/2,ry+rh/2+CL*.28);ctx.fillText(r.w*r.h+' SF',rx+rw/2,ry+rh/2+CL*.62);
+    if(isSel){ctx.fillStyle=C.accent;ctx.fillRect(rx+rw-10,ry+rh-10,10,10);}
+  });
+  ctx.strokeStyle='#f59e0b';ctx.lineWidth=3;
+  S.doors.forEach(d=>{ctx.beginPath();if(d.dir==='h'){ctx.moveTo(d.x*CL,d.y*CL);ctx.lineTo((d.x+1)*CL,d.y*CL);}else{ctx.moveTo(d.x*CL,d.y*CL);ctx.lineTo(d.x*CL,(d.y+1)*CL);}ctx.stroke();});
+  ctx.strokeStyle='#38bdf8';ctx.lineWidth=4;
+  S.windows.forEach(w=>{ctx.beginPath();if(w.dir==='h'){ctx.moveTo(w.x*CL,w.y*CL);ctx.lineTo((w.x+2)*CL,w.y*CL);}else{ctx.moveTo(w.x*CL,w.y*CL);ctx.lineTo(w.x*CL,(w.y+2)*CL);}ctx.stroke();});
+}
+function getXY(e){const rect=cv.getBoundingClientRect(),CL=CELL(),px=e.clientX-rect.left,py=e.clientY-rect.top;return{cx:Math.floor(px/CL),cy:Math.floor(py/CL),px,py};}
+cv.onmousedown=e=>{
+  const{cx,cy,px,py}=getXY(e),CL=CELL();
+  for(const r of S.rooms){if(S.sel===r.id&&Math.abs(px-(r.x+r.w)*CL)<14&&Math.abs(py-(r.y+r.h)*CL)<14){rsz={id:r.id,sw:r.w,sh:r.h,spx:px,spy:py};return;}}
+  const hit=S.rooms.find(r=>cx>=r.x&&cx<r.x+r.w&&cy>=r.y&&cy<r.y+r.h);
+  if(hit){S.sel=hit.id;drag={id:hit.id,ox:cx-hit.x,oy:cy-hit.y};}else S.sel=null;
+  renderSidebar();drawCanvas();
+};
+cv.onmousemove=e=>{
+  const{cx,cy,px,py}=getXY(e),CL=CELL();
+  if(drag){S.rooms=S.rooms.map(r=>r.id===drag.id?{...r,x:Math.max(0,cx-drag.ox),y:Math.max(0,cy-drag.oy)}:r);drawCanvas();}
+  if(rsz){const dx=Math.round((px-rsz.spx)/CL),dy=Math.round((py-rsz.spy)/CL);S.rooms=S.rooms.map(r=>r.id===rsz.id?{...r,w:Math.max(4,rsz.sw+dx),h:Math.max(4,rsz.sh+dy)}:r);drawCanvas();}
+};
+cv.onmouseup=()=>{if(drag||rsz)renderSidebar();drag=null;rsz=null;};
+cv.onmouseleave=()=>{drag=null;rsz=null;};
+
+renderPlanList();
+setTab('design');
+</script>
+</body>
+</html>
