@@ -552,13 +552,22 @@ function nameFromFeature(props, fid) {
 }
 
 function featureKey(f) {
+  // Reject building:part fragments — they cause the "split pieces" problem
+  const props = f.properties || {};
+  if (props['building:part'] || props.building === 'part') return null;
   // Prefer stable OSM id, then MapLibre feature id, then geometry hash
-  if (f.properties?.osm_id)  return 'osm_' + f.properties.osm_id;
-  if (f.id != null)           return 'fid_' + f.id;
+  if (props.osm_id)  return 'osm_' + props.osm_id;
+  if (f.id != null)  return 'fid_' + f.id;
   const ring = f.geometry?.coordinates?.[0];
   if (ring?.length)
     return `pos_${Math.round(ring[0][0]*10000)}_${Math.round(ring[0][1]*10000)}`;
-  return 'rnd_' + Math.random().toString(36).slice(2);
+  return null; // discard unidentifiable features
+}
+
+// Centroid grid key for spatial dedup (~11m cells)
+function centroidCell(geom) {
+  const {lat, lng} = centroid(geom);
+  return `${Math.round(lat*10000)}_${Math.round(lng*10000)}`;
 }
 
 function centroid(geom) {
@@ -577,7 +586,8 @@ function makeGameLocation(fid, feature) {
   const [mn,mx] = dpByType[type] || [800,3000];
   const maxDp  = randRange(mn, mx);
   const roll   = Math.random();
-  const status = roll < 0.10 ? 'yours' : roll < 0.30 ? 'enemy' : 'neutral';
+  // ~2% yours, ~5% enemy, ~93% neutral at game start
+  const status = roll < 0.02 ? 'yours' : roll < 0.07 ? 'enemy' : 'neutral';
   const dp     = status === 'neutral' ? maxDp : randRange(Math.floor(maxDp*0.4), maxDp);
   const {lat, lng} = centroid(feature.geometry);
   return { id:fid, name, type, rare, status, dp, maxDp,
@@ -617,6 +627,15 @@ map.on('load', () => {
   map.addLayer({ id:'game-stroke', type:'line', source:'game-overlay',
     paint:{ 'line-color':['get','color'], 'line-width':2, 'line-opacity':0.9 } });
 
+  // ── Neutral (uncaptured) building grey tint ────────
+  map.addSource('neutral-overlay', {
+    type:'geojson', data:{ type:'FeatureCollection', features:[] }
+  });
+  map.addLayer({ id:'neutral-fill', type:'fill', source:'neutral-overlay',
+    paint:{ 'fill-color':'#4a5568', 'fill-opacity':0.35 } });
+  map.addLayer({ id:'neutral-stroke', type:'line', source:'neutral-overlay',
+    paint:{ 'line-color':'#718096', 'line-width':1, 'line-opacity':0.5 } });
+
   // ── Selected building highlight ────────────────────
   map.addSource('selected-overlay', {
     type:'geojson', data:{ type:'FeatureCollection', features:[] }
@@ -640,7 +659,7 @@ map.on('load', () => {
   // ── Player marker ──────────────────────────────────
   const el = document.createElement('div');
   el.id = 'playerMarkerEl';
-  el.innerHTML = buildPlayerHTML(playerColorVal);
+  el.innerHTML = buildPlayerHTML(playerColorVal, 0);
   el.style.cssText = 'width:26px;height:26px;pointer-events:none;';
   playerMarker = new maplibregl.Marker({ element:el, anchor:'center' })
     .setLngLat([BASE_PLAYER[1], BASE_PLAYER[0]])
@@ -654,12 +673,27 @@ map.on('load', () => {
 // ── Click on a building ────────────────────────────────
 map.on('click', (e) => {
   if (!buildingLayerIds.length) { closePopup(); return; }
-  const hits = map.queryRenderedFeatures(e.point, { layers:buildingLayerIds });
+  const hits = map.queryRenderedFeatures(e.point, { layers: buildingLayerIds });
   if (!hits.length) { closePopup(); return; }
-  const f   = hits[0];
-  const fid = featureKey(f);
+
+  // Pick best hit: skip building:parts, prefer named features, one per key
+  let best = null;
+  const seenKeys = new Set();
+  for (const f of hits) {
+    const fid = featureKey(f);
+    if (!fid || seenKeys.has(fid)) continue;
+    seenKeys.add(fid);
+    if (!best) { best = f; continue; }
+    // Prefer the feature that has a name or address
+    const hasInfo = f.properties?.name || f.properties?.['addr:housenumber'];
+    const bestHasInfo = best.properties?.name || best.properties?.['addr:housenumber'];
+    if (hasInfo && !bestHasInfo) best = f;
+  }
+  if (!best) { closePopup(); return; }
+
+  const fid = featureKey(best);
   if (!gameBuildings.has(fid)) {
-    gameBuildings.set(fid, makeGameLocation(fid, f));
+    gameBuildings.set(fid, makeGameLocation(fid, best));
     updateGameOverlay();
   }
   selectLocation(gameBuildings.get(fid));
@@ -667,36 +701,48 @@ map.on('click', (e) => {
 
 // ── Seed buildings as map pans/zooms ──────────────────
 map.on('moveend', seedVisibleBuildings);
+const seededCells = new Set(); // centroid grid dedup
 
 function seedVisibleBuildings() {
   if (!buildingLayerIds.length || map.getZoom() < 13) return;
-  if (gameBuildings.size > 1000) return;  // memory cap
-  const features = map.queryRenderedFeatures(undefined, { layers:buildingLayerIds });
+  if (gameBuildings.size > 1500) return;
+  const features = map.queryRenderedFeatures(undefined, { layers: buildingLayerIds });
   let changed = false;
   for (const f of features) {
     const fid = featureKey(f);
+    if (!fid) continue;                        // building:part or unidentifiable
     if (gameBuildings.has(fid)) continue;
+    // Centroid dedup — skip if another building already owns this ~11m cell
+    const cell = centroidCell(f.geometry);
+    if (seededCells.has(cell)) continue;
+    seededCells.add(cell);
     gameBuildings.set(fid, makeGameLocation(fid, f));
     changed = true;
   }
   if (changed) { updateGameOverlay(); renderMyLocations(); }
 }
 
-// ── Rebuild the colored-building GeoJSON layer ─────────
+// ── Rebuild the colored-building GeoJSON layers ────────
 function updateGameOverlay() {
   try {
-    const src = map.getSource('game-overlay');
-    if (!src) return;
-    const features = [];
+    const gameSrc    = map.getSource('game-overlay');
+    const neutralSrc = map.getSource('neutral-overlay');
+    if (!gameSrc) return;
+    const gameFeatures    = [];
+    const neutralFeatures = [];
     for (const loc of gameBuildings.values()) {
       if (!loc.geometry) continue;
-      if (loc.status === 'neutral') continue;
-      if (loc.status === 'yours'  && !chipState.mine)  continue;
-      if (loc.status === 'enemy'  && !chipState.enemy) continue;
-      const color = loc.status === 'yours' ? playerColorVal : enemyColorVal;
-      features.push({ type:'Feature', geometry:loc.geometry, properties:{ color } });
+      if (loc.status === 'neutral') {
+        neutralFeatures.push({ type:'Feature', geometry:loc.geometry, properties:{} });
+      } else {
+        if (loc.status === 'yours'  && !chipState.mine)  continue;
+        if (loc.status === 'enemy'  && !chipState.enemy) continue;
+        const color = loc.status === 'yours' ? playerColorVal : enemyColorVal;
+        gameFeatures.push({ type:'Feature', geometry:loc.geometry, properties:{ color } });
+      }
     }
-    src.setData({ type:'FeatureCollection', features });
+    gameSrc.setData({ type:'FeatureCollection', features:gameFeatures });
+    if (neutralSrc) neutralSrc.setData({ type:'FeatureCollection', features:neutralFeatures });
   } catch(e) {}
 }
 
@@ -722,9 +768,9 @@ function updateRadius() {
   } catch(e) {}
 }
 
-// ── Player marker HTML ─────────────────────────────────
-function buildPlayerHTML(color) {
-  return `<div style="position:relative;width:26px;height:26px;">
+// ── Player marker HTML (bearing controls triangle rotation) ──
+function buildPlayerHTML(color, bearing = 0) {
+  return `<div style="position:relative;width:26px;height:26px;transform:rotate(${bearing}deg);">
     <div style="width:26px;height:26px;border-radius:50%;background:${color};
       border:3px solid #fff;box-shadow:0 0 18px ${color}cc,0 2px 8px rgba(0,0,0,.55);
       display:flex;align-items:center;justify-content:center;
@@ -735,17 +781,50 @@ function buildPlayerHTML(color) {
   </div>`;
 }
 
-// ── Simulated player walk ──────────────────────────────
+// ── Keyboard movement (desktop arrow keys) ─────────────
+const keysHeld   = new Set();
+let   playerBearing = 0;
+const MOVE_SPEED = 0.000025; // degrees per ~50ms tick (~2.8m)
+
+document.addEventListener('keydown', e => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+    keysHeld.add(e.key); e.preventDefault();
+  }
+});
+document.addEventListener('keyup', e => keysHeld.delete(e.key));
+
+// ── Unified movement ticker ────────────────────────────
 let walkAngle = 0;
 setInterval(() => {
-  walkAngle += 0.012;
-  playerLatLng = [
-    BASE_PLAYER[0] + Math.cos(walkAngle)*0.0003,
-    BASE_PLAYER[1] + Math.sin(walkAngle*0.7)*0.0004,
-  ];
-  if (playerMarker) playerMarker.setLngLat([playerLatLng[1], playerLatLng[0]]);
+  let dlat = 0, dlng = 0;
+
+  if (keysHeld.size > 0) {
+    // Arrow-key movement
+    if (keysHeld.has('ArrowUp'))    dlat += MOVE_SPEED;
+    if (keysHeld.has('ArrowDown'))  dlat -= MOVE_SPEED;
+    if (keysHeld.has('ArrowRight')) dlng += MOVE_SPEED;
+    if (keysHeld.has('ArrowLeft'))  dlng -= MOVE_SPEED;
+    if (dlat !== 0 || dlng !== 0) {
+      // Bearing: atan2(east,north) → degrees, 0=north
+      playerBearing = Math.atan2(dlng, dlat) * 180 / Math.PI;
+    }
+  } else {
+    // Idle simulated drift when no keys held
+    walkAngle += 0.012;
+    dlat = Math.cos(walkAngle) * 0.0003 + BASE_PLAYER[0] - playerLatLng[0];
+    dlng = Math.sin(walkAngle * 0.7) * 0.0004 + BASE_PLAYER[1] - playerLatLng[1];
+    dlat *= 0.05; dlng *= 0.05; // smooth drift
+  }
+
+  playerLatLng = [playerLatLng[0] + dlat, playerLatLng[1] + dlng];
+
+  if (playerMarker) {
+    playerMarker.setLngLat([playerLatLng[1], playerLatLng[0]]);
+    const el = document.getElementById('playerMarkerEl');
+    if (el) el.innerHTML = buildPlayerHTML(playerColorVal, playerBearing);
+  }
   updateRadius();
-}, 160);
+}, 50);
 
 // ═══════════════════════════════════════════════════════
 // POPUP
@@ -923,7 +1002,7 @@ function toggleRadius(el) {
 function updatePlayerColor(c) {
   playerColorVal = c;
   const el = document.getElementById('playerMarkerEl');
-  if (el) el.innerHTML = buildPlayerHTML(c);
+  if (el) el.innerHTML = buildPlayerHTML(c, playerBearing);
   try {
     map.setPaintProperty('radius-fill',   'fill-color', c);
     map.setPaintProperty('radius-stroke', 'line-color', c);
