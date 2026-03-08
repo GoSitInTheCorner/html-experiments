@@ -479,7 +479,7 @@ let buildingLayerIds = [];
 const chipState = { mine:true, enemy:true, terr:true, boosted:false };
 
 // ── Change these coords to your real location ──────────
-const BASE_PLAYER = [40.7580, -73.9855]; // [lat, lng] Times Square
+const BASE_PLAYER = [39.0997, -94.5786]; // [lat, lng] Kansas City, MO
 let playerLatLng = [...BASE_PLAYER];
 
 // ═══════════════════════════════════════════════════════
@@ -617,6 +617,16 @@ map.on('load', () => {
   map.addLayer({ id:'game-stroke', type:'line', source:'game-overlay',
     paint:{ 'line-color':['get','color'], 'line-width':2, 'line-opacity':0.9 } });
 
+  // ── Selected building highlight ────────────────────
+  map.addSource('selected-overlay', {
+    type:'geojson', data:{ type:'FeatureCollection', features:[] }
+  });
+  map.addLayer({ id:'selected-fill', type:'fill', source:'selected-overlay',
+    paint:{ 'fill-color':'#ffffff', 'fill-opacity':0.18 } });
+  map.addLayer({ id:'selected-stroke', type:'line', source:'selected-overlay',
+    paint:{ 'line-color':'#ffffff', 'line-width':3, 'line-opacity':1,
+            'line-dasharray':[3,2] } });
+
   // ── Sheer radius circle ────────────────────────────
   map.addSource('radius-overlay', {
     type:'geojson', data:{ type:'FeatureCollection', features:[] }
@@ -742,6 +752,14 @@ setInterval(() => {
 // ═══════════════════════════════════════════════════════
 function selectLocation(loc) {
   selectedLocation = loc;
+
+  // Highlight the building outline
+  try {
+    const src = map.getSource('selected-overlay');
+    if (src && loc.geometry)
+      src.setData({ type:'FeatureCollection',
+        features:[{ type:'Feature', geometry:loc.geometry, properties:{} }] });
+  } catch(e) {}
   const icon = typeIcons[loc.type] || '🏗';
   document.getElementById('popName').textContent = `${icon} ${loc.name}`;
   document.getElementById('popType').textContent = (loc.rare ? '⭐ RARE · ' : '') + loc.type.toUpperCase();
@@ -772,6 +790,10 @@ function selectLocation(loc) {
 
 function closePopup() {
   selectedLocation = null;
+  try {
+    const src = map.getSource('selected-overlay');
+    if (src) src.setData({ type:'FeatureCollection', features:[] });
+  } catch(e) {}
   document.getElementById('locationPopup').classList.remove('visible');
 }
 
