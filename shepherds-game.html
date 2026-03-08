@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Shepherds</title>
 
-<!-- Leaflet CSS + JS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- MapLibre GL -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap');
@@ -87,11 +87,8 @@ body{
 .dot-blue{background:#3b82f6;}.dot-red{background:#ef4444;}
 .dot-purple{background:#a855f7;}.dot-green{background:#22c55e;}
 
-/* LEAFLET MAP */
+/* MAP */
 #map{flex:1;width:100%;z-index:1;}
-
-/* No global tile filter — tile style is handled per-layer */
-.leaflet-control-attribution,.leaflet-control-zoom{display:none!important;}
 
 /* MAP FABs */
 .map-fab{
@@ -267,33 +264,6 @@ body{
 .toast{position:absolute;top:calc(var(--topbar-h) + 12px);left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;z-index:3000;opacity:0;pointer-events:none;transition:opacity .3s;}
 .toast.show{opacity:1;}
 
-/* MAP LOADING OVERLAY */
-.map-loading{
-  position:absolute;inset:0;background:rgba(10,14,26,0.82);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:14px;z-index:800;backdrop-filter:blur(3px);
-  transition:opacity .4s;
-}
-.map-loading.hidden{opacity:0;pointer-events:none;}
-.loader-ring{
-  width:46px;height:46px;border-radius:50%;
-  border:3px solid var(--border);
-  border-top-color:var(--accent);
-  animation:spin .9s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loader-text{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:2px;color:var(--text2);}
-.loader-sub{font-size:11px;color:var(--text3);}
-.map-error{
-  position:absolute;inset:0;background:rgba(10,14,26,0.88);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;z-index:800;padding:24px;text-align:center;
-}
-.map-error.visible{display:flex;}
-.error-icon{font-size:36px;}
-.error-msg{font-size:13px;color:var(--text2);line-height:1.5;}
-.btn-retry{background:var(--accent);border:none;border-radius:10px;padding:10px 24px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;cursor:pointer;}
-
 @keyframes sheer-pulse{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:.8;}100%{transform:scale(1);opacity:1;}}
 .attacking{animation:sheer-pulse .4s ease 3;}
 @keyframes playerPulse{0%{transform:scale(1);opacity:.8;}100%{transform:scale(1.7);opacity:0;}}
@@ -307,29 +277,17 @@ body{
   body{max-width:none;box-shadow:none;}
 }
 
-  /* ── BACK BUTTON ── */
-  .back-btn {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 9999;
-    background: rgba(15,21,37,0.9);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 5px 11px 5px 8px;
-    color: var(--text2);
-    font-family: 'Exo 2', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    backdrop-filter: blur(6px);
-    transition: border-color .15s, color .15s;
-    text-decoration: none;
-  }
-  .back-btn:hover { border-color: var(--accent); color: var(--accent2); }
+/* ── BACK BUTTON ── */
+.back-btn{
+  position:fixed; top:12px; left:12px; z-index:9999;
+  background:rgba(15,21,37,0.9); border:1px solid var(--border);
+  border-radius:8px; padding:5px 11px 5px 8px; color:var(--text2);
+  font-family:'Exo 2',sans-serif; font-size:12px; font-weight:500;
+  cursor:pointer; display:flex; align-items:center; gap:5px;
+  backdrop-filter:blur(6px); transition:border-color .15s,color .15s;
+  text-decoration:none;
+}
+.back-btn:hover{border-color:var(--accent);color:var(--accent2);}
 </style>
 </head>
 <body>
@@ -362,25 +320,11 @@ body{
 
     <div id="map"></div>
 
-    <!-- Loading overlay -->
-    <div class="map-loading" id="mapLoading">
-      <div class="loader-ring"></div>
-      <div class="loader-text">LOADING MAP DATA</div>
-      <div class="loader-sub" id="loaderSub">Querying OpenStreetMap…</div>
-    </div>
-    <!-- Error overlay -->
-    <div class="map-error" id="mapError">
-      <div class="error-icon">📡</div>
-      <div class="error-msg" id="errorMsg">Could not load map data. Check your internet connection and try again.</div>
-      <button class="btn-retry" onclick="loadOSMData()">↺ RETRY</button>
-    </div>
-
     <button class="map-fab" id="zoomInBtn"   onclick="map.zoomIn()">+</button>
     <button class="map-fab" id="zoomOutBtn"  onclick="map.zoomOut()">−</button>
     <button class="map-fab" id="recenterBtn" onclick="recenterMap()">◎</button>
-    <div class="osm-credit">Map data © OpenStreetMap contributors</div>
+    <div class="osm-credit">Map © OpenStreetMap · Tiles © OpenFreeMap</div>
 
-    <!-- Location popup sits inside the map panel so it can overlay the map -->
     <div class="location-popup" id="locationPopup">
       <div class="loc-header">
         <div><div class="loc-name" id="popName">—</div><div class="loc-type" id="popType">—</div></div>
@@ -421,7 +365,7 @@ body{
           <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:77%"></div></div>
         </div>
         <div class="stats-grid">
-          <div class="stat-box"><div class="stat-val" style="color:var(--accent2)">14</div><div class="stat-lbl">LOCATIONS</div></div>
+          <div class="stat-box"><div class="stat-val" id="statLocations" style="color:var(--accent2)">0</div><div class="stat-lbl">BUILDINGS</div></div>
           <div class="stat-box"><div class="stat-val" style="color:var(--green)">3</div><div class="stat-lbl">TERRITORIES</div></div>
           <div class="stat-box"><div class="stat-val" style="color:var(--orange)">47</div><div class="stat-lbl">SHEERS</div></div>
         </div>
@@ -441,9 +385,11 @@ body{
         </div>
       </div>
       <div class="player-card">
-        <div class="section-title">My Locations</div>
+        <div class="section-title">My Buildings</div>
         <div class="locations-list" id="myLocationsList">
-          <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Loading locations…</div>
+          <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">
+            Pan the map and click any building to capture it!
+          </div>
         </div>
       </div>
     </div>
@@ -497,14 +443,14 @@ body{
     <div class="overlay-panel" onclick="event.stopPropagation()">
       <div class="overlay-title">⚙ SETTINGS</div>
       <div class="settings-row"><div><div class="settings-label">Notifications</div><div class="settings-sub">Location attacked, team events</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="settings-row"><div><div class="settings-label">Night Mode Map</div><div class="settings-sub">Dark map tiles</div></div><div class="toggle-switch" id="nightModeToggle" onclick="toggleNightMode(this)"></div></div>
+      <div class="settings-row"><div><div class="settings-label">Night Mode Map</div><div class="settings-sub">Dark map style</div></div><div class="toggle-switch" id="nightModeToggle" onclick="toggleNightMode(this)"></div></div>
       <div class="settings-row"><div><div class="settings-label">Show Sheer Radius</div><div class="settings-sub">Visual zone on map</div></div><div class="toggle-switch on" id="radiusToggle" onclick="toggleRadius(this)"></div></div>
       <div class="settings-row">
-        <div><div class="settings-label">My Color</div><div class="settings-sub">Captured location color</div></div>
+        <div><div class="settings-label">My Color</div><div class="settings-sub">Captured building color</div></div>
         <input type="color" value="#3b82f6" onchange="updatePlayerColor(this.value)" style="border:none;background:none;width:36px;height:36px;cursor:pointer;border-radius:6px;">
       </div>
       <div class="settings-row">
-        <div><div class="settings-label">Enemy Color</div><div class="settings-sub">Occupied location color</div></div>
+        <div><div class="settings-label">Enemy Color</div><div class="settings-sub">Enemy building color</div></div>
         <input type="color" value="#ef4444" onchange="updateEnemyColor(this.value)" style="border:none;background:none;width:36px;height:36px;cursor:pointer;border-radius:6px;">
       </div>
       <button class="close-overlay" onclick="hideSettings()">CLOSE</button>
@@ -525,373 +471,269 @@ body{
 // ═══════════════════════════════════════════════════════
 let playerColorVal = '#3b82f6';
 let enemyColorVal  = '#ef4444';
-let showRadius = true;
-let nightMode  = false;
+let showRadius     = true;
+let nightMode      = false;
 let selectedLocation = null;
+let gameBuildings    = new Map();   // featureKey → game location object
+let buildingLayerIds = [];
+const chipState = { mine:true, enemy:true, terr:true, boosted:false };
 
-const basePlayer = [40.7580, -73.9855]; // Times Square — change to your coords
-let playerLatLng  = [...basePlayer];
+// ── Change these coords to your real location ──────────
+const BASE_PLAYER = [40.7580, -73.9855]; // [lat, lng] Times Square
+let playerLatLng = [...BASE_PLAYER];
 
-let locations  = [];
-let territories = [];
-
-// ── OSM tag → game type ────────────────────────────────
-const osmTypeMap = {
-  // amenity
-  cafe:'Coffee Shop', coffee_shop:'Coffee Shop',
-  restaurant:'Restaurant', fast_food:'Fast Food',
-  bar:'Bar', pub:'Pub', nightclub:'Nightclub',
-  bank:'Bank', pharmacy:'Pharmacy',
-  hospital:'Hospital', clinic:'Clinic', doctors:'Clinic',
+// ═══════════════════════════════════════════════════════
+// BUILDING TYPE SYSTEM
+// ═══════════════════════════════════════════════════════
+const buildingTypeMap = {
+  commercial:'Shop', retail:'Shop', supermarket:'Supermarket',
+  office:'Office', industrial:'Warehouse', warehouse:'Warehouse',
+  hotel:'Hotel', hospital:'Hospital',
   school:'School', university:'University', college:'University',
-  library:'Library', place_of_worship:'Church',
-  fuel:'Gas Station', cinema:'Cinema', theatre:'Theatre',
-  gym:'Gym', fitness_centre:'Gym',
-  marketplace:'Market', food_court:'Market',
-  // shop
-  supermarket:'Supermarket', convenience:'Convenience Store',
-  clothes:'Clothing Store', electronics:'Tech Store',
-  mall:'Mall', department_store:'Mall', hairdresser:'Salon',
-  // leisure
-  park:'Park', garden:'Park', nature_reserve:'Park',
-  stadium:'Stadium', sports_centre:'Sports Centre',
-  fitness_centre:'Gym', golf_course:'Golf Course',
-  // tourism
-  hotel:'Hotel', motel:'Hotel', hostel:'Hotel',
-  museum:'Museum', gallery:'Gallery',
-  attraction:'Landmark', viewpoint:'Landmark', artwork:'Landmark',
-  theme_park:'Theme Park',
+  church:'Church', cathedral:'Church', chapel:'Church',
+  mosque:'Mosque', synagogue:'Synagogue', temple:'Temple',
+  stadium:'Stadium', arena:'Stadium', sports_hall:'Sports Centre',
+  apartments:'Residence', residential:'Residence', house:'Residence',
+  detached:'Residence', semidetached_house:'Residence', terrace:'Residence',
+  garage:'Garage', shed:'Shed', storage:'Warehouse',
+  public:'Civic Building', civic:'Civic Building', government:'Civic Building',
+  train_station:'Station', transportation:'Station',
+  museum:'Museum', library:'Library', theatre:'Theatre', cinema:'Cinema',
+  fire_station:'Fire Station', police:'Police Station',
 };
 
 const typeIcons = {
-  'Coffee Shop':'☕','Restaurant':'🍽','Fast Food':'🍔',
-  'Bar':'🍺','Pub':'🍺','Nightclub':'🎵',
-  'Bank':'🏦','Pharmacy':'💊',
-  'Hospital':'🏥','Clinic':'🏥',
-  'School':'🏫','University':'🎓',
-  'Library':'📚','Church':'⛪',
-  'Gas Station':'⛽','Cinema':'🎬','Theatre':'🎭',
-  'Gym':'💪','Sports Centre':'🏋',
-  'Supermarket':'🛒','Convenience Store':'🏪',
-  'Clothing Store':'👕','Tech Store':'💻','Salon':'✂',
-  'Mall':'🛍','Market':'🛒',
-  'Park':'🌳','Stadium':'🏟','Golf Course':'⛳',
-  'Hotel':'🏨','Museum':'🏛','Gallery':'🖼',
-  'Landmark':'🏛','Theme Park':'🎡',
-  'Location':'📍',
+  Shop:'🏪', Office:'🏢', Hotel:'🏨', Hospital:'🏥',
+  School:'🏫', University:'🎓', Church:'⛪', Mosque:'🕌',
+  Synagogue:'🕍', Temple:'⛩', Stadium:'🏟', 'Sports Centre':'🏋',
+  Supermarket:'🛒', Warehouse:'🏭', Residence:'🏠',
+  Garage:'🚗', Shed:'🏚', 'Civic Building':'🏛',
+  Station:'🚉', Museum:'🏛', Library:'📚',
+  Theatre:'🎭', Cinema:'🎬',
+  'Fire Station':'🚒', 'Police Station':'🚔',
+  Building:'🏗',
 };
 
-// DP range [min, max] by type — rarer/bigger = more DP
 const dpByType = {
-  'Stadium':[15000,30000],'Museum':[8000,15000],'Mall':[8000,18000],
-  'Theme Park':[12000,25000],'Hospital':[6000,14000],'University':[5000,12000],
-  'Hotel':[5000,12000],'Cinema':[4000,9000],'Park':[3000,9000],
-  'Sports Centre':[4000,10000],'Library':[3000,7000],
-  'Golf Course':[5000,11000],'Theatre':[4000,9000],
-  'Church':[2000,6000],'Bank':[2000,6000],'Gym':[2000,5000],
-  'Supermarket':[2000,6000],'Restaurant':[1500,5000],
-  'Bar':[1500,4500],'Pub':[1500,4500],'Nightclub':[2000,5000],
-  'Coffee Shop':[1200,4000],'Fast Food':[800,2500],
-  'Clothing Store':[1000,3000],'Tech Store':[1500,4000],
-  'Convenience Store':[800,2500],'Gas Station':[1000,3000],
-  'Salon':[800,2000],'Clinic':[1500,4000],
-  'Landmark':[3000,8000],'Gallery':[2000,6000],
-  'default':[800,3000],
+  Stadium:[15000,30000], Hospital:[6000,14000], University:[5000,12000],
+  Hotel:[5000,12000], Museum:[4000,10000], Theatre:[4000,9000], Cinema:[4000,9000],
+  Office:[3000,9000], Library:[3000,7000], 'Civic Building':[3000,8000],
+  Station:[3000,8000], 'Sports Centre':[4000,10000],
+  Church:[2000,6000], Mosque:[2000,6000], Synagogue:[2000,6000], Temple:[2000,6000],
+  'Fire Station':[2500,6000], 'Police Station':[2500,6000],
+  Supermarket:[2000,6000], School:[2000,6000], Shop:[1500,5000],
+  Warehouse:[1200,4000], Building:[800,3000],
+  Residence:[400,1500], Garage:[200,600], Shed:[100,400],
 };
 
-const rareTypes = new Set(['Stadium','Museum','Mall','Hospital','University',
-  'Cinema','Theatre','Theme Park','Landmark','Gallery','Golf Course']);
+const rareTypes = new Set([
+  'Stadium','Hospital','University','Hotel','Museum','Theatre','Cinema','Station'
+]);
 
-function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randRange(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
 
-function osmTagToType(tags) {
-  const keys = ['amenity','shop','leisure','tourism'];
-  for (const k of keys) {
-    if (tags[k] && osmTypeMap[tags[k]]) return osmTypeMap[tags[k]];
-  }
-  // fallback readable label
-  for (const k of keys) { if (tags[k]) return tags[k].replace(/_/g,' '); }
-  return 'Location';
+function typeFromFeature(props) {
+  if (!props) return 'Building';
+  const b = (props.building || '').toLowerCase().trim();
+  if (buildingTypeMap[b]) return buildingTypeMap[b];
+  if (b && b !== 'yes' && b.length > 1)
+    return b.charAt(0).toUpperCase() + b.slice(1).replace(/_/g,' ');
+  return 'Building';
 }
 
-function buildLocationFromOSM(node, idx) {
-  const tags = node.tags || {};
-  const type = osmTagToType(tags);
-  const rare = rareTypes.has(type);
-  const [dpMin, dpMax] = dpByType[type] || dpByType['default'];
-  const maxDp = randRange(dpMin, dpMax);
-
-  // Seed statuses: ~10% yours (demo), ~20% enemy, rest neutral
-  const roll = Math.random();
-  let status = 'neutral';
-  if (roll < 0.10) status = 'yours';
-  else if (roll < 0.30) status = 'enemy';
-
-  const dp = status === 'neutral' ? maxDp
-           : status === 'enemy'   ? randRange(Math.floor(maxDp*0.3), maxDp)
-           : randRange(Math.floor(maxDp*0.5), maxDp);
-
-  return {
-    id: idx,
-    osmId: node.id,
-    name: tags.name,
-    type,
-    rare,
-    status,
-    dp,
-    maxDp,
-    lat: node.lat,
-    lng: node.lon,
-    territory: null,
-  };
+function nameFromFeature(props, fid) {
+  if (!props) return 'Building ' + String(fid).slice(-4);
+  if (props.name) return props.name;
+  const num = props['addr:housenumber'], str = props['addr:street'];
+  if (num && str) return `${num} ${str}`;
+  if (str) return str;
+  const type = typeFromFeature(props);
+  return type !== 'Building' ? type : 'Building ' + String(fid).slice(-4);
 }
 
-// ═══════════════════════════════════════════════════════
-// OVERPASS FETCH
-// ═══════════════════════════════════════════════════════
-async function loadOSMData() {
-  const loadEl  = document.getElementById('mapLoading');
-  const errEl   = document.getElementById('mapError');
-  const subEl   = document.getElementById('loaderSub');
-  loadEl.classList.remove('hidden');
-  errEl.classList.remove('visible');
+function featureKey(f) {
+  // Prefer stable OSM id, then MapLibre feature id, then geometry hash
+  if (f.properties?.osm_id)  return 'osm_' + f.properties.osm_id;
+  if (f.id != null)           return 'fid_' + f.id;
+  const ring = f.geometry?.coordinates?.[0];
+  if (ring?.length)
+    return `pos_${Math.round(ring[0][0]*10000)}_${Math.round(ring[0][1]*10000)}`;
+  return 'rnd_' + Math.random().toString(36).slice(2);
+}
 
-  const [lat, lng] = basePlayer;
-  const r = 1200; // metres radius
+function centroid(geom) {
+  const ring = geom?.coordinates?.[0];
+  if (!ring?.length) return { lat:BASE_PLAYER[0], lng:BASE_PLAYER[1] };
+  let sLng=0, sLat=0;
+  ring.forEach(([lng,lat])=>{ sLng+=lng; sLat+=lat; });
+  return { lat:sLat/ring.length, lng:sLng/ring.length };
+}
 
-  const query = `
-[out:json][timeout:30];
-(
-  node["amenity"]["name"](around:${r},${lat},${lng});
-  node["shop"]["name"](around:${r},${lat},${lng});
-  node["leisure"~"^(park|stadium|sports_centre|fitness_centre|golf_course|nature_reserve|garden)$"]["name"](around:${r},${lat},${lng});
-  node["tourism"~"^(hotel|motel|hostel|museum|gallery|attraction|viewpoint|theme_park)$"]["name"](around:${r},${lat},${lng});
-);
-out body 120;
-`.trim();
-
-  try {
-    subEl.textContent = 'Querying OpenStreetMap…';
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    subEl.textContent = 'Building game world…';
-    const json = await res.json();
-    const elements = json.elements || [];
-
-    if (elements.length === 0) throw new Error('No named locations found nearby. Try a more urban area.');
-
-    // Deduplicate by OSM id, cap at 80
-    const seen = new Set();
-    const unique = elements.filter(e => {
-      if (seen.has(e.id)) return false;
-      seen.add(e.id); return true;
-    }).slice(0, 80);
-
-    // Clear old markers
-    layerMine.clearLayers();
-    layerEnemy.clearLayers();
-    layerNeutral.clearLayers();
-    layerTerr.clearLayers();
-    Object.keys(markerRefs).forEach(k => delete markerRefs[k]);
-
-    locations = unique.map((node, i) => buildLocationFromOSM(node, i));
-    territories = []; // territories form as player captures — none to start
-
-    locations.forEach(addLocMarker);
-    drawTerritories();
-    updateRadius();
-    renderMyLocations();
-
-    // Hide loader
-    loadEl.classList.add('hidden');
-    showToast(`🗺 ${locations.length} real locations loaded!`);
-
-  } catch (err) {
-    loadEl.classList.add('hidden');
-    document.getElementById('errorMsg').textContent = err.message || 'Failed to load map data.';
-    errEl.classList.add('visible');
-  }
+function makeGameLocation(fid, feature) {
+  const props  = feature.properties || {};
+  const type   = typeFromFeature(props);
+  const name   = nameFromFeature(props, fid);
+  const rare   = rareTypes.has(type);
+  const [mn,mx] = dpByType[type] || [800,3000];
+  const maxDp  = randRange(mn, mx);
+  const roll   = Math.random();
+  const status = roll < 0.10 ? 'yours' : roll < 0.30 ? 'enemy' : 'neutral';
+  const dp     = status === 'neutral' ? maxDp : randRange(Math.floor(maxDp*0.4), maxDp);
+  const {lat, lng} = centroid(feature.geometry);
+  return { id:fid, name, type, rare, status, dp, maxDp,
+           lat, lng, geometry:feature.geometry, territory:null };
 }
 
 // ═══════════════════════════════════════════════════════
-// LEAFLET INIT
+// MAPLIBRE INIT — OpenFreeMap (free, no API key, global)
 // ═══════════════════════════════════════════════════════
-const map = L.map('map', {
-  center: playerLatLng,
-  zoom: 14,
-  zoomControl: false,
+// Disable web worker — prevents DataCloneError with Request objects
+maplibregl.workerCount = 0;
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://tiles.openfreemap.org/styles/liberty',
+  center: [BASE_PLAYER[1], BASE_PLAYER[0]],  // MapLibre uses [lng, lat]
+  zoom: 15,
   attributionControl: false,
-  tap: true,          // ensure touch tap works on iOS
+  pitchWithRotate: false,
+  dragRotate: false,
 });
 
-// CartoDB Voyager — clean, colourful, close to Google Maps default style
-const lightTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19, subdomains:['a','b','c','d'],
-}).addTo(map);
+let playerMarker = null;
 
-// Dark alternative (toggled via Settings)
-const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19, subdomains:['a','b','c','d'],
+map.on('load', () => {
+  // Auto-detect building layer IDs from the loaded style
+  buildingLayerIds = map.getStyle().layers
+    .filter(l => l['source-layer'] === 'building')
+    .map(l => l.id);
+
+  // ── Colored building overlay (yours/enemy) ─────────
+  map.addSource('game-overlay', {
+    type:'geojson', data:{ type:'FeatureCollection', features:[] }
+  });
+  map.addLayer({ id:'game-fill', type:'fill', source:'game-overlay',
+    paint:{ 'fill-color':['get','color'], 'fill-opacity':0.5 } });
+  map.addLayer({ id:'game-stroke', type:'line', source:'game-overlay',
+    paint:{ 'line-color':['get','color'], 'line-width':2, 'line-opacity':0.9 } });
+
+  // ── Sheer radius circle ────────────────────────────
+  map.addSource('radius-overlay', {
+    type:'geojson', data:{ type:'FeatureCollection', features:[] }
+  });
+  map.addLayer({ id:'radius-fill', type:'fill', source:'radius-overlay',
+    paint:{ 'fill-color':playerColorVal, 'fill-opacity':0.05 } });
+  map.addLayer({ id:'radius-stroke', type:'line', source:'radius-overlay',
+    paint:{ 'line-color':playerColorVal, 'line-width':1.5,
+            'line-opacity':0.35, 'line-dasharray':[5,4] } });
+
+  // ── Player marker ──────────────────────────────────
+  const el = document.createElement('div');
+  el.id = 'playerMarkerEl';
+  el.innerHTML = buildPlayerHTML(playerColorVal);
+  el.style.cssText = 'width:26px;height:26px;pointer-events:none;';
+  playerMarker = new maplibregl.Marker({ element:el, anchor:'center' })
+    .setLngLat([BASE_PLAYER[1], BASE_PLAYER[0]])
+    .addTo(map);
+
+  updateRadius();
+  seedVisibleBuildings();
+  showToast('🏙 Click any building to claim it!');
 });
 
-// Layer groups for toggling
-const layerMine    = L.layerGroup().addTo(map);
-const layerEnemy   = L.layerGroup().addTo(map);
-const layerNeutral = L.layerGroup().addTo(map);
-const layerTerr    = L.layerGroup().addTo(map);
-const layerPlayer  = L.layerGroup().addTo(map);
-const layerRadius  = L.layerGroup().addTo(map);
-
-const markerRefs = {};
-
-// ── Icon builder ──────────────────────────────────────
-function colorForLoc(loc) {
-  if (loc.status === 'yours')  return playerColorVal;
-  if (loc.status === 'enemy')  return enemyColorVal;
-  return '#6b7280';
-}
-
-function buildLocIcon(loc) {
-  const color  = colorForLoc(loc);
-  const emoji  = typeIcons[loc.type] || '📍';
-  const sz     = loc.rare ? 46 : 38;
-  const bdr    = loc.underAttack ? '#ef4444' : 'rgba(255,255,255,0.55)';
-  const bdrW   = loc.underAttack ? 3 : 2.5;
-  const pulse  = loc.underAttack
-    ? `<div style="position:absolute;inset:-6px;border-radius:50%;border:2px solid #ef444488;animation:playerPulse 1s infinite;pointer-events:none;"></div>`
-    : '';
-  return L.divIcon({
-    className: '',
-    iconSize:   [sz, sz],
-    iconAnchor: [sz/2, sz/2],
-    html: `<div style="
-        width:${sz}px;height:${sz}px;border-radius:50%;
-        background:${color}bb;
-        border:${bdrW}px solid ${bdr};
-        display:flex;align-items:center;justify-content:center;
-        font-size:${Math.round(sz*0.44)}px;
-        box-shadow:0 0 16px ${color}77,0 2px 8px rgba(0,0,0,0.65);
-        cursor:pointer;position:relative;
-      ">${pulse}${emoji}</div>`,
-  });
-}
-
-function buildPlayerIcon(color) {
-  return L.divIcon({
-    className: '',
-    iconSize:   [26, 26],
-    iconAnchor: [13, 13],
-    html: `<div style="position:relative;width:26px;height:26px;">
-      <div style="
-        width:26px;height:26px;border-radius:50%;
-        background:${color};border:3px solid #fff;
-        box-shadow:0 0 18px ${color}cc,0 2px 8px rgba(0,0,0,0.55);
-        display:flex;align-items:center;justify-content:center;
-        font-size:11px;color:#fff;font-weight:800;z-index:2;position:relative;
-      ">▲</div>
-      <div style="
-        position:absolute;inset:-5px;border-radius:50%;
-        border:2px solid ${color}55;
-        animation:playerPulse 1.8s infinite;pointer-events:none;
-      "></div>
-    </div>`,
-  });
-}
-
-// ── Layer that holds the target for a location ────────
-function targetLayer(loc) {
-  if (loc.status === 'yours')  return layerMine;
-  if (loc.status === 'enemy')  return layerEnemy;
-  return layerNeutral;
-}
-
-// ── Add / refresh markers ─────────────────────────────
-function addLocMarker(loc) {
-  const m = L.marker([loc.lat, loc.lng], { icon: buildLocIcon(loc) })
-    .on('click', e => { L.DomEvent.stopPropagation(e); selectLocation(loc); });
-  m.addTo(targetLayer(loc));
-  markerRefs[loc.id] = m;
-}
-
-function refreshMarker(loc) {
-  const old = markerRefs[loc.id];
-  if (old) {
-    layerMine.removeLayer(old);
-    layerEnemy.removeLayer(old);
-    layerNeutral.removeLayer(old);
+// ── Click on a building ────────────────────────────────
+map.on('click', (e) => {
+  if (!buildingLayerIds.length) { closePopup(); return; }
+  const hits = map.queryRenderedFeatures(e.point, { layers:buildingLayerIds });
+  if (!hits.length) { closePopup(); return; }
+  const f   = hits[0];
+  const fid = featureKey(f);
+  if (!gameBuildings.has(fid)) {
+    gameBuildings.set(fid, makeGameLocation(fid, f));
+    updateGameOverlay();
   }
-  addLocMarker(loc);
+  selectLocation(gameBuildings.get(fid));
+});
+
+// ── Seed buildings as map pans/zooms ──────────────────
+map.on('moveend', seedVisibleBuildings);
+
+function seedVisibleBuildings() {
+  if (!buildingLayerIds.length || map.getZoom() < 13) return;
+  if (gameBuildings.size > 1000) return;  // memory cap
+  const features = map.queryRenderedFeatures(undefined, { layers:buildingLayerIds });
+  let changed = false;
+  for (const f of features) {
+    const fid = featureKey(f);
+    if (gameBuildings.has(fid)) continue;
+    gameBuildings.set(fid, makeGameLocation(fid, f));
+    changed = true;
+  }
+  if (changed) { updateGameOverlay(); renderMyLocations(); }
 }
 
-// ── Territory polygons ────────────────────────────────
-function drawTerritories() {
-  layerTerr.clearLayers();
-  territories.forEach(t => {
-    const pts = t.locIds.map(id => { const l = locations[id]; return [l.lat, l.lng]; });
-    L.polygon(pts, {
-      color: t.color, fillColor: t.color,
-      fillOpacity: 0.07, weight: 2, dashArray:'7 5', opacity: 0.55,
-    }).addTo(layerTerr);
-    for (let i=0;i<pts.length;i++)
-      for (let j=i+1;j<pts.length;j++)
-        L.polyline([pts[i],pts[j]],{color:t.color,weight:1.5,opacity:0.3,dashArray:'4 4'}).addTo(layerTerr);
-  });
+// ── Rebuild the colored-building GeoJSON layer ─────────
+function updateGameOverlay() {
+  try {
+    const src = map.getSource('game-overlay');
+    if (!src) return;
+    const features = [];
+    for (const loc of gameBuildings.values()) {
+      if (!loc.geometry) continue;
+      if (loc.status === 'neutral') continue;
+      if (loc.status === 'yours'  && !chipState.mine)  continue;
+      if (loc.status === 'enemy'  && !chipState.enemy) continue;
+      const color = loc.status === 'yours' ? playerColorVal : enemyColorVal;
+      features.push({ type:'Feature', geometry:loc.geometry, properties:{ color } });
+    }
+    src.setData({ type:'FeatureCollection', features });
+  } catch(e) {}
 }
 
-// ── Player marker + radius ────────────────────────────
-let playerMarker = L.marker(playerLatLng, { icon: buildPlayerIcon(playerColorVal), zIndexOffset:1000 }).addTo(layerPlayer);
+// ── Sheer radius circle polygon ────────────────────────
+function circleGeoJSON(lat, lng, radiusM, steps=64) {
+  const pts = [];
+  for (let i=0; i<=steps; i++) {
+    const a    = (i/steps)*2*Math.PI;
+    const dLat = (radiusM*Math.cos(a))/111320;
+    const dLng = (radiusM*Math.sin(a))/(111320*Math.cos(lat*Math.PI/180));
+    pts.push([lng+dLng, lat+dLat]);
+  }
+  return { type:'Feature', geometry:{ type:'Polygon', coordinates:[pts] }, properties:{} };
+}
 
 function updateRadius() {
-  layerRadius.clearLayers();
-  if (!showRadius) return;
-  L.circle(playerLatLng, {
-    radius: 400, color: playerColorVal,
-    fillColor: playerColorVal, fillOpacity: 0.05,
-    weight: 1.5, opacity: 0.3, dashArray:'5 5',
-  }).addTo(layerRadius);
+  try {
+    const src = map.getSource('radius-overlay');
+    if (!src) return;
+    if (!showRadius) { src.setData({ type:'FeatureCollection', features:[] }); return; }
+    src.setData({ type:'FeatureCollection',
+      features:[ circleGeoJSON(playerLatLng[0], playerLatLng[1], 400) ] });
+  } catch(e) {}
 }
 
-// Init — load real OSM data
-loadOSMData();
-
-// Close popup when tapping blank map
-map.on('click', closePopup);
-
-// ── Render player tab locations list ─────────────────
-function renderMyLocations() {
-  const list = document.getElementById('myLocationsList');
-  const mine = locations.filter(l => l.status === 'yours');
-  if (mine.length === 0) {
-    list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">No captured locations yet. Go sheer some!</div>';
-    return;
-  }
-  list.innerHTML = mine.map(loc => {
-    const color = loc.rare ? '#a855f7' : playerColorVal;
-    const sub   = [loc.type, loc.rare ? '⭐ RARE' : '', loc.territory ? 'Territory: '+loc.territory : ''].filter(Boolean).join(' · ');
-    return `<div class="location-row" onclick="flyToLocation(${loc.id})">
-      <div class="loc-color-dot" style="background:${color}"></div>
-      <div class="loc-info">
-        <div class="loc-row-name">${loc.name}</div>
-        <div class="loc-row-sub">${sub}</div>
-      </div>
-      <div class="loc-row-dp">${loc.dp.toLocaleString()} DP</div>
-    </div>`;
-  }).join('');
+// ── Player marker HTML ─────────────────────────────────
+function buildPlayerHTML(color) {
+  return `<div style="position:relative;width:26px;height:26px;">
+    <div style="width:26px;height:26px;border-radius:50%;background:${color};
+      border:3px solid #fff;box-shadow:0 0 18px ${color}cc,0 2px 8px rgba(0,0,0,.55);
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;color:#fff;font-weight:800;">▲</div>
+    <div style="position:absolute;inset:-5px;border-radius:50%;
+      border:2px solid ${color}55;animation:playerPulse 1.8s infinite;
+      pointer-events:none;"></div>
+  </div>`;
 }
 
-// Simulated player walk
+// ── Simulated player walk ──────────────────────────────
 let walkAngle = 0;
 setInterval(() => {
   walkAngle += 0.012;
   playerLatLng = [
-    basePlayer[0] + Math.cos(walkAngle) * 0.0003,
-    basePlayer[1] + Math.sin(walkAngle * 0.7) * 0.0004,
+    BASE_PLAYER[0] + Math.cos(walkAngle)*0.0003,
+    BASE_PLAYER[1] + Math.sin(walkAngle*0.7)*0.0004,
   ];
-  playerMarker.setLatLng(playerLatLng);
+  if (playerMarker) playerMarker.setLngLat([playerLatLng[1], playerLatLng[0]]);
   updateRadius();
 }, 160);
 
@@ -900,29 +742,28 @@ setInterval(() => {
 // ═══════════════════════════════════════════════════════
 function selectLocation(loc) {
   selectedLocation = loc;
-  document.getElementById('popName').textContent = loc.name;
+  const icon = typeIcons[loc.type] || '🏗';
+  document.getElementById('popName').textContent = `${icon} ${loc.name}`;
   document.getElementById('popType').textContent = (loc.rare ? '⭐ RARE · ' : '') + loc.type.toUpperCase();
 
   const st = document.getElementById('popStatus');
   st.className = 'status-badge';
-  if (loc.status === 'neutral') { st.classList.add('status-neutral'); st.textContent = 'NEUTRAL'; }
-  else if (loc.status === 'yours') { st.classList.add('status-yours'); st.textContent = 'CAPTURED'; }
-  else { st.classList.add('status-enemy'); st.textContent = 'ENEMY'; }
+  if (loc.status === 'neutral')     { st.classList.add('status-neutral'); st.textContent='NEUTRAL'; }
+  else if (loc.status === 'yours')  { st.classList.add('status-yours');  st.textContent='CAPTURED'; }
+  else                              { st.classList.add('status-enemy');   st.textContent='ENEMY'; }
 
-  document.getElementById('popDP').textContent = loc.dp.toLocaleString() + ' DP';
-  document.getElementById('popDPBar').style.width = Math.min(100, loc.dp/loc.maxDp*100) + '%';
+  document.getElementById('popDP').textContent = loc.dp.toLocaleString()+' DP';
+  document.getElementById('popDPBar').style.width = Math.min(100, loc.dp/loc.maxDp*100)+'%';
+  document.getElementById('popTerritory').style.display = 'none';
 
-  const terrEl = document.getElementById('popTerritory');
-  if (loc.territory) { terrEl.style.display='flex'; document.getElementById('popTerritoryName').textContent=loc.territory; }
-  else terrEl.style.display='none';
-
-  const ab = document.getElementById('attackBtn'), bb = document.getElementById('boostBtn'), cb = document.getElementById('popXPCostBlock');
+  const ab=document.getElementById('attackBtn'), bb=document.getElementById('boostBtn'),
+        cb=document.getElementById('popXPCostBlock');
   if (loc.status === 'yours') {
     ab.style.display='none'; bb.style.display='flex'; cb.style.display='none';
     document.getElementById('popCooldown').textContent='';
   } else {
     ab.style.display='flex'; bb.style.display='none'; cb.style.display='block'; ab.disabled=false;
-    document.getElementById('popCost').textContent = Math.floor(loc.dp*.6).toLocaleString() + ' XP';
+    document.getElementById('popCost').textContent = Math.floor(loc.dp*.6).toLocaleString()+' XP';
     document.getElementById('popCooldown').textContent = loc.status==='neutral'
       ? 'Costs XP to sheer · No cooldown on neutral' : '⏱ 1 hr cooldown per location';
   }
@@ -940,25 +781,54 @@ function closePopup() {
 function doSheer() {
   if (!selectedLocation) return;
   const btn = document.getElementById('attackBtn');
-  btn.classList.add('attacking'); btn.textContent = '⚡ SHEERING…'; btn.disabled = true;
+  btn.classList.add('attacking'); btn.textContent='⚡ SHEERING…'; btn.disabled=true;
   setTimeout(() => {
     btn.classList.remove('attacking');
     const loc = selectedLocation;
     if (loc.status === 'neutral') {
-      loc.status = 'yours'; showToast('📍 Location Captured!');
+      loc.status = 'yours'; showToast('📍 Building Captured!');
     } else {
-      loc.dp = Math.floor(loc.dp * 0.4); showToast('⚔ Sheer successful! DP reduced!');
-      if (loc.dp < 100) { loc.status='yours'; loc.dp=2000; showToast('🎉 Location Captured!'); }
+      loc.dp = Math.floor(loc.dp*0.4); showToast('⚔ Sheer successful! DP reduced!');
+      if (loc.dp < 100) { loc.status='yours'; loc.dp=2000; showToast('🎉 Building Captured!'); }
     }
-    refreshMarker(loc); drawTerritories(); closePopup(); renderMyLocations();
+    updateGameOverlay(); closePopup(); renderMyLocations();
   }, 1200);
 }
 
 function doBoost() {
   if (!selectedLocation) return;
-  selectedLocation.dp = Math.min(selectedLocation.maxDp, selectedLocation.dp + 800);
+  selectedLocation.dp = Math.min(selectedLocation.maxDp, selectedLocation.dp+800);
   showToast('↑ DP Boosted! +800 DP');
+  updateGameOverlay();
   selectLocation(selectedLocation);
+}
+
+// ═══════════════════════════════════════════════════════
+// PLAYER TAB — My Buildings list
+// ═══════════════════════════════════════════════════════
+function renderMyLocations() {
+  const list  = document.getElementById('myLocationsList');
+  const mine  = [...gameBuildings.values()].filter(l => l.status === 'yours');
+  const statEl = document.getElementById('statLocations');
+  if (statEl) statEl.textContent = mine.length;
+  if (!mine.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Pan the map and click any building to capture it!</div>';
+    return;
+  }
+  list.innerHTML = mine.map(loc => {
+    const color = loc.rare ? '#a855f7' : playerColorVal;
+    const icon  = typeIcons[loc.type] || '🏗';
+    const sub   = [loc.type, loc.rare ? '⭐ RARE' : ''].filter(Boolean).join(' · ');
+    // JSON.stringify wraps string id in quotes for safe onclick attribute
+    return `<div class="location-row" onclick="flyToLocation(${JSON.stringify(loc.id)})">
+      <div class="loc-color-dot" style="background:${color}"></div>
+      <div class="loc-info">
+        <div class="loc-row-name">${icon} ${loc.name}</div>
+        <div class="loc-row-sub">${sub}</div>
+      </div>
+      <div class="loc-row-dp">${loc.dp.toLocaleString()} DP</div>
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -969,35 +839,33 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   document.getElementById('tabBtn-'+name).classList.add('active');
-  if (name === 'map') setTimeout(()=>map.invalidateSize(), 60);
+  if (name === 'map')    setTimeout(()=>map.resize(), 60);
+  if (name === 'player') renderMyLocations();
 }
 
 // ═══════════════════════════════════════════════════════
 // TOGGLE CHIPS
 // ═══════════════════════════════════════════════════════
-const chipState = { mine:true, enemy:true, terr:true, boosted:false };
 function toggleChip(key) {
   chipState[key] = !chipState[key];
   document.getElementById('chip-'+key).classList.toggle('on', chipState[key]);
-  if (key==='mine')  chipState[key] ? map.addLayer(layerMine)  : map.removeLayer(layerMine);
-  if (key==='enemy') chipState[key] ? map.addLayer(layerEnemy) : map.removeLayer(layerEnemy);
-  if (key==='terr')  chipState[key] ? map.addLayer(layerTerr)  : map.removeLayer(layerTerr);
+  if (key==='mine' || key==='enemy') updateGameOverlay();
 }
 
 // ═══════════════════════════════════════════════════════
 // MAP HELPERS
 // ═══════════════════════════════════════════════════════
 function recenterMap() {
-  map.flyTo(playerLatLng, 15, { animate:true, duration:.8 });
+  map.flyTo({ center:[playerLatLng[1], playerLatLng[0]], zoom:15, duration:800 });
   showToast('📍 Centered on your location');
 }
 
 function flyToLocation(id) {
-  const loc = locations.find(l => l.id === id);
+  const loc = gameBuildings.get(id);
   if (!loc) return;
   switchTab('map');
-  setTimeout(()=>{
-    map.flyTo([loc.lat,loc.lng], 16, { animate:true, duration:.9 });
+  setTimeout(() => {
+    map.flyTo({ center:[loc.lng, loc.lat], zoom:18, duration:900 });
     setTimeout(()=>selectLocation(loc), 950);
   }, 60);
 }
@@ -1012,15 +880,11 @@ function hideSettings(e) {
 }
 
 function applyNightMode(on) {
-  if (on) {
-    map.removeLayer(lightTiles);
-    map.addLayer(darkTiles);
-  } else {
-    map.removeLayer(darkTiles);
-    map.addLayer(lightTiles);
-  }
+  // CSS invert on the WebGL canvas — light map becomes dark, hue-rotate restores colours
+  map.getCanvas().style.filter = on
+    ? 'invert(92%) hue-rotate(180deg) brightness(0.88)' : '';
 }
-applyNightMode(false); // start in light/Google Maps mode
+applyNightMode(false);
 
 function toggleNightMode(el) {
   el.classList.toggle('on');
@@ -1036,16 +900,19 @@ function toggleRadius(el) {
 
 function updatePlayerColor(c) {
   playerColorVal = c;
-  playerMarker.setIcon(buildPlayerIcon(c));
-  updateRadius();
-  locations.filter(l=>l.status==='yours').forEach(refreshMarker);
-  drawTerritories();
+  const el = document.getElementById('playerMarkerEl');
+  if (el) el.innerHTML = buildPlayerHTML(c);
+  try {
+    map.setPaintProperty('radius-fill',   'fill-color', c);
+    map.setPaintProperty('radius-stroke', 'line-color', c);
+  } catch(e){}
+  updateGameOverlay();
+  renderMyLocations();
 }
 
 function updateEnemyColor(c) {
   enemyColorVal = c;
-  locations.filter(l=>l.status==='enemy').forEach(refreshMarker);
-  drawTerritories();
+  updateGameOverlay();
 }
 
 // ═══════════════════════════════════════════════════════
