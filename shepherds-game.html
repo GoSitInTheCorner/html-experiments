@@ -267,6 +267,33 @@ body{
 .toast{position:absolute;top:calc(var(--topbar-h) + 12px);left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;z-index:3000;opacity:0;pointer-events:none;transition:opacity .3s;}
 .toast.show{opacity:1;}
 
+/* MAP LOADING OVERLAY */
+.map-loading{
+  position:absolute;inset:0;background:rgba(10,14,26,0.82);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:800;backdrop-filter:blur(3px);
+  transition:opacity .4s;
+}
+.map-loading.hidden{opacity:0;pointer-events:none;}
+.loader-ring{
+  width:46px;height:46px;border-radius:50%;
+  border:3px solid var(--border);
+  border-top-color:var(--accent);
+  animation:spin .9s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:2px;color:var(--text2);}
+.loader-sub{font-size:11px;color:var(--text3);}
+.map-error{
+  position:absolute;inset:0;background:rgba(10,14,26,0.88);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;z-index:800;padding:24px;text-align:center;
+}
+.map-error.visible{display:flex;}
+.error-icon{font-size:36px;}
+.error-msg{font-size:13px;color:var(--text2);line-height:1.5;}
+.btn-retry{background:var(--accent);border:none;border-radius:10px;padding:10px 24px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;cursor:pointer;}
+
 @keyframes sheer-pulse{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:.8;}100%{transform:scale(1);opacity:1;}}
 .attacking{animation:sheer-pulse .4s ease 3;}
 @keyframes playerPulse{0%{transform:scale(1);opacity:.8;}100%{transform:scale(1.7);opacity:0;}}
@@ -335,6 +362,19 @@ body{
 
     <div id="map"></div>
 
+    <!-- Loading overlay -->
+    <div class="map-loading" id="mapLoading">
+      <div class="loader-ring"></div>
+      <div class="loader-text">LOADING MAP DATA</div>
+      <div class="loader-sub" id="loaderSub">Querying OpenStreetMap…</div>
+    </div>
+    <!-- Error overlay -->
+    <div class="map-error" id="mapError">
+      <div class="error-icon">📡</div>
+      <div class="error-msg" id="errorMsg">Could not load map data. Check your internet connection and try again.</div>
+      <button class="btn-retry" onclick="loadOSMData()">↺ RETRY</button>
+    </div>
+
     <button class="map-fab" id="zoomInBtn"   onclick="map.zoomIn()">+</button>
     <button class="map-fab" id="zoomOutBtn"  onclick="map.zoomOut()">−</button>
     <button class="map-fab" id="recenterBtn" onclick="recenterMap()">◎</button>
@@ -402,11 +442,8 @@ body{
       </div>
       <div class="player-card">
         <div class="section-title">My Locations</div>
-        <div class="locations-list">
-          <div class="location-row" onclick="flyToLocation(0)"><div class="loc-color-dot" style="background:#3b82f6"></div><div class="loc-info"><div class="loc-row-name">Riverside Coffee Co.</div><div class="loc-row-sub">Coffee Shop · Territory: Downtown Loop</div></div><div class="loc-row-dp">4,200 DP</div></div>
-          <div class="location-row" onclick="flyToLocation(1)"><div class="loc-color-dot" style="background:#3b82f6"></div><div class="loc-info"><div class="loc-row-name">Central Park East</div><div class="loc-row-sub">Park · ⚡ DP Boost Active</div></div><div class="loc-row-dp">6,800 DP</div></div>
-          <div class="location-row" onclick="flyToLocation(2)"><div class="loc-color-dot" style="background:#a855f7"></div><div class="loc-info"><div class="loc-row-name">Westfield Stadium</div><div class="loc-row-sub">Stadium · RARE · Territory Anchor</div></div><div class="loc-row-dp">18,500 DP</div></div>
-          <div class="location-row" onclick="flyToLocation(3)"><div class="loc-color-dot" style="background:#3b82f6"></div><div class="loc-info"><div class="loc-row-name">Harbor View Library</div><div class="loc-row-sub">Landmark · ⚠ Under attack!</div></div><div class="loc-row-dp" style="color:var(--red)">1,100 DP ⚠</div></div>
+        <div class="locations-list" id="myLocationsList">
+          <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">Loading locations…</div>
         </div>
       </div>
     </div>
@@ -484,7 +521,7 @@ body{
 
 <script>
 // ═══════════════════════════════════════════════════════
-// GAME DATA  (lat/lng around NYC for demo)
+// GAME STATE
 // ═══════════════════════════════════════════════════════
 let playerColorVal = '#3b82f6';
 let enemyColorVal  = '#ef4444';
@@ -492,32 +529,193 @@ let showRadius = true;
 let nightMode  = false;
 let selectedLocation = null;
 
-const basePlayer = [40.7580, -73.9855]; // Times Square
+const basePlayer = [40.7580, -73.9855]; // Times Square — change to your coords
 let playerLatLng  = [...basePlayer];
 
-const locations = [
-  { id:0, name:'Riverside Coffee Co.', type:'Coffee Shop', status:'yours',   dp:4200,  maxDp:8000,  lat:40.7614, lng:-73.9776, territory:'Downtown Loop', rare:false },
-  { id:1, name:'Central Park East',    type:'Park',        status:'yours',   dp:6800,  maxDp:10000, lat:40.7741, lng:-73.9712, territory:'Downtown Loop', rare:false },
-  { id:2, name:'Westfield Stadium',    type:'Stadium',     status:'yours',   dp:18500, maxDp:30000, lat:40.7505, lng:-74.0034, territory:'Downtown Loop', rare:true  },
-  { id:3, name:'Harbor View Library',  type:'Landmark',    status:'yours',   dp:1100,  maxDp:5000,  lat:40.7527, lng:-73.9772, territory:null,            rare:false, underAttack:true },
-  { id:4, name:'The Grand Hotel',      type:'Hotel',       status:'enemy',   dp:7200,  maxDp:12000, lat:40.7649, lng:-73.9791, territory:'Northgate',     rare:false },
-  { id:5, name:'City Market',          type:'Market',      status:'enemy',   dp:3100,  maxDp:5000,  lat:40.7695, lng:-73.9866, territory:'Northgate',     rare:false },
-  { id:6, name:'Tech Campus Hub',      type:'Office',      status:'enemy',   dp:9400,  maxDp:15000, lat:40.7488, lng:-73.9680, territory:'Northgate',     rare:false },
-  { id:7, name:'Beacon Tower',         type:'Landmark',    status:'neutral', dp:2000,  maxDp:2000,  lat:40.7061, lng:-74.0087, territory:null,            rare:false },
-  { id:8, name:'Riverside Mall',       type:'Mall',        status:'neutral', dp:1500,  maxDp:1500,  lat:40.7282, lng:-74.0776, territory:null,            rare:false },
-  { id:9, name:'Sunrise Gym',          type:'Gym',         status:'neutral', dp:1000,  maxDp:1000,  lat:40.7831, lng:-73.9712, territory:null,            rare:false },
-  { id:10,name:'Old Town Square',      type:'Landmark',    status:'neutral', dp:800,   maxDp:800,   lat:40.7021, lng:-74.0159, territory:null,            rare:false },
-];
+let locations  = [];
+let territories = [];
 
-const territories = [
-  { name:'Downtown Loop', locIds:[0,1,2], color:'#3b82f6' },
-  { name:'Northgate',     locIds:[4,5,6], color:'#ef4444'  },
-];
+// ── OSM tag → game type ────────────────────────────────
+const osmTypeMap = {
+  // amenity
+  cafe:'Coffee Shop', coffee_shop:'Coffee Shop',
+  restaurant:'Restaurant', fast_food:'Fast Food',
+  bar:'Bar', pub:'Pub', nightclub:'Nightclub',
+  bank:'Bank', pharmacy:'Pharmacy',
+  hospital:'Hospital', clinic:'Clinic', doctors:'Clinic',
+  school:'School', university:'University', college:'University',
+  library:'Library', place_of_worship:'Church',
+  fuel:'Gas Station', cinema:'Cinema', theatre:'Theatre',
+  gym:'Gym', fitness_centre:'Gym',
+  marketplace:'Market', food_court:'Market',
+  // shop
+  supermarket:'Supermarket', convenience:'Convenience Store',
+  clothes:'Clothing Store', electronics:'Tech Store',
+  mall:'Mall', department_store:'Mall', hairdresser:'Salon',
+  // leisure
+  park:'Park', garden:'Park', nature_reserve:'Park',
+  stadium:'Stadium', sports_centre:'Sports Centre',
+  fitness_centre:'Gym', golf_course:'Golf Course',
+  // tourism
+  hotel:'Hotel', motel:'Hotel', hostel:'Hotel',
+  museum:'Museum', gallery:'Gallery',
+  attraction:'Landmark', viewpoint:'Landmark', artwork:'Landmark',
+  theme_park:'Theme Park',
+};
 
 const typeIcons = {
-  'Coffee Shop':'☕','Park':'🌳','Stadium':'🏟','Library':'📚',
-  'Landmark':'🏛','Hotel':'🏨','Market':'🛒','Office':'🏢','Mall':'🛍','Gym':'💪'
+  'Coffee Shop':'☕','Restaurant':'🍽','Fast Food':'🍔',
+  'Bar':'🍺','Pub':'🍺','Nightclub':'🎵',
+  'Bank':'🏦','Pharmacy':'💊',
+  'Hospital':'🏥','Clinic':'🏥',
+  'School':'🏫','University':'🎓',
+  'Library':'📚','Church':'⛪',
+  'Gas Station':'⛽','Cinema':'🎬','Theatre':'🎭',
+  'Gym':'💪','Sports Centre':'🏋',
+  'Supermarket':'🛒','Convenience Store':'🏪',
+  'Clothing Store':'👕','Tech Store':'💻','Salon':'✂',
+  'Mall':'🛍','Market':'🛒',
+  'Park':'🌳','Stadium':'🏟','Golf Course':'⛳',
+  'Hotel':'🏨','Museum':'🏛','Gallery':'🖼',
+  'Landmark':'🏛','Theme Park':'🎡',
+  'Location':'📍',
 };
+
+// DP range [min, max] by type — rarer/bigger = more DP
+const dpByType = {
+  'Stadium':[15000,30000],'Museum':[8000,15000],'Mall':[8000,18000],
+  'Theme Park':[12000,25000],'Hospital':[6000,14000],'University':[5000,12000],
+  'Hotel':[5000,12000],'Cinema':[4000,9000],'Park':[3000,9000],
+  'Sports Centre':[4000,10000],'Library':[3000,7000],
+  'Golf Course':[5000,11000],'Theatre':[4000,9000],
+  'Church':[2000,6000],'Bank':[2000,6000],'Gym':[2000,5000],
+  'Supermarket':[2000,6000],'Restaurant':[1500,5000],
+  'Bar':[1500,4500],'Pub':[1500,4500],'Nightclub':[2000,5000],
+  'Coffee Shop':[1200,4000],'Fast Food':[800,2500],
+  'Clothing Store':[1000,3000],'Tech Store':[1500,4000],
+  'Convenience Store':[800,2500],'Gas Station':[1000,3000],
+  'Salon':[800,2000],'Clinic':[1500,4000],
+  'Landmark':[3000,8000],'Gallery':[2000,6000],
+  'default':[800,3000],
+};
+
+const rareTypes = new Set(['Stadium','Museum','Mall','Hospital','University',
+  'Cinema','Theatre','Theme Park','Landmark','Gallery','Golf Course']);
+
+function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function osmTagToType(tags) {
+  const keys = ['amenity','shop','leisure','tourism'];
+  for (const k of keys) {
+    if (tags[k] && osmTypeMap[tags[k]]) return osmTypeMap[tags[k]];
+  }
+  // fallback readable label
+  for (const k of keys) { if (tags[k]) return tags[k].replace(/_/g,' '); }
+  return 'Location';
+}
+
+function buildLocationFromOSM(node, idx) {
+  const tags = node.tags || {};
+  const type = osmTagToType(tags);
+  const rare = rareTypes.has(type);
+  const [dpMin, dpMax] = dpByType[type] || dpByType['default'];
+  const maxDp = randRange(dpMin, dpMax);
+
+  // Seed statuses: ~10% yours (demo), ~20% enemy, rest neutral
+  const roll = Math.random();
+  let status = 'neutral';
+  if (roll < 0.10) status = 'yours';
+  else if (roll < 0.30) status = 'enemy';
+
+  const dp = status === 'neutral' ? maxDp
+           : status === 'enemy'   ? randRange(Math.floor(maxDp*0.3), maxDp)
+           : randRange(Math.floor(maxDp*0.5), maxDp);
+
+  return {
+    id: idx,
+    osmId: node.id,
+    name: tags.name,
+    type,
+    rare,
+    status,
+    dp,
+    maxDp,
+    lat: node.lat,
+    lng: node.lon,
+    territory: null,
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// OVERPASS FETCH
+// ═══════════════════════════════════════════════════════
+async function loadOSMData() {
+  const loadEl  = document.getElementById('mapLoading');
+  const errEl   = document.getElementById('mapError');
+  const subEl   = document.getElementById('loaderSub');
+  loadEl.classList.remove('hidden');
+  errEl.classList.remove('visible');
+
+  const [lat, lng] = basePlayer;
+  const r = 1200; // metres radius
+
+  const query = `
+[out:json][timeout:30];
+(
+  node["amenity"]["name"](around:${r},${lat},${lng});
+  node["shop"]["name"](around:${r},${lat},${lng});
+  node["leisure"~"^(park|stadium|sports_centre|fitness_centre|golf_course|nature_reserve|garden)$"]["name"](around:${r},${lat},${lng});
+  node["tourism"~"^(hotel|motel|hostel|museum|gallery|attraction|viewpoint|theme_park)$"]["name"](around:${r},${lat},${lng});
+);
+out body 120;
+`.trim();
+
+  try {
+    subEl.textContent = 'Querying OpenStreetMap…';
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    subEl.textContent = 'Building game world…';
+    const json = await res.json();
+    const elements = json.elements || [];
+
+    if (elements.length === 0) throw new Error('No named locations found nearby. Try a more urban area.');
+
+    // Deduplicate by OSM id, cap at 80
+    const seen = new Set();
+    const unique = elements.filter(e => {
+      if (seen.has(e.id)) return false;
+      seen.add(e.id); return true;
+    }).slice(0, 80);
+
+    // Clear old markers
+    layerMine.clearLayers();
+    layerEnemy.clearLayers();
+    layerNeutral.clearLayers();
+    layerTerr.clearLayers();
+    Object.keys(markerRefs).forEach(k => delete markerRefs[k]);
+
+    locations = unique.map((node, i) => buildLocationFromOSM(node, i));
+    territories = []; // territories form as player captures — none to start
+
+    locations.forEach(addLocMarker);
+    drawTerritories();
+    updateRadius();
+    renderMyLocations();
+
+    // Hide loader
+    loadEl.classList.add('hidden');
+    showToast(`🗺 ${locations.length} real locations loaded!`);
+
+  } catch (err) {
+    loadEl.classList.add('hidden');
+    document.getElementById('errorMsg').textContent = err.message || 'Failed to load map data.';
+    errEl.classList.add('visible');
+  }
+}
 
 // ═══════════════════════════════════════════════════════
 // LEAFLET INIT
@@ -657,13 +855,33 @@ function updateRadius() {
   }).addTo(layerRadius);
 }
 
-// Init
-locations.forEach(addLocMarker);
-drawTerritories();
-updateRadius();
+// Init — load real OSM data
+loadOSMData();
 
 // Close popup when tapping blank map
 map.on('click', closePopup);
+
+// ── Render player tab locations list ─────────────────
+function renderMyLocations() {
+  const list = document.getElementById('myLocationsList');
+  const mine = locations.filter(l => l.status === 'yours');
+  if (mine.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px;">No captured locations yet. Go sheer some!</div>';
+    return;
+  }
+  list.innerHTML = mine.map(loc => {
+    const color = loc.rare ? '#a855f7' : playerColorVal;
+    const sub   = [loc.type, loc.rare ? '⭐ RARE' : '', loc.territory ? 'Territory: '+loc.territory : ''].filter(Boolean).join(' · ');
+    return `<div class="location-row" onclick="flyToLocation(${loc.id})">
+      <div class="loc-color-dot" style="background:${color}"></div>
+      <div class="loc-info">
+        <div class="loc-row-name">${loc.name}</div>
+        <div class="loc-row-sub">${sub}</div>
+      </div>
+      <div class="loc-row-dp">${loc.dp.toLocaleString()} DP</div>
+    </div>`;
+  }).join('');
+}
 
 // Simulated player walk
 let walkAngle = 0;
@@ -732,7 +950,7 @@ function doSheer() {
       loc.dp = Math.floor(loc.dp * 0.4); showToast('⚔ Sheer successful! DP reduced!');
       if (loc.dp < 100) { loc.status='yours'; loc.dp=2000; showToast('🎉 Location Captured!'); }
     }
-    refreshMarker(loc); drawTerritories(); closePopup();
+    refreshMarker(loc); drawTerritories(); closePopup(); renderMyLocations();
   }, 1200);
 }
 
@@ -774,8 +992,9 @@ function recenterMap() {
   showToast('📍 Centered on your location');
 }
 
-function flyToLocation(idx) {
-  const loc = locations[idx];
+function flyToLocation(id) {
+  const loc = locations.find(l => l.id === id);
+  if (!loc) return;
   switchTab('map');
   setTimeout(()=>{
     map.flyTo([loc.lat,loc.lng], 16, { animate:true, duration:.9 });
