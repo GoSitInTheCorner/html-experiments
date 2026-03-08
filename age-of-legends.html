@@ -12,59 +12,71 @@ body{
   background:#000;touch-action:none;user-select:none;
   width:100vw;height:100dvh;
   font-family:'Cinzel',serif;
+  padding-top:0;
 }
 
 #gc{position:fixed;top:0;left:0;display:block;z-index:1;}
 #hud{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10;}
 
 /* ══════════════════════════════════════════════════
-   TOP BAR
+   TOP BAR — AoM style, full height with badge
    ══════════════════════════════════════════════════ */
 #topBar{
-  position:absolute;top:0;left:0;right:0;height:var(--topH,46px);
-  background:linear-gradient(180deg,#2a1400 0%,#3c1e00 40%,#2a1400 100%);
+  position:absolute;top:0;left:0;right:0;height:var(--topH,56px);
+  background:linear-gradient(180deg,#1a0d00 0%,#3c1e00 30%,#2a1400 80%,#1a0d00 100%);
   border-bottom:3px solid #8c6010;
-  display:flex;align-items:center;padding:0 14px;gap:6px;
+  display:flex;align-items:center;padding:0 8px;gap:4px;
   pointer-events:auto;
-  box-shadow:0 4px 24px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,200,80,.12);
+  box-shadow:0 4px 24px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,200,80,.15);
+  overflow:visible;z-index:20;
 }
 .res{
-  display:flex;align-items:center;gap:5px;
-  background:linear-gradient(180deg,rgba(55,28,0,.92),rgba(20,10,0,.96));
-  border:1px solid rgba(140,90,0,.8);border-radius:3px;
-  padding:4px 10px 4px 6px;flex-shrink:0;
-  box-shadow:inset 0 1px 0 rgba(255,190,60,.1),inset 0 -1px 0 rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:4px;
+  background:linear-gradient(180deg,rgba(30,15,0,.96),rgba(8,4,0,.98));
+  border:1px solid rgba(160,100,0,.9);border-radius:3px;
+  padding:3px 8px 3px 5px;flex-shrink:0;
+  box-shadow:inset 0 1px 0 rgba(255,190,60,.12),inset 0 -1px 0 rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.6);
 }
-.resIcon{width:22px;height:22px;flex-shrink:0;}
+.resIcon{width:20px;height:20px;flex-shrink:0;}
 .resVal{
-  color:#ffe060;font-size:15px;font-weight:700;min-width:38px;
-  text-shadow:0 0 12px rgba(255,210,0,.6),0 1px 2px rgba(0,0,0,.9);
+  color:#ffe060;font-size:14px;font-weight:700;min-width:32px;
+  text-shadow:0 0 12px rgba(255,210,0,.7),0 1px 2px rgba(0,0,0,.9);
 }
-.resSep{width:1px;height:26px;background:linear-gradient(180deg,transparent,#7a5010 40%,#7a5010 60%,transparent);flex-shrink:0;margin:0 1px;}
+.resSep{width:1px;height:24px;background:linear-gradient(180deg,transparent,#7a5010 40%,#7a5010 60%,transparent);flex-shrink:0;margin:0 1px;}
 
-/* Age medallion — pops above the bar like AoM */
+/* Age medallion — sits within top bar, no clip */
 #ageBadge{
-  position:absolute;left:50%;transform:translateX(-50%);top:-14px;
-  width:74px;height:74px;border-radius:50%;
+  position:absolute;left:50%;transform:translateX(-50%);top:50%;margin-top:-34px;
+  width:68px;height:68px;border-radius:50%;
   background:radial-gradient(circle at 40% 35%,#643800 0%,#2e1800 50%,#120800 100%);
   border:4px solid #d4ac40;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  box-shadow:0 0 30px rgba(220,155,0,.55),inset 0 2px 0 rgba(255,215,80,.28),0 6px 18px rgba(0,0,0,.9);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  box-shadow:0 0 28px rgba(220,155,0,.6),inset 0 2px 0 rgba(255,215,80,.3),0 6px 18px rgba(0,0,0,.9),0 0 0 2px rgba(0,0,0,.5);
   z-index:30;cursor:pointer;pointer-events:auto;
 }
 #ageBadge::after{
-  content:'';position:absolute;inset:6px;border-radius:50%;
-  border:1px solid rgba(220,170,60,.2);pointer-events:none;
+  content:'';position:absolute;inset:5px;border-radius:50%;
+  border:1px solid rgba(220,170,60,.25);pointer-events:none;
 }
-#ageBadge .ageNum{color:#ffe84a;font-size:24px;font-weight:900;line-height:1;text-shadow:0 0 16px rgba(255,220,0,.9),0 1px 3px rgba(0,0,0,.9);}
-#ageBadge .ageLbl{color:#b89030;font-size:7.5px;letter-spacing:1.5px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+#ageBadge .ageNum{color:#ffe84a;font-size:22px;font-weight:900;line-height:1;text-shadow:0 0 16px rgba(255,220,0,.9),0 1px 3px rgba(0,0,0,.9);}
+#ageBadge .ageLbl{color:#b89030;font-size:7px;letter-spacing:1.5px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.8);}
 
 #popDisplay{
   margin-left:auto;flex-shrink:0;
-  display:flex;align-items:center;gap:5px;
-  background:linear-gradient(180deg,rgba(55,28,0,.92),rgba(20,10,0,.96));
-  border:1px solid rgba(140,90,0,.7);border-radius:3px;padding:4px 12px;
-  color:#e0c870;font-size:13px;letter-spacing:.3px;
+  display:flex;align-items:center;gap:4px;
+  background:linear-gradient(180deg,rgba(30,15,0,.96),rgba(8,4,0,.98));
+  border:1px solid rgba(140,90,0,.8);border-radius:3px;padding:3px 10px;
+  color:#e0c870;font-size:12px;letter-spacing:.3px;
+  box-shadow:inset 0 1px 0 rgba(255,190,60,.1),0 2px 6px rgba(0,0,0,.6);
+}
+#gameTimer{
+  display:flex;align-items:center;
+  background:linear-gradient(180deg,rgba(30,15,0,.96),rgba(8,4,0,.98));
+  border:1px solid rgba(140,90,0,.8);border-radius:3px;padding:3px 10px;
+  color:#c8a040;font-size:13px;font-weight:700;letter-spacing:2px;
+  font-family:'Courier New',monospace;
+  box-shadow:inset 0 1px 0 rgba(255,190,60,.1),0 2px 6px rgba(0,0,0,.6);
+  margin-left:4px;
 }
 
 /* ══════════════════════════════════════════════════
@@ -72,15 +84,15 @@ body{
    [Info/Portrait  ~320px] [Actions  1fr] [Minimap  ~220px]
    ══════════════════════════════════════════════════ */
 #bottomHUD{
-  position:absolute;bottom:0;left:0;right:0;
-  height:var(--hudH,190px);
+  position:absolute;bottom:6px;left:0;right:0;
+  height:var(--hudH,200px);
   display:grid;
   grid-template-columns:320px 1fr 220px;
   pointer-events:auto;
   background:#0e0700;
-  border-top:4px solid #8c6010;
+  border-top:3px solid #8c6010;
   box-shadow:0 -3px 0 #4a2c00,0 -10px 36px rgba(0,0,0,.98),inset 0 1px 0 rgba(255,180,0,.14);
-  overflow:hidden; /* critical — prevents content bleeding below viewport */
+  overflow:hidden;
 }
 
 /* ── LEFT: Portrait + info (AoM style) ── */
@@ -90,11 +102,11 @@ body{
   background:linear-gradient(135deg,#0e0700 0%,#1e1006 60%,#0e0700 100%);
 }
 #portraitWrap{
-  flex-shrink:0;width:130px;
+  flex-shrink:0;width:120px;
   background:linear-gradient(180deg,#0a0500,#160c04,#0a0500);
   border-right:2px solid #4e3200;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:8px 8px 6px;gap:4px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:6px 6px 4px;gap:3px;
 }
 #portrait{
   display:block;flex-shrink:0;
@@ -103,30 +115,52 @@ body{
   box-shadow:0 0 16px rgba(0,0,0,.9),inset 0 0 8px rgba(0,0,0,.7),0 0 0 1px #2a1800;
 }
 #portName{
-  font-size:9px;color:#b89040;letter-spacing:.5px;text-align:center;
+  font-size:8px;color:#b89040;letter-spacing:.3px;text-align:center;
   line-height:1.2;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   text-shadow:0 1px 2px rgba(0,0,0,.8);
+  padding:0 2px;
 }
 #infoText{
   flex:1;min-width:0;
-  padding:10px 12px 8px;
-  display:flex;flex-direction:column;justify-content:center;gap:5px;overflow:hidden;
+  padding:6px 10px 4px;
+  display:flex;flex-direction:column;justify-content:flex-start;gap:3px;overflow:hidden;
 }
 #selName{
-  color:#f8d840;font-size:15px;font-weight:900;
+  color:#f8d840;font-size:13px;font-weight:900;
   text-shadow:0 0 12px rgba(240,190,0,.5),0 1px 3px rgba(0,0,0,.9);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   letter-spacing:.5px;text-transform:uppercase;line-height:1;
 }
-#selInfo{color:#c4a458;font-size:10.5px;line-height:1.65;overflow:hidden;white-space:pre-line;}
-#hpBarWrap{display:none;flex-direction:column;gap:3px;margin-top:2px;}
-#hpLabel{font-size:8.5px;color:#907030;letter-spacing:.8px;}
+#ownerName{
+  color:#6aabff;font-size:9px;letter-spacing:.3px;line-height:1;
+  text-shadow:0 1px 2px rgba(0,0,0,.8);margin-bottom:1px;
+}
+/* AoM stat row: HP bar + stat icons */
+#statRow{
+  display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  font-size:9px;color:#c4a458;line-height:1.4;
+}
+.statItem{display:flex;align-items:center;gap:2px;white-space:nowrap;}
+.statIco{font-size:10px;line-height:1;}
+.statVal{color:#f0d060;font-size:9px;font-weight:700;}
+#hpBarWrap{display:flex;flex-direction:column;gap:2px;margin-top:2px;width:100%;}
+#hpLabel{font-size:7.5px;color:#907030;letter-spacing:.8px;}
 #hpOuter{
-  width:100%;height:11px;
-  background:#060300;border:1px solid #4a3008;border-radius:2px;overflow:hidden;
+  width:100%;height:9px;
+  background:#060300;border:1px solid #4a3008;border-radius:1px;overflow:hidden;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.8);
 }
 #hpInner{height:100%;width:100%;transition:width .25s,background .25s;border-radius:1px;}
+/* AoM-style attack/stat section */
+#atkSection{
+  display:none;flex-direction:column;gap:1px;margin-top:3px;
+  border-top:1px solid #3a2200;padding-top:3px;
+}
+#atkLabel{font-size:7.5px;color:#c09050;letter-spacing:1px;text-transform:uppercase;}
+#atkStats{display:flex;gap:8px;font-size:9px;color:#e0c070;}
+.atkNum{display:flex;align-items:center;gap:2px;}
+.atkIco{font-size:9px;opacity:.8;}
+#selInfo{color:#c4a458;font-size:9.5px;line-height:1.5;overflow:hidden;white-space:pre-line;}
 
 #cmdBtn{
   display:none;width:44px;height:44px;border-radius:50%;
@@ -169,42 +203,44 @@ body{
   text-shadow:0 1px 3px rgba(0,0,0,.9);
 }
 
-/* ── RIGHT: Minimap ── */
+/* ── RIGHT: Minimap — AoM iso diamond style ── */
 #mmPanel{
   background:linear-gradient(135deg,#080400 0%,#100804 50%,#080400 100%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:8px 8px 6px;gap:6px;overflow:hidden;
+  padding:6px 6px 4px;gap:4px;overflow:hidden;
   box-shadow:inset 3px 0 16px rgba(0,0,0,.7);
 }
 #mmLabel{
-  color:#c8a040;font-size:11px;font-weight:700;letter-spacing:3.5px;
+  color:#c8a040;font-size:10px;font-weight:700;letter-spacing:3px;
   flex-shrink:0;
   text-shadow:0 0 10px rgba(200,150,0,.55),0 1px 2px rgba(0,0,0,.9);
 }
 #mmFrame{
   position:relative;flex-shrink:0;line-height:0;
-  border:3px solid #a07828;
+  border:2px solid #a07828;
   box-shadow:0 0 0 1px #d4ac40,0 0 0 2px #3a2400,0 0 20px rgba(0,0,0,.9),inset 0 0 8px rgba(0,0,0,.6);
+  /* Rotate to diamond/iso view like AoM */
+  transform:rotate(45deg);
+  overflow:hidden;
 }
 #minimap{display:block;}
-/* Compass N */
-#mmFrame::before{
-  content:'N';position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+/* AoM minimap has compass rose at corners — simplified N indicator */
+#mmNorth{
+  position:absolute;top:-18px;left:50%;transform:translateX(-50%) rotate(-45deg);
   color:#c8a040;font-size:9px;font-weight:700;letter-spacing:1px;
-  text-shadow:0 1px 3px rgba(0,0,0,.9);
+  text-shadow:0 0 6px rgba(200,140,0,.8),0 1px 2px rgba(0,0,0,.9);
 }
-/* Legend — simplified, legible */
 #mmLegend{
   display:flex;flex-wrap:wrap;justify-content:center;
-  gap:4px 10px;width:100%;flex-shrink:0;padding:2px 4px;
+  gap:3px 8px;width:100%;flex-shrink:0;padding:2px 4px;
 }
 .mmDot{
-  display:flex;align-items:center;gap:5px;
-  font-size:10px;color:#b89840;white-space:nowrap;line-height:1.5;
+  display:flex;align-items:center;gap:4px;
+  font-size:9px;color:#b89840;white-space:nowrap;line-height:1.4;
   font-weight:700;letter-spacing:.2px;
 }
 .mmDot b{
-  width:10px;height:10px;border-radius:50%;
+  width:8px;height:8px;border-radius:50%;
   display:inline-block;flex-shrink:0;
   box-shadow:0 0 4px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1);
 }
@@ -213,7 +249,7 @@ body{
    MISC
    ══════════════════════════════════════════════════ */
 #joystickWrap{
-  position:fixed;right:14px;bottom:calc(var(--hudH,190px) + 14px);
+  position:fixed;right:14px;bottom:calc(var(--hudH,200px) + 20px);
   width:92px;height:92px;display:none;z-index:40;pointer-events:auto;touch-action:none;
 }
 #joystickBase{
@@ -258,34 +294,49 @@ body{
 
   <!-- ── TOP BAR ── -->
   <div id="topBar">
-    <div class="res"><canvas class="resIcon" id="icFood" width="22" height="22"></canvas><span class="resVal" id="rFood">500</span></div>
+    <div class="res"><canvas class="resIcon" id="icFood" width="20" height="20"></canvas><span class="resVal" id="rFood">500</span></div>
     <div class="resSep"></div>
-    <div class="res"><canvas class="resIcon" id="icWood" width="22" height="22"></canvas><span class="resVal" id="rWood">500</span></div>
+    <div class="res"><canvas class="resIcon" id="icWood" width="20" height="20"></canvas><span class="resVal" id="rWood">500</span></div>
     <div class="resSep"></div>
-    <div class="res"><canvas class="resIcon" id="icGold" width="22" height="22"></canvas><span class="resVal" id="rGold">300</span></div>
+    <div class="res"><canvas class="resIcon" id="icGold" width="20" height="20"></canvas><span class="resVal" id="rGold">300</span></div>
     <div class="resSep"></div>
-    <div class="res"><canvas class="resIcon" id="icStone" width="22" height="22"></canvas><span class="resVal" id="rStone">200</span></div>
+    <div class="res"><canvas class="resIcon" id="icStone" width="20" height="20"></canvas><span class="resVal" id="rStone">200</span></div>
     <div id="ageBadge"><span class="ageNum" id="ageNum">I</span><span class="ageLbl" id="ageLbl">DARK AGE</span></div>
     <div id="popDisplay"><span class="popIcon">👤</span><span id="rPop">0</span>&thinsp;/&thinsp;<span id="rPopCap">20</span></div>
+    <div id="gameTimer">00:00:00</div>
   </div>
 
   <!-- ── BOTTOM HUD ── -->
   <div id="bottomHUD">
 
-    <!-- LEFT: Portrait + unit info -->
+    <!-- LEFT: Portrait + unit info AoM style -->
     <div id="infoPanel">
       <div id="portraitWrap">
-        <canvas id="portrait" width="106" height="106"></canvas>
+        <canvas id="portrait" width="100" height="100"></canvas>
         <div id="portName">— SELECT —</div>
         <div id="cmdBtn"><span class="ci">⚔</span><span class="cl">CMD</span></div>
       </div>
       <div id="infoText">
         <div id="selName">No Selection</div>
-        <div id="selInfo">Click a unit or building.</div>
+        <div id="ownerName"></div>
+        <div id="statRow">
+          <span class="statItem"><span class="statIco">❤️</span><span class="statVal" id="statHP">—</span></span>
+          <span class="statItem"><span class="statIco">⚔</span><span class="statVal" id="statAtk">—</span></span>
+          <span class="statItem"><span class="statIco">🎯</span><span class="statVal" id="statRng">—</span></span>
+          <span class="statItem"><span class="statIco">💨</span><span class="statVal" id="statSpd">—</span></span>
+        </div>
         <div id="hpBarWrap">
-          <div id="hpLabel">HEALTH</div>
           <div id="hpOuter"><div id="hpInner"></div></div>
         </div>
+        <div id="atkSection">
+          <div id="atkLabel">ATTACK</div>
+          <div id="atkStats">
+            <span class="atkNum"><span class="atkIco">⚔</span><span id="atkDmg">0</span></span>
+            <span class="atkNum"><span class="atkIco">🎯</span><span id="atkRng">0</span></span>
+            <span class="atkNum"><span class="atkIco">💨</span><span id="atkSpd">0</span></span>
+          </div>
+        </div>
+        <div id="selInfo">Click a unit or building.</div>
       </div>
     </div>
 
@@ -294,13 +345,12 @@ body{
 
     <!-- RIGHT: Minimap -->
     <div id="mmPanel">
-      <div id="mmLabel">MINIMAP</div>
-      <div id="mmFrame"><canvas id="minimap"></canvas></div>
+      <div id="mmLabel">MAP</div>
+      <div id="mmFrame"><canvas id="minimap"></canvas><span id="mmNorth">N</span></div>
       <div id="mmLegend">
         <span class="mmDot"><b style="background:#44dd44"></b>Ally</span>
         <span class="mmDot"><b style="background:#ee2020"></b>Enemy</span>
-        <span class="mmDot"><b style="background:#f0c040"></b>Building</span>
-        <span class="mmDot"><b style="background:#44dd44;opacity:.5"></b>Forest</span>
+        <span class="mmDot"><b style="background:#f0c040"></b>Base</span>
       </div>
     </div>
 
@@ -357,6 +407,7 @@ const G={
   playerAttacked:false,
   spawnTimer:0,phase:0,
   GRACE:99999,
+  startTime:Date.now(),
 };
 const TILE=40,COLS=Math.ceil(G.MW/TILE),ROWS=Math.ceil(G.MH/TILE);
 // ── Isometric projection ──────────────────────────────
@@ -381,28 +432,27 @@ const mmCanvas=document.getElementById('minimap');
 const mctx=mmCanvas.getContext('2d');
 
 // ── Layout system ─────────────────────────────────────
-const L={topH:46,hudH:190,gameH:0,W:0,H:0,mmSize:130,mmW:130,actW:0,portSize:106,btnSize:44,actCols:4};
+const L={topH:56,hudH:200,gameH:0,W:0,H:0,mmSize:100,mmW:100,actW:0,portSize:100,btnSize:44,actCols:4};
 function layoutHUD(){
   L.W=window.innerWidth; L.H=window.innerHeight;
-  L.topH=46; L.hudH=190;
-  L.gameH=L.H-L.topH-L.hudH;
+  L.topH=56; L.hudH=200;
+  L.gameH=L.H-L.topH-L.hudH-6;
   canvas.width=L.W; canvas.height=L.gameH;
   canvas.style.top=L.topH+'px';
   document.documentElement.style.setProperty('--topH',L.topH+'px');
   document.documentElement.style.setProperty('--hudH',L.hudH+'px');
-  // Minimap: right panel 220px, padding 8px×2, border 6px total = ~198px usable width
-  // label ~20px, legend ~28px, gaps = ~134px for map
-  const mmSize=Math.min(130, L.hudH - 20 - 28 - 20); // label+legend+padding
-  L.mmSize=Math.max(60,mmSize); L.mmW=L.mmSize;
+  // Minimap: right panel 220px, rotated 45deg so we need square smaller than available space
+  // Available: 220px wide, ~200px tall minus label(20)+legend(20)+gaps = ~140px → use 90px square (looks bigger when rotated 45deg → 127px diagonal)
+  const mmAvail=Math.min(L.hudH-50, 220-28);
+  L.mmSize=Math.max(60,Math.min(90,mmAvail));
   const mm=document.getElementById('minimap');
   if(mm){mm.width=L.mmSize;mm.height=L.mmSize;}
-  // Portrait: fills left panel height minus padding/portName
-  L.portSize=Math.min(106, L.hudH - 30);
+  // Portrait
+  L.portSize=Math.min(100, L.hudH - 36);
   const port=document.getElementById('portrait');
   if(port){port.width=L.portSize;port.height=L.portSize;}
   // Button sizing: centre panel = total - 320 - 220 = dynamic
   const actW=Math.max(100, L.W-320-220);
-  // 4 columns, 6px padding each side, 5px gaps
   L.btnSize=Math.floor((actW - 12 - 15) / 4);
   L.actCols=4;
   // Centre camera on player TC
@@ -434,6 +484,8 @@ function poly(pts,c){
   for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
   ctx.closePath(); ctx.fill();
 }
+// Unit scale — makes units larger and easier to see
+const UNIT_SCALE=1.7;
 
 // ── Iso terrain rendering ─────────────────────────────
 // Two-pass rendering to prevent objects clipping into ground:
@@ -446,35 +498,35 @@ const SIDE_H=8; // pixel height of side faces
 
 const TPAL={
   water:{
-    top:['#2870c8','#2464b8','#3284d4','#1e58a8','#2c78cc','#1c60ac','#2e80d6','#226ab8'],
+    top:['#2264b8','#2060b0','#2468bc','#1e5cac','#2266b4','#1e60ae','#2266b8','#206ab4'],
     L:'#1a4e9a', R:'#1a4e9a'
   },
   shallow:{
-    top:['#4aa8d8','#3898c8','#52b4e0','#40a0bc','#46a8d4','#3a9cc8','#4eb0dc','#44a0d0'],
+    top:['#3a98cc','#389acc','#3c9ccc','#3896c8','#3a9cce','#389acc','#3e9ece','#3a98cc'],
     L:'#2878a8', R:'#2878a8'
   },
   sand:{
-    top:['#d4b05a','#c8a248','#dcba66','#c4a04c','#caa84e','#d6b45c','#bea040','#d2ac54'],
+    top:['#caa84e','#c8a64c','#ccaa50','#c8a44c','#caa850','#ccaa52','#c8a44e','#caaa50'],
     L:'#9a7828', R:'#7e6018'
   },
   grass:{
-    top:['#52922a','#4a8622','#5e9e30','#46821e','#56962c','#60a030','#4c8a20','#5a9c2e'],
+    top:['#4e8e26','#4c8c24','#508e28','#4a8a22','#4e8c26','#509028','#4c8c22','#4e9026'],
     L:'#2e5c10', R:'#224808'
   },
   grass2:{
-    top:['#3e7018','#366410','#487820','#326010','#3c6e16','#4a7c1e','#366618','#3e7214'],
+    top:['#407018','#3e6e16','#427216','#3c6c14','#407018','#427218','#3e6e14','#406e18'],
     L:'#1e4208', R:'#183404'
   },
   hill:{
-    top:['#9a9068','#8e845c','#a69a70','#847860','#988e66','#8c8260','#a29470','#867c5a'],
+    top:['#948a64','#928862','#968c66','#908660','#948a64','#968c64','#908660','#948864'],
     L:'#5a5030', R:'#484020'
   },
   mtn:{
-    top:['#7a7868','#706e5c','#828070','#686654','#767464','#7e7c6c','#706e5e','#7c7a6a'],
+    top:['#747268','#727066','#767470','#706e64','#747268','#767468','#726e64','#747068'],
     L:'#484640', R:'#38362e'
   },
   path:{
-    top:['#c8b07a','#bca46c','#d0bc82','#b8a268','#c4ac74','#ceb87e','#b6a064','#c6ae78'],
+    top:['#c4aa78','#c2a876','#c6ac7a','#c2a676','#c4aa78','#c6aa78','#c2a676','#c4ac78'],
     L:'#7a6632', R:'#62501e'
   },
 };
@@ -519,19 +571,24 @@ function drawTileTop(c,r){
 
   if(t==='water'){
     const wave=Math.sin(G.tick*.025+c*.5+r*.4)*.5+.5;
+    // Deep water base
     ctx.fillStyle=topCol;
     ctx.beginPath();
     ctx.moveTo(cx,cy-hh); ctx.lineTo(cx+hw,cy); ctx.lineTo(cx,cy+hh); ctx.lineTo(cx-hw,cy);
     ctx.closePath(); ctx.fill();
-    if(wave>.65){
-      ctx.fillStyle=`rgba(160,220,255,${.1+wave*.08})`;
+    // Wave shimmer
+    if(wave>.5){
+      ctx.fillStyle=`rgba(100,180,240,${.06+wave*.06})`;
       ctx.beginPath();
       ctx.moveTo(cx,cy-hh); ctx.lineTo(cx+hw,cy); ctx.lineTo(cx,cy+hh); ctx.lineTo(cx-hw,cy);
       ctx.closePath(); ctx.fill();
     }
-    if(h<3&&wave>.45){
-      ctx.strokeStyle=`rgba(180,230,255,${.18+wave*.12})`; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(cx-hw*.4,cy-wave*3); ctx.lineTo(cx+hw*.3,cy-wave*3); ctx.stroke();
+    // Foam lines on shallow edges
+    const ns=[terrain[r-1]&&terrain[r-1][c],terrain[r+1]&&terrain[r+1][c],terrain[r]&&terrain[r][c-1],terrain[r]&&terrain[r][c+1]];
+    const hasShore=ns.some(n=>n&&n!=='water'&&n!=='shallow');
+    if(hasShore&&wave>.45){
+      ctx.strokeStyle=`rgba(200,235,255,${.22+wave*.12})`; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(cx-hw*.5,cy-wave*2); ctx.lineTo(cx+hw*.4,cy-wave*2); ctx.stroke();
     }
     return;
   }
@@ -681,7 +738,50 @@ function drawDeer(r,sx,sy){
   ctx.beginPath(); ctx.moveTo(hx,hy-3); ctx.lineTo(hx-4,hy-11); ctx.lineTo(hx-8,hy-9); ctx.stroke();
 }
 
-// ── Unit sprites ──────────────────────────────────────
+function drawBerry(r,sx,sy){
+  const sc=r.hp/r.mhp;
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,.18)';
+  ctx.beginPath(); ctx.ellipse(sx+3,sy+8,14*sc,5*sc,.1,0,Math.PI*2); ctx.fill();
+  // Stem/branches
+  ctx.strokeStyle='#3a5a18'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(sx,sy+6); ctx.lineTo(sx,sy-8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx-8,sy-5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sx,sy-3); ctx.lineTo(sx+7,sy-8); ctx.stroke();
+  // Leaves
+  ctx.fillStyle='#3a7020'; ctx.beginPath(); ctx.ellipse(sx,sy-10,8*sc,5*sc,-.2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#4a8828'; ctx.beginPath(); ctx.ellipse(sx-7,sy-6,6*sc,4*sc,.3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#428020'; ctx.beginPath(); ctx.ellipse(sx+6,sy-9,6*sc,4*sc,-.3,0,Math.PI*2); ctx.fill();
+  // Berries
+  if(sc>.3){
+    const b=G.tick*.04+r.wb;
+    [[sx-5,sy-3],[sx+3,sy-5],[sx-2,sy-12],[sx+8,sy-6],[sx-9,sy-8]].forEach(([bx,by],i)=>{
+      ctx.fillStyle=`hsl(${340+i*8},85%,${42+Math.sin(b+i)*.5+.5}%)`;
+      ctx.beginPath(); ctx.arc(bx,by,3*sc,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.35)';
+      ctx.beginPath(); ctx.arc(bx-1,by-1,1*sc,0,Math.PI*2); ctx.fill();
+    });
+  }
+}
+
+function drawFish(r,sx,sy){
+  const sw=Math.sin(G.tick*.08+r.wb)*2.5;
+  const a=r.ang;
+  ctx.save(); ctx.translate(sx,sy); ctx.rotate(a);
+  // Body
+  ctx.fillStyle='#4898c8'; ctx.beginPath(); ctx.ellipse(0,0,10,5,.0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#5abcd8'; ctx.beginPath(); ctx.ellipse(-2,-1,6,3,.0,0,Math.PI*2); ctx.fill();
+  // Tail
+  ctx.fillStyle='#3878a8';
+  ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(14+sw,4); ctx.lineTo(14+sw,-4); ctx.closePath(); ctx.fill();
+  // Eye
+  ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(-6,0,1.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(-6.5,-.5,.6,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // Ripple
+  ctx.strokeStyle='rgba(140,200,240,.25)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(sx,sy+4,12,4,0,0,Math.PI*2); ctx.stroke();
+}
 function drawVillager(e,sx,sy){
   const t=G.tick*.16, walk=e.mv?Math.sin(t)*3.5:0;
   const gath=e.task==='gath'||e.task==='build';
@@ -1267,6 +1367,20 @@ function placeRes(){
   // Deer
   for(let i=0;i<55;i++)
     RMAP.push({type:'deer',x:rand(80,G.MW-80),y:rand(80,G.MH-80),hp:180,mhp:180,id:G.nid++,ang:rand(0,Math.PI*2),wt:0,vx:0,vy:0,wb:0});
+  // Berry bushes — stationary food near grass
+  for(let i=0;i<70;i++){
+    const x=rand(80,G.MW-80),y=rand(80,G.MH-80);
+    const tc=Math.floor(x/TILE),tr=Math.floor(y/TILE);
+    if(terrain[tr]&&terrain[tr][tc]==='grass')
+      RMAP.push({type:'berry',x,y,id:G.nid++,wb:rand(0,Math.PI*2),ang:0,wt:0,vx:0,vy:0,hp:160,mhp:160});
+  }
+  // Fish in shallow water
+  for(let i=0;i<40;i++){
+    const x=rand(80,G.MW-80),y=rand(80,G.MH-80);
+    const tc=Math.floor(x/TILE),tr=Math.floor(y/TILE);
+    if(terrain[tr]&&(terrain[tr][tc]==='water'||terrain[tr][tc]==='shallow'))
+      RMAP.push({type:'fish',x,y,id:G.nid++,wb:rand(0,Math.PI*2),ang:rand(0,Math.PI*2),wt:rand(0,120),vx:0,vy:0,hp:120,mhp:120});
+  }
 }
 
 genTerrain();placeRes();genTufts();
@@ -1294,10 +1408,10 @@ function vilIdle(e){
   const ub=G.ents.find(b=>b.bld&&!b.dead&&!b.built&&!b.enemy&&dist(e,b)<360);
   if(ub){e.task='build';e.tgt=ub;return;}
   let bestR=null,bd=9e9;
-  const need=G.res.food<300?'deer':G.res.wood<300?'tree':'gold';
+  const need=G.res.food<300?'food':G.res.wood<300?'tree':'gold';
   for(const r of RMAP){
     if(r.hp<=0)continue;
-    const ok=(need==='gold'&&(r.type==='gold'||r.type==='stone'))||(need==='tree'&&r.type==='tree')||(need==='deer'&&r.type==='deer');
+    const ok=(need==='gold'&&(r.type==='gold'||r.type==='stone'))||(need==='tree'&&r.type==='tree')||(need==='food'&&(r.type==='deer'||r.type==='berry'||r.type==='fish'));
     if(!ok)continue;
     const gath=G.ents.filter(u=>!u.dead&&u.task==='gath'&&u.tgt===r).length;
     if(gath>=2)continue;
@@ -1428,7 +1542,7 @@ function tickEnt(e){
   if(e.task==='gath'&&e.tgt){
     if(e.tgt.hp<=0){e.task=null;return;}
     if(dist(e,e.tgt)<36){
-      if(e.gcool<=0){e.ca+=6;e.cr=e.tgt.type==='deer'?'food':e.tgt.type==='tree'?'wood':e.tgt.type==='gold'?'gold':'stone';e.tgt.hp-=6;e.gcool=30;}
+      if(e.gcool<=0){e.ca+=6;e.cr=e.tgt.type==='deer'||e.tgt.type==='berry'||e.tgt.type==='fish'?'food':e.tgt.type==='tree'?'wood':e.tgt.type==='gold'?'gold':'stone';e.tgt.hp-=6;e.gcool=30;}
       e.gcool--;e.mv=false;
     }else{moveto(e,e.tgt.x,e.tgt.y,32);e.mv=true;}
     return;
@@ -1481,6 +1595,12 @@ function tickEnts(){
   for(const r of RMAP){
     if(r.type!=='deer'||r.hp<=0)continue;
     r.wt--;if(r.wt<=0){r.ang+=rand(-.6,.6);r.vx=Math.cos(r.ang)*.3;r.vy=Math.sin(r.ang)*.3;r.wt=rand(60,180);}
+    r.x=cl(r.x+r.vx,40,G.MW-40);r.y=cl(r.y+r.vy,40,G.MH-40);
+  }
+  // Fish swim
+  for(const r of RMAP){
+    if(r.type!=='fish'||r.hp<=0)continue;
+    r.wt--;if(r.wt<=0){r.ang+=rand(-.4,.4);r.vx=Math.cos(r.ang)*.2;r.vy=Math.sin(r.ang)*.2;r.wt=rand(80,220);}
     r.x=cl(r.x+r.vx,40,G.MW-40);r.y=cl(r.y+r.vy,40,G.MH-40);
   }
   G.ents=G.ents.filter(e=>!e.dead||(e.bld&&e.dead===false));
@@ -1582,6 +1702,8 @@ function render(){
       if(e.type==='gold'){ drawGold(e,sx,sy); continue; }
       if(e.type==='stone'){ drawStone(e,sx,sy); continue; }
       if(e.type==='deer'){ drawDeer(e,sx,sy); continue; }
+      if(e.type==='berry'){ drawBerry(e,sx,sy); continue; }
+      if(e.type==='fish'){ drawFish(e,sx,sy); continue; }
 
       if(e.sel&&!e.bld){
         ctx.strokeStyle='rgba(60,230,60,.9)'; ctx.lineWidth=2; ctx.setLineDash([5,3]);
@@ -1610,6 +1732,9 @@ function render(){
         }
         if(e.sel){ ctx.strokeStyle='rgba(60,230,60,.8)'; ctx.lineWidth=2.5; ctx.setLineDash([5,3]); ctx.strokeRect(sx-e.w/2-4,sy-e.h/2-4,e.w+8,e.h+8); ctx.setLineDash([]); }
       }else{
+        // Scale up units for visibility
+        ctx.save();
+        ctx.translate(sx,sy); ctx.scale(UNIT_SCALE,UNIT_SCALE); ctx.translate(-sx,-sy);
         switch(e.type){
           case'villager': drawVillager(e,sx,sy); break;
           case'militia': drawSwordsman(e,sx,sy); break;
@@ -1621,6 +1746,7 @@ function render(){
           case'troll': drawTroll(e,sx,sy); break;
           default: ctx.fillStyle='#808080'; ctx.beginPath(); ctx.arc(sx,sy,13,0,Math.PI*2); ctx.fill();
         }
+        ctx.restore();
       }
       ctx.globalAlpha=1;
 
@@ -1653,36 +1779,40 @@ function render(){
 function renderMM(){
   const mw=L.mmSize, mh=L.mmSize;
   const scx=mw/G.MW, scy=mh/G.MH;
+  // Draw map top-down (mmFrame CSS rotates it 45deg to show iso diamond)
   mctx.fillStyle='#1a2a10'; mctx.fillRect(0,0,mw,mh);
-  for(let r=0;r<ROWS;r+=3) for(let c=0;c<COLS;c+=3){
+  for(let r=0;r<ROWS;r+=2) for(let c=0;c<COLS;c+=2){
     const t=terrain[r]&&terrain[r][c];
-    let col='#2c5618';
-    if(t==='water') col='#1a4a8a';
-    else if(t==='sand') col='#a89048';
+    let col='#3a6618';
+    if(t==='water') col='#1e5898';
+    else if(t==='shallow') col='#2870a8';
+    else if(t==='sand') col='#b89a48';
     else if(t==='grass2') col='#3a6a1a';
-    else if(t==='hill') col='#6a6040';
-    else if(t==='mtn') col='#5a5848';
+    else if(t==='hill') col='#7a7248';
+    else if(t==='mtn') col='#6a6858';
+    else if(t==='path') col='#b8a068';
     mctx.fillStyle=col;
-    mctx.fillRect(c*TILE*scx,r*TILE*scy,TILE*scx*3+1,TILE*scy*3+1);
+    mctx.fillRect(c*TILE*scx,r*TILE*scy,TILE*scx*2+1,TILE*scy*2+1);
   }
   for(const r of RMAP){
     if(r.hp<=0) continue;
-    if(r.type==='tree'){mctx.fillStyle='#1a5412'; mctx.fillRect(r.x*scx-1,r.y*scy-1,2,2);}
-    else if(r.type==='gold'){mctx.fillStyle='#d0a010'; mctx.fillRect(r.x*scx-1,r.y*scy-1,2,2);}
+    if(r.type==='tree'){mctx.fillStyle='#1a5010'; mctx.fillRect(r.x*scx-1,r.y*scy-1,3,3);}
+    else if(r.type==='berry'){mctx.fillStyle='#c0304a'; mctx.fillRect(r.x*scx-.5,r.y*scy-.5,2,2);}
+    else if(r.type==='gold'){mctx.fillStyle='#d8a810'; mctx.fillRect(r.x*scx-1,r.y*scy-1,2,2);}
     else if(r.type==='stone'){mctx.fillStyle='#909080'; mctx.fillRect(r.x*scx-1,r.y*scy-1,2,2);}
   }
   for(const e of G.ents){
     if(e.dead) continue;
-    mctx.fillStyle=e.enemy?(e.bld?'#ff4040':'#ee2020'):(e.bld?(e.built?'#f0c040':'#806020'):'#48cc48');
-    const sz=e.bld?Math.max(3,(e.w*scx*.6)|0):2;
+    mctx.fillStyle=e.enemy?(e.bld?'#ff3030':'#ee1818'):(e.bld?(e.built?'#f0c040':'#806020'):'#40e040');
+    const sz=e.bld?Math.max(3,(e.w*scx*.6)|0):3;
     mctx.fillRect(e.x*scx-sz/2,e.y*scy-sz/2,sz,sz);
   }
-  // Camera viewport: convert iso cam position back to world for minimap
+  // Camera viewport indicator
   const tl=isoToWorld(G.cam.x, G.cam.y);
   const br=isoToWorld(G.cam.x+L.W, G.cam.y+L.gameH);
   const vx=Math.min(tl.x,br.x)*scx, vy=Math.min(tl.y,br.y)*scy;
   const vw=(Math.abs(br.x-tl.x))*scx, vh=(Math.abs(br.y-tl.y))*scy;
-  mctx.strokeStyle='rgba(240,200,60,.85)'; mctx.lineWidth=1.5;
+  mctx.strokeStyle='rgba(240,200,60,.9)'; mctx.lineWidth=1.5;
   mctx.strokeRect(vx, vy, vw, vh);
 }
 
@@ -1996,6 +2126,13 @@ function updHUD(){
   const lbls=['DARK','ARCHAIC','CLASSICAL','HEROIC'];
   document.getElementById('ageNum').textContent=nums[G.age]||'I';
   document.getElementById('ageLbl').textContent=lbls[G.age]||'';
+  // Update game timer
+  const el=Math.floor((Date.now()-G.startTime)/1000);
+  const h=Math.floor(el/3600).toString().padStart(2,'0');
+  const m=Math.floor((el%3600)/60).toString().padStart(2,'0');
+  const s=(el%60).toString().padStart(2,'0');
+  const t=document.getElementById('gameTimer');
+  if(t)t.textContent=`${h}:${m}:${s}`;
 }
 function rIco(r){return{food:'🌾',wood:'🪵',gold:'⛏',stone:'🪨'}[r]||'';}
 function uIco(t){return{villager:'👷',militia:'⚔',archer:'🏹',horseman:'🐴',catapult:'💣'}[t]||'?';}
@@ -2003,28 +2140,54 @@ function uIco(t){return{villager:'👷',militia:'⚔',archer:'🏹',horseman:'�
 function updSel(){
   const nm=document.getElementById('selName'),inf=document.getElementById('selInfo'),
         hw=document.getElementById('hpBarWrap'),hi=document.getElementById('hpInner'),
-        pn=document.getElementById('portName');
+        pn=document.getElementById('portName'),
+        own=document.getElementById('ownerName'),
+        statHP=document.getElementById('statHP'),
+        statAtk=document.getElementById('statAtk'),
+        statRng=document.getElementById('statRng'),
+        statSpd=document.getElementById('statSpd'),
+        atkSec=document.getElementById('atkSection'),
+        atkDmg=document.getElementById('atkDmg'),
+        atkRng=document.getElementById('atkRng'),
+        atkSpd=document.getElementById('atkSpd');
   drawPortrait(G.sel.length===1?G.sel[0]:null);
   if(!G.sel.length){
     nm.textContent='No Selection';inf.textContent='Click a unit or building to select.';
-    hw.style.display='none';if(pn)pn.textContent='— SELECT A UNIT —';
+    if(hw)hw.style.display='none';if(pn)pn.textContent='— SELECT A UNIT —';
+    if(own)own.textContent='';if(atkSec)atkSec.style.display='none';
+    if(statHP)statHP.textContent='—';if(statAtk)statAtk.textContent='—';
+    if(statRng)statRng.textContent='—';if(statSpd)statSpd.textContent='—';
   } else if(G.sel.length===1){
     const e=G.sel[0];
     nm.textContent=e.name;
     if(pn)pn.textContent=e.name.toUpperCase();
-    let t=`HP: ${Math.ceil(e.hp)} / ${e.mhp}`;
-    if(e.bld&&e.tq&&e.tq.length)t+=`\nTraining: ${UD[e.tq[0]]?.name||e.tq[0]}`;
-    if(!e.bld&&e.task)t+=`\nTask: ${e.task.toUpperCase()}`;
+    if(own)own.textContent=e.enemy?'Enemy':'TheBradFad';
+    const p=e.hp/e.mhp;
+    if(statHP){statHP.textContent=`${Math.ceil(e.hp)}/${e.mhp}`;}
+    if(statAtk){statAtk.textContent=e.dmg>0?e.dmg:'—';}
+    if(statRng){statRng.textContent=e.rng>18?Math.round(e.rng/10)+'0m':'Melee';}
+    if(statSpd){statSpd.textContent=e.spd?e.spd.toFixed(1):'—';}
+    if(hw)hw.style.display='flex';
+    if(hi){hi.style.width=(p*100)+'%';hi.style.background=p>.5?'#28a020':p>.25?'#c09020':'#cc2020';}
+    if(atkSec&&!e.bld){
+      atkSec.style.display='flex';
+      if(atkDmg)atkDmg.textContent=e.dmg||0;
+      if(atkRng)atkRng.textContent=e.rng||18;
+      if(atkSpd)atkSpd.textContent=e.spd?e.spd.toFixed(1):'1.0';
+    } else if(atkSec){atkSec.style.display='none';}
+    let t='';
+    if(e.bld&&e.tq&&e.tq.length)t+=`Training: ${UD[e.tq[0]]?.name||e.tq[0]}`;
+    if(!e.bld&&e.task)t+=`Task: ${e.task.toUpperCase()}`;
     if(e.ca>0)t+=`\nCarrying: ${e.ca} ${e.cr}`;
     inf.textContent=t;
-    hw.style.display='flex';
-    const p=e.hp/e.mhp;hi.style.width=(p*100)+'%';
-    hi.style.background=p>.5?'#28a020':p>.25?'#c09020':'#cc2020';
   } else {
     nm.textContent=G.sel.length+' Selected';
     inf.textContent=G.sel.map(e=>e.name).join(', ');
-    hw.style.display='none';
+    if(hw)hw.style.display='none';
     if(pn)pn.textContent=G.sel.length+' UNITS';
+    if(own)own.textContent='';if(atkSec)atkSec.style.display='none';
+    if(statHP)statHP.textContent='—';if(statAtk)statAtk.textContent='—';
+    if(statRng)statRng.textContent='—';if(statSpd)statSpd.textContent='—';
   }
   updAct();
 }
