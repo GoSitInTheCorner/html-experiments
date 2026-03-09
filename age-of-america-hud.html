@@ -1,0 +1,2649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Age of America</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#d4a520;--gold-br:#f0c040;--parch:#c8a96e;--parch-dk:#a0784a;--parch-lt:#e8d5a8;
+  --ink:#2a1a08;--red:#cc3030;--yellow:#c8a520;--blue:#3a6890;--green:#4a8c3f;
+  --border:#6b4820;--orn:#8b5e20;
+  --TH:72px;--BH:224px;
+}
+html,body{width:100%;height:100%;overflow:hidden;
+  font-family:'IM Fell English',Georgia,serif;background:#1a1208;
+  color:var(--parch-lt);user-select:none;-webkit-user-select:none;}
+
+/* ── MAP ── */
+#gc{position:fixed;inset:0;cursor:grab;z-index:0;background:#283818;}
+#gc.drag{cursor:grabbing;}
+#mc{position:absolute;inset:0;width:100%;height:100%;}
+
+/* ══════════════════════════════════
+   TOP BAR
+══════════════════════════════════ */
+#tb{
+  position:fixed;top:0;left:0;right:0;z-index:100;pointer-events:auto;
+  background:linear-gradient(180deg,#130901 0%,#23150a 65%,rgba(13,7,2,.92) 100%);
+  border-bottom:2px solid var(--gold);box-shadow:0 3px 14px rgba(0,0,0,.85);
+}
+#r1{display:flex;align-items:center;height:var(--TH);padding:0 12px;gap:7px;overflow:hidden;}
+#r2{display:none;align-items:center;height:58px;padding:0 10px;gap:7px;
+  border-top:1px solid rgba(107,72,32,.35);}
+
+/* Date + time block */
+.datetime{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#1e0c03,#3a1c08);
+  border:1.5px solid var(--gold);border-radius:4px;
+  padding:5px 14px;flex-shrink:0;min-width:160px;
+}
+.dt-era{font-family:'Cinzel',serif;font-size:10px;color:var(--gold-br);
+  letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;}
+.dt-date{font-family:'Cinzel',serif;font-size:19px;font-weight:700;
+  color:var(--parch-lt);line-height:1.15;white-space:nowrap;}
+.dt-time{display:none;}
+
+/* Resources */
+#rs{display:flex;align-items:center;gap:4px;flex:1;min-width:0;overflow:hidden;}
+.ri{display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.38);
+  border:1px solid rgba(107,72,32,.5);border-radius:3px;padding:5px 8px;
+  flex:1;min-width:0;cursor:default;transition:border-color .15s;}
+.ri:hover{border-color:var(--gold);}
+.ri-ic{font-size:20px;flex-shrink:0;}
+.ri-c{display:flex;flex-direction:column;line-height:1;min-width:0;}
+.ri-lb{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);
+  letter-spacing:.8px;text-transform:uppercase;white-space:nowrap;}
+.ri-v{font-family:'Cinzel',serif;font-size:17px;font-weight:600;color:var(--parch-lt);white-space:nowrap;}
+.ri-v.w{color:var(--yellow);}
+.ri-v.c{color:var(--red);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Right cluster */
+#tr{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.ssn{display:flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.38);
+  border:1px solid var(--border);border-radius:3px;padding:4px 10px;}
+.ssn-i{font-size:22px;}.ssn-l{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);}
+.pop-pill{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.38);
+  border:1px solid var(--border);border-radius:3px;padding:5px 12px;white-space:nowrap;}
+.pop-pill em{font-family:'Cinzel',serif;font-size:17px;color:var(--gold);font-style:normal;}
+.pop-pill span{font-family:'Cinzel',serif;font-size:17px;}
+.spds{display:flex;gap:3px;}
+.sb{width:36px;height:36px;background:rgba(0,0,0,.5);border:1px solid var(--border);
+  color:var(--parch);border-radius:3px;cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.sb:hover{background:rgba(65,38,10,.8);border-color:var(--gold);}
+.sb.on{background:var(--gold);color:var(--ink);border-color:var(--gold-br);}
+
+/* Era progress strip */
+#ep{position:fixed;top:var(--TH);left:0;right:0;height:3px;z-index:99;
+  pointer-events:none;background:rgba(0,0,0,.5);}
+#ef{height:100%;background:linear-gradient(90deg,var(--parch-dk),var(--gold-br));transition:width 1.2s ease;}
+
+/* ══════════════════════════════════
+   BOTTOM HUD — Town Management
+══════════════════════════════════ */
+#bh{
+  position:fixed;bottom:0;left:0;right:0;height:var(--BH);z-index:100;
+  pointer-events:auto;display:flex;align-items:stretch;
+  background:linear-gradient(0deg,#0b0601 0%,#1a0f06 70%,rgba(11,6,1,.94) 100%);
+  border-top:2px solid var(--gold);box-shadow:0 -3px 14px rgba(0,0,0,.85);
+}
+
+/* ── LEFT: Town Info Panel ── */
+#town-panel{
+  width:268px;flex-shrink:0;display:flex;flex-direction:column;
+  padding:10px 13px;gap:7px;border-right:1px solid var(--border);
+  overflow:hidden;
+}
+.town-header{display:flex;align-items:center;gap:9px;}
+.town-icon{font-size:34px;flex-shrink:0;}
+.town-title{display:flex;flex-direction:column;min-width:0;}
+.town-name{font-family:'Cinzel',serif;font-size:17px;color:var(--gold-br);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.town-sub{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);
+  letter-spacing:.8px;text-transform:uppercase;margin-top:2px;}
+
+/* Town stat rows */
+.tstat{display:flex;align-items:center;gap:7px;}
+.tstat-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.tstat-lb{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);
+  width:68px;letter-spacing:.3px;text-transform:uppercase;flex-shrink:0;}
+.tstat-bw{flex:1;height:10px;background:rgba(0,0,0,.5);
+  border:1px solid rgba(100,70,30,.3);border-radius:3px;overflow:hidden;}
+.tstat-bar{height:100%;border-radius:3px;transition:width .5s ease;}
+.tstat-bar.pop {background:linear-gradient(90deg,#2a5a2a,#50c050);}
+.tstat-bar.food{background:linear-gradient(90deg,#5a3a10,#d08040);}
+.tstat-bar.water{background:linear-gradient(90deg,#182848,#3898d0);}
+.tstat-bar.mood{background:linear-gradient(90deg,#3a1848,#c050d0);}
+.tstat-bar.def {background:linear-gradient(90deg,#5a1818,#d04040);}
+.tstat-val{font-family:'Cinzel',serif;font-size:11px;color:var(--parch-dk);
+  width:34px;text-align:right;flex-shrink:0;}
+
+/* Town list tabs */
+.town-tabs{display:flex;gap:4px;margin-top:auto;padding-top:5px;
+  border-top:1px solid rgba(107,72,32,.35);overflow-x:auto;}
+.town-tabs::-webkit-scrollbar{height:2px;}
+.town-tab{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);
+  background:rgba(0,0,0,.4);border:1px solid var(--border);
+  border-radius:3px;padding:3px 8px;cursor:pointer;white-space:nowrap;
+  letter-spacing:.5px;transition:all .15s;flex-shrink:0;}
+.town-tab:hover{color:var(--parch-lt);border-color:var(--orn);}
+.town-tab.on{background:rgba(55,32,8,.85);border-color:var(--gold);color:var(--gold-br);}
+
+/* ── CENTER: Action Panel ── */
+#ap{flex:1;display:flex;flex-direction:column;padding:8px 10px;min-width:0;}
+.tabs{display:flex;gap:4px;margin-bottom:5px;overflow-x:auto;flex-wrap:nowrap;}
+.tabs::-webkit-scrollbar{height:2px;}.tabs::-webkit-scrollbar-thumb{background:var(--border);}
+.tab{background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--parch-dk);
+  padding:5px 12px;border-radius:3px 3px 0 0;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:11px;letter-spacing:.8px;text-transform:uppercase;
+  transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.tab:hover{color:var(--parch-lt);border-color:var(--orn);}
+.tab.on{background:rgba(55,32,8,.85);border-color:var(--gold);color:var(--gold-br);border-bottom-color:transparent;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));
+  gap:5px;flex:1;overflow-y:auto;align-content:start;}
+.grid::-webkit-scrollbar{width:3px;}.grid::-webkit-scrollbar-thumb{background:var(--border);}
+.btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:linear-gradient(135deg,rgba(26,14,4,.9),rgba(46,26,6,.9));
+  border:1px solid var(--border);border-radius:4px;padding:7px 4px;
+  cursor:pointer;transition:all .15s;position:relative;min-height:72px;}
+.btn:hover{background:linear-gradient(135deg,rgba(55,32,8,.95),rgba(75,46,10,.95));
+  border-color:var(--gold);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.5);}
+.btn:active{transform:translateY(0);}
+.btn.lk{opacity:.35;cursor:not-allowed;}
+.btn.lk:hover{transform:none;box-shadow:none;border-color:var(--border);}
+.btn.am{border-color:var(--gold-br);background:rgba(75,46,10,.95);box-shadow:0 0 8px rgba(240,192,64,.4);}
+.bi{font-size:26px;}
+.bl{font-family:'Cinzel',serif;font-size:10px;text-align:center;
+  color:var(--parch-dk);letter-spacing:.4px;line-height:1.2;}
+.btn:hover .bl{color:var(--parch-lt);}
+.bc{position:absolute;bottom:3px;right:4px;font-family:'Cinzel',serif;font-size:9px;color:var(--gold);}
+.bk{position:absolute;top:3px;left:4px;font-size:9px;color:var(--parch-dk);
+  background:rgba(0,0,0,.5);border-radius:2px;padding:0 3px;font-family:'Cinzel',serif;}
+
+/* ── RIGHT: Minimap ── */
+#mp{width:210px;flex-shrink:0;padding:10px;border-left:1px solid var(--border);
+  display:flex;flex-direction:column;gap:6px;}
+.mmw{position:relative;flex:1;background:#0b1706;border:1.5px solid var(--orn);
+  border-radius:3px;overflow:hidden;}
+#mmc{width:100%;height:100%;display:block;}
+.mmv{position:absolute;border:1.5px solid rgba(255,255,255,.65);
+  background:rgba(255,255,255,.05);pointer-events:none;border-radius:1px;}
+.mml{position:absolute;top:3px;left:50%;transform:translateX(-50%);
+  font-family:'Cinzel',serif;font-size:9px;color:rgba(200,170,110,.4);
+  letter-spacing:1.5px;text-transform:uppercase;}
+.mmbs{display:flex;gap:4px;}
+.mmb{flex:1;background:rgba(0,0,0,.5);border:1px solid var(--border);color:var(--parch-dk);
+  padding:5px;border-radius:3px;cursor:pointer;font-size:11px;text-align:center;
+  font-family:'Cinzel',serif;transition:all .15s;white-space:nowrap;}
+.mmb:hover{color:var(--parch-lt);border-color:var(--orn);}
+
+/* ── ALERTS ── */
+#al{position:fixed;top:calc(var(--TH)+5px);left:8px;
+  width:min(380px,calc(50vw - 16px));z-index:200;
+  display:flex;flex-direction:column;gap:4px;pointer-events:none;
+  max-height:calc(4*46px + 3*4px);overflow:hidden;}
+.a{background:rgba(11,5,2,.88);border:1px solid var(--border);border-left:3px solid var(--red);
+  border-radius:4px;padding:8px 10px 8px 12px;display:flex;align-items:center;gap:8px;
+  pointer-events:auto;animation:sli .25s ease;max-height:44px;overflow:hidden;backdrop-filter:blur(4px);}
+.a.w{border-left-color:var(--yellow);}
+.a.i{border-left-color:var(--blue);}
+.a.ok{border-left-color:var(--green);}
+@keyframes sli{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:none;}}
+@keyframes fadeOut{to{opacity:0;max-height:0;padding:0;margin:0;border-width:0;}}
+.a-ic{font-size:17px;flex-shrink:0;}
+.a-tx{flex:1;font-family:'Cinzel',serif;font-size:12px;color:var(--parch-lt);
+  letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.a-x{font-size:17px;line-height:1;color:var(--parch-dk);cursor:pointer;flex-shrink:0;
+  padding:0 3px;font-family:sans-serif;font-weight:700;transition:color .15s;}
+.a-x:hover{color:var(--parch-lt);}
+
+/* ── SIDE PANEL ── */
+#sp{position:fixed;top:calc(var(--TH)+3px);right:0;bottom:var(--BH);width:52px;
+  z-index:100;pointer-events:auto;background:rgba(10,5,2,.88);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;gap:4px;padding:7px 5px;}
+.stb{width:42px;height:42px;background:rgba(0,0,0,.5);border:1px solid var(--border);
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;cursor:pointer;transition:all .15s;position:relative;}
+.stb:hover{border-color:var(--gold);background:rgba(55,32,8,.85);}
+.stt{position:absolute;right:48px;top:50%;transform:translateY(-50%);
+  background:rgba(10,5,2,.97);border:1px solid var(--border);border-radius:3px;
+  padding:3px 9px;font-size:11px;color:var(--parch-lt);white-space:nowrap;
+  font-family:'Cinzel',serif;letter-spacing:.8px;pointer-events:none;opacity:0;transition:opacity .15s;}
+.stb:hover .stt{opacity:1;}
+
+/* ── ROAD LEGEND ── */
+#rl{position:fixed;bottom:calc(var(--BH)+8px);right:58px;
+  background:rgba(8,4,1,.96);border:1px solid var(--border);border-radius:4px;
+  padding:11px 14px;z-index:150;display:none;flex-direction:column;gap:4px;min-width:260px;}
+#rl.show{display:flex;}
+.rl-t{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.rl-r{display:flex;align-items:center;gap:9px;}
+.rl-sw{height:9px;width:38px;border-radius:2px;}
+.rl-n{font-family:'Cinzel',serif;font-size:11px;color:var(--parch-dk);}
+.rl-note{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);
+  margin-top:5px;line-height:1.5;border-top:1px solid var(--border);padding-top:5px;}
+
+/* Road mode banner */
+#rdbanner{position:fixed;bottom:calc(var(--BH)+2px);left:50%;transform:translateX(-50%);
+  background:rgba(8,4,1,.96);border:1px solid var(--gold);border-radius:4px;
+  padding:8px 20px;z-index:150;display:none;font-family:'Cinzel',serif;font-size:13px;
+  color:var(--gold-br);letter-spacing:.8px;text-align:center;white-space:nowrap;}
+#rdbanner.show{display:block;}
+
+/* ── TOOLTIP ── */
+#tip{position:fixed;z-index:500;pointer-events:none;
+  background:rgba(8,4,1,.97);border:1px solid var(--gold);border-radius:4px;
+  padding:10px 14px;max-width:250px;font-size:13px;color:var(--parch-lt);
+  box-shadow:0 4px 20px rgba(0,0,0,.8);display:none;line-height:1.5;}
+.tip-t{font-family:'Cinzel',serif;font-size:15px;color:var(--gold-br);margin-bottom:4px;}
+.tip-c{font-size:11px;color:var(--parch-dk);margin-top:5px;
+  border-top:1px solid var(--border);padding-top:5px;}
+
+/* ── EVENT SCROLL ── */
+.evm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(8,4,1,.97);border:2px solid var(--gold);border-radius:8px;
+  padding:22px 28px;text-align:center;z-index:500;
+  max-width:min(420px,92vw);display:none;animation:pop .4s ease;}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.9);}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+.evm-t{font-family:'Cinzel',serif;font-size:22px;color:var(--gold-br);margin-bottom:12px;}
+.evm-b{font-family:'IM Fell English',serif;font-style:italic;
+  font-size:15px;color:var(--parch-lt);line-height:1.7;}
+.evm-d{margin-top:16px;font-family:'Cinzel',serif;font-size:12px;color:var(--parch-dk);
+  letter-spacing:1.5px;cursor:pointer;}
+.evm-d:hover{color:var(--parch-lt);}
+
+/* ── START OVERLAY ── */
+#so{position:fixed;inset:0;z-index:1000;
+  background:radial-gradient(ellipse at center,#1a1005 0%,#080604 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:20px;transition:opacity .8s ease;}
+.tsub{font-family:'Cinzel',serif;font-size:11px;letter-spacing:5px;color:var(--parch-dk);text-transform:uppercase;}
+.tmain{font-family:'Cinzel',serif;font-size:clamp(36px,8vw,74px);font-weight:700;
+  color:var(--parch-lt);letter-spacing:3px;line-height:1;
+  text-shadow:0 0 40px rgba(212,165,32,.35);text-align:center;}
+.tmain span{color:var(--gold-br);}
+.ttag{font-family:'IM Fell English',serif;font-style:italic;font-size:15px;color:var(--parch-dk);}
+.dr{display:flex;gap:14px;align-items:center;}
+.dc{font-size:24px;opacity:.6;}
+.dl{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--orn),transparent);}
+.scrow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.sc{display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:rgba(17,9,3,.85);border:1px solid var(--border);border-radius:6px;
+  padding:11px 18px;cursor:pointer;transition:all .2s;min-width:118px;}
+.sc:hover{border-color:var(--gold);}
+.sc.sel{border-color:var(--gold-br);background:rgba(56,32,8,.95);}
+.sc-ic{font-size:23px;}
+.sc-n{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-lt);text-align:center;letter-spacing:.8px;}
+.sc-y{font-size:9.5px;color:var(--parch-dk);}
+.ssbtn{font-family:'Cinzel',serif;font-size:13px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--ink);background:linear-gradient(135deg,var(--gold) 0%,var(--gold-br) 50%,var(--gold) 100%);
+  border:none;padding:13px 38px;border-radius:3px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(212,165,32,.4);transition:all .2s;}
+.ssbtn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(212,165,32,.6);}
+.ver{font-family:'Cinzel',serif;font-size:9px;color:var(--parch-dk);letter-spacing:1.5px;}
+
+/* ── MOBILE ── */
+@media(max-width:680px){
+  :root{--TH:116px;--BH:230px;}
+  #r1{height:60px;padding:0 8px;gap:5px;}
+  #r2{display:flex;}
+  #tr{display:none;}
+  .ri-lb{display:none;}
+  .ri-v{font-size:14px;}.ri-ic{font-size:16px;}.ri{padding:3px 5px;}
+  .datetime{min-width:110px;padding:4px 9px;}
+  .dt-date{font-size:14px;}
+  #al{top:calc(var(--TH)+5px);width:min(340px,calc(100vw - 16px));}
+  #ep{top:var(--TH);}
+  #sp{display:none;}
+  #town-panel{width:195px;padding:7px 9px;}
+  .town-name{font-size:14px;} .town-sub{font-size:9px;}
+  .tstat-lb{font-size:9px;width:58px;}
+  #mp{width:150px;padding:7px;}
+  .btn{min-height:62px;}.bi{font-size:22px;}.bl{font-size:9px;}
+}
+@media(max-width:460px){
+  #town-panel{width:160px;}
+  #mp{width:120px;}
+}
+
+/* ── UNDERGROUND BADGE ── */
+#ug-badge{position:fixed;bottom:calc(var(--BH)+6px);left:50%;transform:translateX(-50%);
+  background:rgba(8,4,1,.96);border:1px solid var(--gold);border-radius:4px;
+  padding:5px 16px;z-index:150;font-family:'Cinzel',serif;font-size:10px;
+  color:var(--gold-br);letter-spacing:1px;display:none;pointer-events:none;}
+#ug-badge.show{display:block;}
+
+/* ── TILE INSPECTOR PANEL ── */
+#tile-inspect{position:fixed;z-index:300;
+  background:linear-gradient(145deg,rgba(10,5,2,.98),rgba(20,10,3,.97));
+  border:1px solid var(--gold);border-radius:5px;padding:12px 14px 10px;
+  min-width:190px;max-width:240px;display:none;
+  box-shadow:0 6px 28px rgba(0,0,0,.85);pointer-events:auto;}
+#tile-inspect.show{display:block;}
+.ti-hdr{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;
+  padding-bottom:7px;border-bottom:1px solid rgba(107,72,32,.4);}
+.ti-icon-lg{font-size:22px;flex-shrink:0;line-height:1;}
+.ti-titles{flex:1;}
+.ti-terrain{font-family:'Cinzel',serif;font-size:12px;color:var(--gold-br);line-height:1.2;}
+.ti-coord{font-family:'Cinzel',serif;font-size:7.5px;color:var(--parch-dk);
+  letter-spacing:.8px;margin-top:2px;}
+.ti-row{display:flex;align-items:center;gap:7px;padding:3px 0;
+  font-family:'Cinzel',serif;font-size:9px;color:var(--parch-dk);}
+.ti-val{color:var(--parch-lt);font-size:9.5px;}
+.ti-ore{display:flex;align-items:center;gap:8px;padding:6px 8px;
+  border-radius:3px;margin:5px 0;border:1px solid rgba(107,72,32,.35);
+  background:rgba(0,0,0,.3);}
+.ti-ore-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;
+  box-shadow:0 0 6px currentColor;}
+.ti-ore-name{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-lt);}
+.ti-ore-qty{font-family:'Cinzel',serif;font-size:7.5px;color:var(--parch-dk);margin-top:1px;}
+.ti-btn{width:100%;margin-top:6px;background:rgba(40,22,5,.9);border:1px solid var(--border);
+  color:var(--parch-dk);padding:6px 5px;border-radius:3px;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.7px;transition:all .15s;text-align:center;}
+.ti-btn:hover{background:rgba(70,40,8,.95);border-color:var(--gold);color:var(--parch-lt);}
+.ti-btn.active{background:rgba(80,48,10,.95);border-color:var(--gold-br);color:var(--gold-br);}
+.ti-close{position:absolute;top:7px;right:9px;font-size:13px;line-height:1;
+  color:var(--parch-dk);cursor:pointer;font-family:sans-serif;font-weight:700;transition:color .15s;}
+.ti-close:hover{color:var(--parch-lt);}
+/* ══════════════════════════════════
+   SIDE PANEL WINDOWS
+══════════════════════════════════ */
+.sp-win{
+  position:fixed;top:calc(var(--TH)+3px);right:58px;
+  bottom:var(--BH);width:320px;z-index:200;
+  background:linear-gradient(160deg,#110800,#1c0f04);
+  border:1.5px solid var(--gold);border-radius:6px 0 0 6px;
+  display:none;flex-direction:column;overflow:hidden;
+  box-shadow:-6px 0 24px rgba(0,0,0,.7);
+}
+.sp-win.open{display:flex;}
+.sp-win-hdr{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 16px 11px;border-bottom:1px solid rgba(107,72,32,.5);
+  flex-shrink:0;
+}
+.sp-win-ico{font-size:20px;}
+.sp-win-title{font-family:'Cinzel',serif;font-size:15px;font-weight:700;
+  color:var(--gold-br);letter-spacing:.8px;flex:1;}
+.sp-win-close{font-size:18px;color:var(--parch-dk);cursor:pointer;
+  font-family:sans-serif;font-weight:700;line-height:1;transition:color .15s;padding:2px 4px;}
+.sp-win-close:hover{color:var(--parch-lt);}
+.sp-win-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+.sp-win-body::-webkit-scrollbar{width:4px;}
+.sp-win-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* Section heading inside panels */
+.sp-sec{font-family:'Cinzel',serif;font-size:10px;color:var(--gold);
+  letter-spacing:2px;text-transform:uppercase;margin-top:4px;
+  padding-bottom:5px;border-bottom:1px solid rgba(107,72,32,.35);}
+
+/* Setting row */
+.sp-row{display:flex;align-items:center;gap:10px;padding:7px 0;
+  border-bottom:1px solid rgba(107,72,32,.15);}
+.sp-row-lbl{font-family:'Cinzel',serif;font-size:11px;color:var(--parch-lt);flex:1;}
+.sp-row-sub{font-family:'Cinzel',serif;font-size:9px;color:var(--parch-dk);margin-top:2px;}
+
+/* Toggle switch */
+.sp-toggle{width:42px;height:22px;background:rgba(0,0,0,.5);border:1px solid var(--border);
+  border-radius:11px;cursor:pointer;position:relative;transition:background .2s,border-color .2s;flex-shrink:0;}
+.sp-toggle.on{background:var(--gold);border-color:var(--gold-br);}
+.sp-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;
+  background:var(--parch-dk);border-radius:50%;transition:transform .2s,background .2s;}
+.sp-toggle.on::after{transform:translateX(20px);background:var(--ink);}
+
+/* Zoom control */
+.zoom-ctrl{display:flex;align-items:center;gap:8px;}
+.zoom-btn{width:30px;height:30px;background:rgba(0,0,0,.5);border:1px solid var(--border);
+  border-radius:4px;cursor:pointer;font-size:16px;font-family:sans-serif;font-weight:700;
+  color:var(--parch-lt);display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;user-select:none;}
+.zoom-btn:hover{background:rgba(65,38,10,.8);border-color:var(--gold);}
+.zoom-btn:active{transform:scale(.92);}
+.zoom-lbl{font-family:'Cinzel',serif;font-size:13px;color:var(--gold-br);
+  width:42px;text-align:center;flex-shrink:0;}
+.zoom-track{flex:1;height:6px;background:rgba(0,0,0,.5);border:1px solid var(--border);
+  border-radius:3px;position:relative;cursor:pointer;}
+.zoom-fill{height:100%;background:linear-gradient(90deg,var(--parch-dk),var(--gold-br));
+  border-radius:3px;transition:width .1s;}
+
+/* Tech tree item */
+.tech-item{display:flex;align-items:flex-start;gap:10px;padding:8px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(107,72,32,.3);border-radius:4px;}
+.tech-item.locked{opacity:.4;}
+.tech-ic{font-size:20px;flex-shrink:0;line-height:1.2;}
+.tech-info{flex:1;}
+.tech-name{font-family:'Cinzel',serif;font-size:11px;color:var(--parch-lt);}
+.tech-desc{font-family:'IM Fell English',serif;font-size:10px;color:var(--parch-dk);
+  margin-top:2px;line-height:1.4;}
+.tech-era{font-family:'Cinzel',serif;font-size:9px;color:var(--gold);margin-top:3px;}
+.tech-badge{font-family:'Cinzel',serif;font-size:8px;padding:1px 6px;border-radius:10px;
+  flex-shrink:0;align-self:flex-start;margin-top:2px;}
+.tech-badge.done{background:rgba(74,140,63,.25);color:#7cd870;border:1px solid #4a8c3f;}
+.tech-badge.avail{background:rgba(212,165,32,.2);color:var(--gold-br);border:1px solid var(--gold);}
+.tech-badge.lock{background:rgba(0,0,0,.3);color:var(--parch-dk);border:1px solid var(--border);}
+
+/* Faction row */
+.fac-row{display:flex;align-items:center;gap:10px;padding:8px;
+  background:rgba(0,0,0,.25);border:1px solid rgba(107,72,32,.25);border-radius:4px;}
+.fac-ic{font-size:20px;flex-shrink:0;}
+.fac-info{flex:1;}
+.fac-name{font-family:'Cinzel',serif;font-size:11px;color:var(--parch-lt);}
+.fac-status{font-family:'Cinzel',serif;font-size:9px;margin-top:2px;}
+.fac-bar-wrap{width:80px;height:6px;background:rgba(0,0,0,.5);
+  border:1px solid var(--border);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.fac-bar{height:100%;border-radius:3px;transition:width .4s;}
+
+/* Codex entry */
+.cod-entry{padding:7px 10px;background:rgba(0,0,0,.25);
+  border:1px solid rgba(107,72,32,.25);border-radius:4px;}
+.cod-head{font-family:'Cinzel',serif;font-size:11px;color:var(--gold-br);cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;}
+.cod-body{font-family:'IM Fell English',serif;font-size:11px;color:var(--parch-dk);
+  line-height:1.6;margin-top:7px;display:none;}
+.cod-entry.open .cod-body{display:block;}
+.cod-entry.open .cod-head{color:var(--gold);}
+
+/* Colony overview stat */
+.cov-stat{display:flex;align-items:center;gap:10px;padding:5px 0;}
+.cov-ic{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
+.cov-lbl{font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);width:80px;flex-shrink:0;}
+.cov-val{font-family:'Cinzel',serif;font-size:14px;color:var(--parch-lt);font-weight:600;}
+.cov-note{font-family:'Cinzel',serif;font-size:9px;color:var(--parch-dk);margin-left:auto;}
+
+/* ══════════════════════════════════
+   LIGHT MODE
+══════════════════════════════════ */
+body.light-mode{background:#e8d8b0;}
+body.light-mode #gc{background:#c8daa0;}
+body.light-mode #tb{
+  background:linear-gradient(180deg,#f5e8c8 0%,#e8d4a0 65%,rgba(232,212,160,.96) 100%);
+  border-bottom-color:#8b6820;}
+body.light-mode #bh{
+  background:linear-gradient(0deg,#d4c090 0%,#e0ccaa 70%,rgba(224,204,170,.97) 100%);
+  border-top-color:#8b6820;}
+body.light-mode #ep{background:rgba(139,104,32,.2);}
+body.light-mode #sp{background:rgba(240,224,192,.95);border-left-color:#a07828;}
+body.light-mode .stb{background:rgba(255,255,255,.5);border-color:#a07828;}
+body.light-mode .stb:hover{background:rgba(212,165,32,.3);}
+body.light-mode .ri{background:rgba(255,255,255,.5);border-color:rgba(139,104,32,.5);}
+body.light-mode .ri-v{color:#2a1a08;}
+body.light-mode .ri-lb{color:#7a5a28;}
+body.light-mode .datetime{background:linear-gradient(135deg,#f0d890,#e0c060);}
+body.light-mode .dt-era{color:#8b5e20;}
+body.light-mode .dt-date{color:#2a1a08;}
+body.light-mode #town-panel{border-right-color:#a07828;}
+body.light-mode .town-name{color:#8b5010;}
+body.light-mode .town-sub{color:#7a5a28;}
+body.light-mode .tstat-lb{color:#7a5a28;}
+body.light-mode .tstat-val{color:#5a3a10;}
+body.light-mode .tstat-bw{background:rgba(0,0,0,.1);}
+body.light-mode .tab{background:rgba(255,255,255,.4);border-color:#a07828;color:#7a5a28;}
+body.light-mode .tab.on{background:rgba(212,165,32,.3);border-color:#8b5010;color:#5a2800;}
+body.light-mode .btn{background:linear-gradient(135deg,rgba(240,220,180,.9),rgba(220,196,148,.9));border-color:#a07828;}
+body.light-mode .btn:hover{background:linear-gradient(135deg,rgba(255,235,190,.95),rgba(240,215,165,.95));border-color:#8b5010;}
+body.light-mode .bl{color:#7a5a28;}
+body.light-mode .btn:hover .bl{color:#2a1a08;}
+body.light-mode .ssn,.pop-pill{background:rgba(255,255,255,.4);}
+body.light-mode .sb{background:rgba(255,255,255,.5);border-color:#a07828;color:#2a1a08;}
+body.light-mode .sb.on{background:#d4a520;color:#fff;}
+body.light-mode .sp-win{background:linear-gradient(160deg,#f0e0c0,#e8d0a0);border-color:#8b6820;}
+body.light-mode .sp-win-title{color:#5a2800;}
+body.light-mode .sp-sec{color:#8b5010;}
+body.light-mode .sp-row-lbl{color:#2a1a08;}
+body.light-mode .sp-row-sub{color:#7a5a28;}
+body.light-mode .tech-name,.fac-name,.cov-val{color:#2a1a08;}
+body.light-mode .tech-desc,.fac-status,.cod-body,.cov-note{color:#7a5a28;}
+body.light-mode .cod-head{color:#8b5010;}
+body.light-mode .tech-item,.fac-row,.cod-entry,.cov-stat-box{background:rgba(255,255,255,.3);border-color:rgba(139,104,32,.3);}
+body.light-mode #mp{border-left-color:#a07828;}
+body.light-mode .mmb{background:rgba(255,255,255,.4);border-color:#a07828;color:#5a3a10;}
+body.light-mode .a{background:rgba(240,224,192,.95);border-color:#a07828;}
+body.light-mode .a-tx{color:#2a1a08;}
+</style>
+</head>
+<body>
+
+<!-- MAP -->
+<div id="gc">
+  <canvas id="terrain-cv" style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;"></canvas>
+  <canvas id="entity-cv"  style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;"></canvas>
+  <canvas id="fog-cv"     style="position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;"></canvas>
+</div>
+<!-- MAP GENERATION LOADING OVERLAY -->
+<div id="mapLoading" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(10,6,2,.96);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-family:'Cinzel',serif;font-size:24px;color:var(--gold-br);letter-spacing:3px;">Age of America</div>
+  <div style="font-family:'IM Fell English',serif;font-size:13px;color:var(--parch-dk);letter-spacing:1px;">Generating the New World...</div>
+  <div style="width:260px;height:7px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;">
+    <div id="loadBar" style="height:100%;background:linear-gradient(90deg,var(--parch-dk),var(--gold-br));border-radius:3px;transition:width .3s ease;width:0%;"></div>
+  </div>
+  <div id="loadMsg" style="font-family:'Cinzel',serif;font-size:10px;color:var(--parch-dk);letter-spacing:1px;">Shaping coastlines...</div>
+</div>
+<div id="ep"><div id="ef" style="width:5%"></div></div>
+
+<!-- TOP BAR -->
+<div id="tb">
+  <div id="r1">
+
+    <!-- Date + time badge -->
+    <div class="datetime">
+      <div class="dt-era" id="dtEra">First Contact</div>
+      <div class="dt-date" id="dtDate">May 14, 1607</div>
+      <div class="dt-time" id="dtTime">06:00 AM · Spring</div>
+    </div>
+
+    <!-- Resources -->
+    <div id="rs">
+      <div class="ri" onmouseenter="tip(event,'Lumber','Core building material — needed for almost everything')" onmouseleave="htip()">
+        <span class="ri-ic">🪵</span><div class="ri-c"><span class="ri-lb">Wood</span><span class="ri-v" id="vW">450</span></div></div>
+      <div class="ri" onmouseenter="tip(event,'Stone','Needed for permanent structures and roads')" onmouseleave="htip()">
+        <span class="ri-ic">🪨</span><div class="ri-c"><span class="ri-lb">Stone</span><span class="ri-v" id="vS">120</span></div></div>
+      <div class="ri" onmouseenter="tip(event,'Food','Settlers starve without it — stock for winter')" onmouseleave="htip()">
+        <span class="ri-ic">🥩</span><div class="ri-c"><span class="ri-lb">Food</span><span class="ri-v w" id="vF">218</span></div></div>
+      <div class="ri" onmouseenter="tip(event,'Water','Settlers die in days without clean water')" onmouseleave="htip()">
+        <span class="ri-ic">💧</span><div class="ri-c"><span class="ri-lb">Water</span><span class="ri-v c" id="vH">42</span></div></div>
+      <div class="ri" onmouseenter="tip(event,'Fur & Hide','Trade commodity; also used for clothing')" onmouseleave="htip()">
+        <span class="ri-ic">🦫</span><div class="ri-c"><span class="ri-lb">Fur</span><span class="ri-v" id="vFr">88</span></div></div>
+      <div class="ri" onmouseenter="tip(event,'Iron','Smelted for tools, weapons and machinery')" onmouseleave="htip()">
+        <span class="ri-ic">⚙️</span><div class="ri-c"><span class="ri-lb">Iron</span><span class="ri-v" id="vI">0</span></div></div>
+      <div class="ri" onmouseenter="tip(event,'Gold','Trade currency — use with Europe and other colonies')" onmouseleave="htip()">
+        <span class="ri-ic">🪙</span><div class="ri-c"><span class="ri-lb">Gold</span><span class="ri-v" id="vG">25</span></div></div>
+    </div>
+
+    <!-- Desktop right: season, pop, speed -->
+    <div id="tr">
+      <div class="ssn"><span class="ssn-i" id="si1">🌱</span><span class="ssn-l" id="sl1">Spring</span></div>
+      <div class="pop-pill">
+        <span style="font-size:16px">👥</span>
+        <em id="pn1">47</em><span>/<span id="pm1">60</span></span>
+      </div>
+      <div class="spds">
+        <div class="sb" id="d0" onclick="setSp(0)" title="Pause">⏸</div>
+        <div class="sb on" id="d1" onclick="setSp(1)" title="Normal speed">▶</div>
+        <div class="sb" id="d2" onclick="setSp(2)" title="Fast">▶▶</div>
+        <div class="sb" id="d3" onclick="setSp(3)" title="Very fast">▶▶▶</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile row 2 -->
+  <div id="r2">
+    <div class="ssn"><span class="ssn-i" id="si2">🌱</span><span class="ssn-l" id="sl2">Spring</span></div>
+    <div class="pop-pill" style="flex:1">
+      <span style="font-size:16px">👥</span>
+      <em id="pn2">47</em><span>/<span id="pm2">60</span></span>
+    </div>
+    <div class="spds">
+      <div class="sb" id="m0" onclick="setSp(0)">⏸</div>
+      <div class="sb on" id="m1" onclick="setSp(1)">▶</div>
+      <div class="sb" id="m2" onclick="setSp(2)">▶▶</div>
+      <div class="sb" id="m3" onclick="setSp(3)">▶▶▶</div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS -->
+<div id="al"></div>
+
+<!-- BOTTOM HUD -->
+<div id="bh">
+
+  <!-- TOWN PANEL -->
+  <div id="town-panel">
+    <div class="town-header">
+      <span class="town-icon">🏘️</span>
+      <div class="town-title">
+        <div class="town-name" id="tnName">Jamestown</div>
+        <div class="town-sub" id="tnSub">Founded 1607 · Pop. 47</div>
+      </div>
+    </div>
+
+    <!-- Town stats -->
+    <div class="tstat">
+      <span class="tstat-ic">👥</span><span class="tstat-lb">Population</span>
+      <div class="tstat-bw"><div class="tstat-bar pop" id="tbPop" style="width:78%"></div></div>
+      <span class="tstat-val" id="tvPop">47/60</span>
+    </div>
+    <div class="tstat">
+      <span class="tstat-ic">🥩</span><span class="tstat-lb">Food Supply</span>
+      <div class="tstat-bw"><div class="tstat-bar food" id="tbFood" style="width:42%"></div></div>
+      <span class="tstat-val" id="tvFood">42%</span>
+    </div>
+    <div class="tstat">
+      <span class="tstat-ic">💧</span><span class="tstat-lb">Water Supply</span>
+      <div class="tstat-bw"><div class="tstat-bar water" id="tbWater" style="width:18%"></div></div>
+      <span class="tstat-val" id="tvWater">18%</span>
+    </div>
+    <div class="tstat">
+      <span class="tstat-ic">😊</span><span class="tstat-lb">Happiness</span>
+      <div class="tstat-bw"><div class="tstat-bar mood" id="tbMood" style="width:65%"></div></div>
+      <span class="tstat-val" id="tvMood">65%</span>
+    </div>
+    <div class="tstat">
+      <span class="tstat-ic">🛡️</span><span class="tstat-lb">Defense</span>
+      <div class="tstat-bw"><div class="tstat-bar def" id="tbDef" style="width:30%"></div></div>
+      <span class="tstat-val" id="tvDef">30%</span>
+    </div>
+
+    <!-- Town selector tabs -->
+    <div class="town-tabs" id="townTabs">
+      <div class="town-tab on" onclick="selectTown(this,0)">Jamestown</div>
+    </div>
+  </div>
+
+  <!-- ACTION PANEL -->
+  <div id="ap">
+    <div class="tabs">
+      <div class="tab on"  onclick="swTab(this,'build')">Build</div>
+      <div class="tab"     onclick="swTab(this,'workers')">Workers</div>
+      <div class="tab"     onclick="swTab(this,'policy')">Policy</div>
+      <div class="tab"     onclick="swTab(this,'military')">Military</div>
+      <div class="tab"     onclick="swTab(this,'research')">Research</div>
+      <div class="tab"     onclick="swTab(this,'roads')">Roads</div>
+      <div class="tab"     onclick="swTab(this,'diplomacy')">Diplomacy</div>
+    </div>
+
+    <!-- BUILD -->
+    <div class="grid" id="tab-build">
+      <div class="btn" onmouseenter="tip(event,'Lean-to Shelter','Temp shelter; auto-assigned to 2 settlers','20 Logs, 10 Thatch')" onmouseleave="htip()">
+        <span class="bk">Q</span><span class="bi">🏕️</span><span class="bl">Lean-to Shelter</span><span class="bc">20🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Log Cabin','Permanent housing for 4 settlers','60 Logs, 10 Stone')" onmouseleave="htip()">
+        <span class="bk">W</span><span class="bi">🏠</span><span class="bl">Log Cabin</span><span class="bc">60🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Storehouse','Increases food and resource storage capacity','80 Logs, 40 Stone')" onmouseleave="htip()">
+        <span class="bk">E</span><span class="bi">🏚️</span><span class="bl">Storehouse</span><span class="bc">80🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Well','Provides steady clean water to the town','20 Stone, 10 Wood')" onmouseleave="htip()">
+        <span class="bk">R</span><span class="bi">🪣</span><span class="bl">Well</span><span class="bc">20🪨</span></div>
+      <div class="btn" onmouseenter="tip(event,'Palisade Wall','Defensive perimeter; deters raids','15 Logs/segment')" onmouseleave="htip()">
+        <span class="bk">T</span><span class="bi">🛡️</span><span class="bl">Palisade Wall</span><span class="bc">15🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Fire Pit','Cooking; morale boost at night','5 Stone, 5 Logs')" onmouseleave="htip()">
+        <span class="bi">🔥</span><span class="bl">Fire Pit</span><span class="bc">5🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Smokehouse','Preserve meat and fish for winter storage','30 Logs, 15 Stone')" onmouseleave="htip()">
+        <span class="bi">🏭</span><span class="bl">Smokehouse</span><span class="bc">30🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Watch Tower','Expands sight range; alerts to approaching threats','40 Logs, 10 Stone')" onmouseleave="htip()">
+        <span class="bi">🗼</span><span class="bl">Watch Tower</span><span class="bc">40🪵</span></div>
+      <div class="btn" onmouseenter="tip(event,'Farm Plot','Settlers auto-till and harvest crops each season','30 Logs, 20 Stone')" onmouseleave="htip()">
+        <span class="bi">🌾</span><span class="bl">Farm Plot</span><span class="bc">30🪵</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Blacksmith','Requires Iron ore — not yet discovered','50 Logs, 80 Stone, 40 Iron')" onmouseleave="htip()">
+        <span class="bi">⚒️</span><span class="bl">Blacksmith</span><span class="bc">🔒</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Church','Boosts happiness; unlocks Colony Charter','100 Logs, 60 Stone')" onmouseleave="htip()">
+        <span class="bi">⛪</span><span class="bl">Church</span><span class="bc">🔒</span></div>
+    </div>
+
+    <!-- WORKERS — assign town roles, not individuals -->
+    <div class="grid" id="tab-workers" style="display:none">
+      <div class="btn" onmouseenter="tip(event,'Woodcutters','Set how many settlers gather lumber automatically')" onmouseleave="htip()">
+        <span class="bi">🪓</span><span class="bl">Woodcutters</span><span class="bc" id="wkWood">8</span></div>
+      <div class="btn" onmouseenter="tip(event,'Farmers','Set how many settlers tend crops and harvest food')" onmouseleave="htip()">
+        <span class="bi">🌾</span><span class="bl">Farmers</span><span class="bc" id="wkFarm">6</span></div>
+      <div class="btn" onmouseenter="tip(event,'Hunters','Set how many settlers hunt game in nearby wilderness')" onmouseleave="htip()">
+        <span class="bi">🏹</span><span class="bl">Hunters</span><span class="bc" id="wkHunt">4</span></div>
+      <div class="btn" onmouseenter="tip(event,'Fishers','Set how many settlers fish rivers and coastline')" onmouseleave="htip()">
+        <span class="bi">🎣</span><span class="bl">Fishers</span><span class="bc" id="wkFish">3</span></div>
+      <div class="btn" onmouseenter="tip(event,'Miners','Set how many settlers mine stone and ore')" onmouseleave="htip()">
+        <span class="bi">⛏️</span><span class="bl">Miners</span><span class="bc" id="wkMine">2</span></div>
+      <div class="btn" onmouseenter="tip(event,'Builders','Set how many settlers construct queued buildings')" onmouseleave="htip()">
+        <span class="bi">🔨</span><span class="bl">Builders</span><span class="bc" id="wkBuild">8</span></div>
+      <div class="btn" onmouseenter="tip(event,'Guards','Set how many settlers patrol the town perimeter')" onmouseleave="htip()">
+        <span class="bi">🛡️</span><span class="bl">Guards</span><span class="bc" id="wkGuard">4</span></div>
+      <div class="btn" onmouseenter="tip(event,'Traders','Set how many settlers run the trading post')" onmouseleave="htip()">
+        <span class="bi">🤝</span><span class="bl">Traders</span><span class="bc" id="wkTrade">2</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Doctors','Requires Herbalist Hut — reduces disease deaths')" onmouseleave="htip()">
+        <span class="bi">💊</span><span class="bl">Doctors</span><span class="bc">🔒</span></div>
+    </div>
+
+    <!-- POLICY -->
+    <div class="grid" id="tab-policy" style="display:none">
+      <div class="btn" onmouseenter="tip(event,'Tax Rate','Higher taxes grow treasury; lower taxes raise happiness')" onmouseleave="htip()">
+        <span class="bi">📜</span><span class="bl">Tax Rate</span></div>
+      <div class="btn" onmouseenter="tip(event,'Ration Level','Full rations keep morale high; reduced rations save food in lean times')" onmouseleave="htip()">
+        <span class="bi">🍽️</span><span class="bl">Ration Level</span></div>
+      <div class="btn" onmouseenter="tip(event,'Work Hours','More hours = faster production but lower happiness')" onmouseleave="htip()">
+        <span class="bi">⏰</span><span class="bl">Work Hours</span></div>
+      <div class="btn" onmouseenter="tip(event,'Expansion Policy','Open borders invite new settlers; closed borders protect resources')" onmouseleave="htip()">
+        <span class="bi">🗺️</span><span class="bl">Expansion Policy</span></div>
+      <div class="btn" onmouseenter="tip(event,'Trade Agreements','Open trade with nearby factions to exchange surplus resources')" onmouseleave="htip()">
+        <span class="bi">🚢</span><span class="bl">Trade Agreements</span></div>
+      <div class="btn" onmouseenter="tip(event,'Settler Rights','Affects loyalty and migration; too harsh triggers unrest')" onmouseleave="htip()">
+        <span class="bi">⚖️</span><span class="bl">Settler Rights</span></div>
+    </div>
+
+    <!-- MILITARY -->
+    <div class="grid" id="tab-military" style="display:none">
+      <div class="btn" onmouseenter="tip(event,'Train Militia','Raise an armed force from your settler population','10 Gold, 5 Iron')" onmouseleave="htip()">
+        <span class="bi">⚔️</span><span class="bl">Train Militia</span><span class="bc">10🪙</span></div>
+      <div class="btn" onmouseenter="tip(event,'Build Barracks','Permanent military training facility','60 Logs, 40 Stone')" onmouseleave="htip()">
+        <span class="bi">🏰</span><span class="bl">Build Barracks</span></div>
+      <div class="btn" onmouseenter="tip(event,'Send Scout Party','Reveals fog of war in surrounding region','5 Gold')" onmouseleave="htip()">
+        <span class="bi">🔭</span><span class="bl">Send Scout Party</span><span class="bc">5🪙</span></div>
+      <div class="btn" onmouseenter="tip(event,'Set Defense Level','Allocate militia to town defense vs. offensive patrol')" onmouseleave="htip()">
+        <span class="bi">🛡️</span><span class="bl">Defense Level</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Artillery','Unlocks 1650+ with Blacksmith and Iron supply')" onmouseleave="htip()">
+        <span class="bi">💣</span><span class="bl">Artillery</span><span class="bc">🔒</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Cavalry','Requires horses — obtained via trade or taming')" onmouseleave="htip()">
+        <span class="bi">🐎</span><span class="bl">Cavalry</span><span class="bc">🔒</span></div>
+    </div>
+
+    <!-- RESEARCH -->
+    <div class="grid" id="tab-research" style="display:none">
+      <div class="btn" onmouseenter="tip(event,'Better Axes','+25% lumber gathering town-wide','50 Wood, 5 Gold')" onmouseleave="htip()">
+        <span class="bi">🪓</span><span class="bl">Better Axes</span></div>
+      <div class="btn" onmouseenter="tip(event,'Crop Rotation','Doubles farm yield in growing season','30 Gold')" onmouseleave="htip()">
+        <span class="bi">🌾</span><span class="bl">Crop Rotation</span></div>
+      <div class="btn" onmouseenter="tip(event,'Preservation','Extends food storage life through winter','20 Gold')" onmouseleave="htip()">
+        <span class="bi">🫙</span><span class="bl">Preservation</span></div>
+      <div class="btn" onmouseenter="tip(event,'Medicine','Halves disease deaths town-wide','40 Gold + Herbalist')" onmouseleave="htip()">
+        <span class="bi">💊</span><span class="bl">Medicine</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Gunpowder','Unlocks muskets and cannon; requires Blacksmith')" onmouseleave="htip()">
+        <span class="bi">💣</span><span class="bl">Gunpowder</span><span class="bc">🔒</span></div>
+      <div class="btn lk" onmouseenter="tip(event,'Steam Power','Industrial era — unlocks factories and railroads')" onmouseleave="htip()">
+        <span class="bi">⚙️</span><span class="bl">Steam Power</span><span class="bc">🔒</span></div>
+    </div>
+
+    <!-- ROADS -->
+    <div class="grid" id="tab-roads" style="display:none">
+      <div class="btn" id="rd-dirt" onclick="rdMode('dirt')"
+        onmouseenter="tip(event,'Dirt Road','Era 1607–1700 · +15% travel speed · Click 2 map points to connect','5 Logs/tile')" onmouseleave="htip()">
+        <span class="bi">🛤️</span><span class="bl">Dirt Road</span><span class="bc">5🪵</span></div>
+      <div class="btn" id="rd-gravel" onclick="rdMode('gravel')"
+        onmouseenter="tip(event,'Gravel Road','Era 1700–1800 · +30% travel speed','10 Stone/tile')" onmouseleave="htip()">
+        <span class="bi">⬛</span><span class="bl">Gravel Road</span><span class="bc">10🪨</span></div>
+      <div class="btn lk" id="rd-brick"
+        onmouseenter="tip(event,'Brick Road','Era 1800–1870 · +50% travel speed · Unlocks 1800+','20 Stone, 5 Iron/tile')" onmouseleave="htip()">
+        <span class="bi">🧱</span><span class="bl">Brick Road</span><span class="bc">🔒</span></div>
+      <div class="btn lk" id="rd-paved"
+        onmouseenter="tip(event,'Paved Road','Era 1870–1920 · +75% travel speed · Unlocks 1870+','30 Stone/tile')" onmouseleave="htip()">
+        <span class="bi">🛣️</span><span class="bl">Paved Road</span><span class="bc">🔒</span></div>
+      <div class="btn lk" id="rd-concrete"
+        onmouseenter="tip(event,'Concrete Road','Era 1920+ · +100% travel speed · Unlocks 1920+','50 Stone, 20 Iron/tile')" onmouseleave="htip()">
+        <span class="bi">🏗️</span><span class="bl">Concrete Road</span><span class="bc">🔒</span></div>
+      <div class="btn" onclick="autoConnect()"
+        onmouseenter="tip(event,'Auto-Connect Towns','Build best available road between your nearest two towns')" onmouseleave="htip()">
+        <span class="bi">🔗</span><span class="bl">Auto-Connect Towns</span></div>
+      <div class="btn" onclick="upgradeRoads()"
+        onmouseenter="tip(event,'Upgrade All Roads','Upgrade every existing road to current era type')" onmouseleave="htip()">
+        <span class="bi">⬆️</span><span class="bl">Upgrade All</span></div>
+      <div class="btn" onclick="toggleRL()"
+        onmouseenter="tip(event,'Road Legend','See all road types and era requirements')" onmouseleave="htip()">
+        <span class="bi">🗺️</span><span class="bl">Road Legend</span></div>
+    </div>
+
+    <!-- DIPLOMACY -->
+    <div class="grid" id="tab-diplomacy" style="display:none">
+      <div class="btn"><span class="bi">🤝</span><span class="bl">Propose Trade</span></div>
+      <div class="btn"><span class="bi">📜</span><span class="bl">Send Envoy</span></div>
+      <div class="btn"><span class="bi">🎁</span><span class="bl">Send Gift</span></div>
+      <div class="btn"><span class="bi">⚔️</span><span class="bl">Declare War</span></div>
+      <div class="btn"><span class="bi">🏳️</span><span class="bl">Offer Peace</span></div>
+      <div class="btn"><span class="bi">🔭</span><span class="bl">Spy Mission</span></div>
+    </div>
+  </div>
+
+  <!-- MINIMAP -->
+  <div id="mp">
+    <div class="mmw" id="mmw">
+      <canvas id="mmc"></canvas>
+      <div class="mmv" id="mmv"></div>
+      <div class="mml">Map · 1607</div>
+    </div>
+    <div class="mmbs">
+      <div class="mmb" onclick="goHome()">⌂ Home</div>
+      <div class="mmb" onclick="nextTown()">▶ Town</div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDE PANEL -->
+<div id="sp">
+  <div class="stb on" id="ugBtn" onclick="spOpen('underground')" title="Underground View">⛏️<span class="stt">Underground View</span></div>
+  <div class="stb" id="spTech"    onclick="spOpen('tech')">📚<span class="stt">Technology</span></div>
+  <div class="stb" id="spColony"  onclick="spOpen('colony')">📊<span class="stt">Colony Overview</span></div>
+  <div class="stb" id="spFaction" onclick="spOpen('factions')">⚑<span class="stt">Factions</span></div>
+  <div class="stb" id="spCodex"   onclick="spOpen('codex')">📖<span class="stt">Codex</span></div>
+  <div class="stb" id="spSettings" onclick="spOpen('settings')">⚙️<span class="stt">Settings</span></div>
+</div>
+
+<!-- ── UNDERGROUND PANEL ── -->
+<div class="sp-win" id="win-underground">
+  <div class="sp-win-hdr">
+    <span class="sp-win-ico">⛏️</span>
+    <span class="sp-win-title">Underground View</span>
+    <span class="sp-win-close" onclick="spClose()">✕</span>
+  </div>
+  <div class="sp-win-body">
+    <div class="sp-sec">Subsurface Mode</div>
+    <div class="sp-row">
+      <div><div class="sp-row-lbl">Show Underground Layer</div><div class="sp-row-sub">Overlays known mineral deposits on the map</div></div>
+      <div class="sp-toggle" id="ugToggle" onclick="toggleUnderground()"></div>
+    </div>
+    <div class="sp-sec">How It Works</div>
+    <div style="font-family:'IM Fell English',serif;font-size:11px;color:var(--parch-dk);line-height:1.7;">
+      Click any land tile on the map to open the <b style="color:var(--parch-lt)">Tile Inspector</b>. From there, spend <b style="color:var(--gold)">5 Gold</b> to survey the ground beneath. If a resource is found, you can begin mining.<br><br>
+      Deposits marked <b style="color:var(--gold)">?</b> exist but are unsurveyed. Click to reveal them.
+    </div>
+    <div class="sp-sec">Ore Legend</div>
+    <div id="ugLegend" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+</div>
+
+<!-- ── TECHNOLOGY PANEL ── -->
+<div class="sp-win" id="win-tech">
+  <div class="sp-win-hdr">
+    <span class="sp-win-ico">📚</span>
+    <span class="sp-win-title">Technology</span>
+    <span class="sp-win-close" onclick="spClose()">✕</span>
+  </div>
+  <div class="sp-win-body" id="techBody"></div>
+</div>
+
+<!-- ── COLONY OVERVIEW PANEL ── -->
+<div class="sp-win" id="win-colony">
+  <div class="sp-win-hdr">
+    <span class="sp-win-ico">📊</span>
+    <span class="sp-win-title">Colony Overview</span>
+    <span class="sp-win-close" onclick="spClose()">✕</span>
+  </div>
+  <div class="sp-win-body" id="colonyBody"></div>
+</div>
+
+<!-- ── FACTIONS PANEL ── -->
+<div class="sp-win" id="win-factions">
+  <div class="sp-win-hdr">
+    <span class="sp-win-ico">⚑</span>
+    <span class="sp-win-title">Factions & Diplomacy</span>
+    <span class="sp-win-close" onclick="spClose()">✕</span>
+  </div>
+  <div class="sp-win-body" id="factionBody"></div>
+</div>
+
+<!-- ── CODEX PANEL ── -->
+<div class="sp-win" id="win-codex">
+  <div class="sp-win-hdr">
+    <span class="sp-win-ico">📖</span>
+    <span class="sp-win-title">Codex</span>
+    <span class="sp-win-close" onclick="spClose()">✕</span>
+  </div>
+  <div class="sp-win-body" id="codexBody"></div>
+</div>
+
+<!-- ── SETTINGS PANEL ── -->
+<div class="sp-win" id="win-settings">
+  <div class="sp-win-hdr">
+    <span class="sp-win-ico">⚙️</span>
+    <span class="sp-win-title">Settings</span>
+    <span class="sp-win-close" onclick="spClose()">✕</span>
+  </div>
+  <div class="sp-win-body">
+    <div class="sp-sec">Display</div>
+    <div class="sp-row">
+      <div><div class="sp-row-lbl">Light Mode</div><div class="sp-row-sub">Switch to parchment / daylight theme</div></div>
+      <div class="sp-toggle" id="lightToggle" onclick="toggleLightMode()"></div>
+    </div>
+
+    <div class="sp-sec">Map Zoom</div>
+    <div class="sp-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div class="zoom-ctrl">
+        <button class="zoom-btn" onclick="doZoom(-0.25)">−</button>
+        <div class="zoom-track" onclick="clickZoomTrack(event)">
+          <div class="zoom-fill" id="zoomFill" style="width:40%"></div>
+        </div>
+        <button class="zoom-btn" onclick="doZoom(+0.25)">+</button>
+        <div class="zoom-lbl" id="zoomLbl">100%</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="zoom-btn" style="width:auto;padding:0 10px;font-size:10px;font-family:'Cinzel',serif;" onclick="setZoom(0.5)">50%</button>
+        <button class="zoom-btn" style="width:auto;padding:0 10px;font-size:10px;font-family:'Cinzel',serif;" onclick="setZoom(0.75)">75%</button>
+        <button class="zoom-btn" style="width:auto;padding:0 10px;font-size:10px;font-family:'Cinzel',serif;" onclick="setZoom(1.0)">100%</button>
+        <button class="zoom-btn" style="width:auto;padding:0 10px;font-size:10px;font-family:'Cinzel',serif;" onclick="setZoom(1.5)">150%</button>
+        <button class="zoom-btn" style="width:auto;padding:0 10px;font-size:10px;font-family:'Cinzel',serif;" onclick="setZoom(2.0)">200%</button>
+      </div>
+    </div>
+
+    <div class="sp-sec">Game Speed</div>
+    <div class="sp-row">
+      <div><div class="sp-row-lbl">Normal Speed</div><div class="sp-row-sub" id="speedDesc">1 game-day ≈ 75 real seconds</div></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="zoom-btn" style="width:auto;flex:1;font-size:11px;font-family:'Cinzel',serif;" onclick="setSp(0)">⏸ Pause</button>
+      <button class="zoom-btn" style="width:auto;flex:1;font-size:11px;font-family:'Cinzel',serif;" onclick="setSp(1)">▶ Normal</button>
+      <button class="zoom-btn" style="width:auto;flex:1;font-size:11px;font-family:'Cinzel',serif;" onclick="setSp(2)">▶▶ Fast</button>
+      <button class="zoom-btn" style="width:auto;flex:1;font-size:11px;font-family:'Cinzel',serif;" onclick="setSp(3)">▶▶▶</button>
+    </div>
+
+    <div class="sp-sec">About</div>
+    <div style="font-family:'IM Fell English',serif;font-size:11px;color:var(--parch-dk);line-height:1.7;">
+      <b style="color:var(--parch-lt)">Age of America</b> — HUD Prototype v0.7<br>
+      A historical RTS spanning 1607–1920.<br><br>
+      <b style="color:var(--parch-lt)">Controls:</b> Click + drag to pan map. Click a tile to inspect it. Use speed buttons or this panel to control time.
+    </div>
+  </div>
+</div>
+
+<!-- ROAD LEGEND -->
+<div id="rl">
+  <div class="rl-t">Road Types — Unlocked by Era</div>
+  <div class="rl-r"><div class="rl-sw" style="background:#8B6A18"></div><div class="rl-n">Dirt Road · 1607–1700 · +15% speed</div></div>
+  <div class="rl-r"><div class="rl-sw" style="background:#706050"></div><div class="rl-n">Gravel Road · 1700–1800 · +30% speed</div></div>
+  <div class="rl-r"><div class="rl-sw" style="background:#9B4E28"></div><div class="rl-n">Brick Road · 1800–1870 · +50% speed</div></div>
+  <div class="rl-r"><div class="rl-sw" style="background:#484858"></div><div class="rl-n">Paved Road · 1870–1920 · +75% speed</div></div>
+  <div class="rl-r"><div class="rl-sw" style="background:#7C8090"></div><div class="rl-n">Concrete Road · 1920+ · +100% speed</div></div>
+  <div class="rl-note">A road auto-builds between towns when<br>a 2nd settlement is founded.</div>
+</div>
+<div id="rdbanner"></div>
+
+<!-- TILE INSPECTOR -->
+<div id="tile-inspect">
+  <span class="ti-close" onclick="closeTileInspect()">✕</span>
+  <div class="ti-hdr">
+    <div class="ti-icon-lg" id="ti-icon">🌿</div>
+    <div class="ti-titles">
+      <div class="ti-terrain" id="ti-name">Plains</div>
+      <div class="ti-coord" id="ti-coord">Tile 0, 0</div>
+    </div>
+  </div>
+  <div class="ti-row" id="ti-terrain-row">
+    <span>🗺️</span><span class="ti-val" id="ti-terrain-desc"></span>
+  </div>
+  <div id="ti-under-section">
+    <div class="ti-ore" id="ti-ore-row" style="display:none">
+      <div class="ti-ore-dot" id="ti-ore-dot"></div>
+      <div>
+        <div class="ti-ore-name" id="ti-ore-name">Iron Ore</div>
+        <div class="ti-ore-qty" id="ti-ore-qty">~200 units</div>
+      </div>
+    </div>
+    <div id="ti-unknown-row" class="ti-row" style="display:none">
+      <span>❓</span><span class="ti-val">Unknown — survey to reveal</span>
+    </div>
+    <div id="ti-empty-row" class="ti-row" style="display:none">
+      <span>—</span><span class="ti-val">No notable deposits</span>
+    </div>
+  </div>
+  <button class="ti-btn" id="ti-survey-btn" onclick="surveyTile()">🔍 Survey This Land (5 Gold)</button>
+  <button class="ti-btn" id="ti-mine-btn" onclick="toggleMining()" style="display:none">⛏️ Begin Mining</button>
+</div>
+<div id="ug-badge">⛏ Underground View Active</div>
+
+<!-- TOOLTIP -->
+<div id="tip"><div class="tip-t" id="tt"></div><div id="tb2"></div><div class="tip-c" id="tc"></div></div>
+
+<!-- EVENT SCROLL -->
+<div class="evm" id="ev">
+  <div class="evm-t">⚓ Landfall! — May 14, 1607</div>
+  <div class="evm-b">Your three ships anchor in the James River. 104 settlers step ashore onto Virginia soil.<br><br>
+  <em>Your settlers will work automatically. Set building priorities, assign worker roles, and manage town policy — they'll handle the rest.</em></div>
+  <div class="evm-d" onclick="dismissEv()">[ Tap to begin ]</div>
+</div>
+
+<!-- START OVERLAY -->
+<div id="so">
+  <div style="text-align:center">
+    <div class="tsub">A New World Awaits</div>
+    <div class="tmain">Age of <span>America</span></div>
+    <div class="ttag">"From the untamed shore to a nation forged in fire."</div>
+  </div>
+  <div class="dr">
+    <span class="dc">⚓</span>
+    <div style="display:flex;align-items:center;gap:5px;width:140px">
+      <div class="dl"></div><span style="color:var(--orn)">✦</span><div class="dl"></div>
+    </div>
+    <span class="dc">🌲</span>
+  </div>
+  <div style="text-align:center">
+    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--parch-dk);margin-bottom:10px">CHOOSE YOUR LANDING</div>
+    <div class="scrow">
+      <div class="sc sel" onclick="pickSc(this,'Jamestown',1607)"><span class="sc-ic">⚔️</span><span class="sc-n">Jamestown, Virginia</span><span class="sc-y">May 14, 1607</span></div>
+      <div class="sc" onclick="pickSc(this,'Plymouth',1620)"><span class="sc-ic">🙏</span><span class="sc-n">Plymouth, Massachusetts</span><span class="sc-y">Dec 21, 1620</span></div>
+      <div class="sc" onclick="pickSc(this,'New Amsterdam',1624)"><span class="sc-ic">🏴‍☠️</span><span class="sc-n">New Amsterdam</span><span class="sc-y">May 4, 1624</span></div>
+    </div>
+  </div>
+  <button class="ssbtn" onclick="startGame()">Begin Settlement</button>
+  <div class="ver">HUD PROTOTYPE v0.3 · Town Management · Date &amp; Time</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const MONTHS=['January','February','March','April','May','June',
+              'July','August','September','October','November','December'];
+const MONTH_DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+
+// Game starts May 14 1607 at 06:00
+const G={
+  yr:1607, month:5, dayOfMonth:14,
+  hr:6, min:0, season:'spring', spd:1, paused:false,
+  res:{wood:450,stone:120,food:218,water:42,fur:88,iron:0,gold:25},
+  pop:{n:47,max:60}, eraP:5,
+  towns:[{
+    x:10, y:12, name:'Jamestown', founded:'May 14, 1607',
+    pop:47, maxPop:60,
+    food:42, water:18, mood:65, def:30
+  }],
+  selectedTown:0,
+  roads:[], rdMode:null, rdStart:null,
+  cam:{x:0,y:0}, drag:false, ds:{x:0,y:0}, dc:{x:0,y:0},
+  zoom:1.0,
+};
+
+const ERAS=[
+  {n:'First Contact',     y:[1607,1700]},
+  {n:'Colonial Expansion',y:[1700,1775]},
+  {n:'Revolutionary War', y:[1775,1783]},
+  {n:'Westward Expansion',y:[1783,1850]},
+  {n:'Industrial Age',    y:[1850,1870]},
+  {n:'The Civil War',     y:[1861,1865]},
+  {n:'Gilded Age',        y:[1877,1920]},
+];
+
+const SSNS={spring:'🌱',summer:'☀️',autumn:'🍂',winter:'❄️'};
+
+const RD={
+  dirt:    {col:'#8B6A18',w:4,yr:1607,label:'Dirt Road'},
+  gravel:  {col:'#706050',w:5,yr:1700,label:'Gravel Road'},
+  brick:   {col:'#9B4E28',w:6,yr:1800,label:'Brick Road'},
+  paved:   {col:'#484858',w:7,yr:1870,label:'Paved Road'},
+  concrete:{col:'#7C8090',w:9,yr:1920,label:'Concrete Road'},
+};
+
+// ═══════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════
+function ordinal(n){
+  const s=['th','st','nd','rd'], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+function fmtDate(){
+  return MONTHS[G.month-1]+' '+G.dayOfMonth+', '+G.yr;
+}
+function fmtTime(){
+  const h12=G.hr===0?12:G.hr>12?G.hr-12:G.hr;
+  const ampm=G.hr<12?'AM':'PM';
+  return String(h12).padStart(2,'0')+':'+String(Math.floor(G.min)).padStart(2,'0')+' '+ampm;
+}
+function advanceDay(){
+  G.dayOfMonth++;
+  const dim=MONTH_DAYS[G.month-1];
+  if(G.dayOfMonth>dim){G.dayOfMonth=1;G.month++;}
+  if(G.month>12){G.month=1;G.yr++;}
+  const m=G.month;
+  G.season=m>=3&&m<=5?'spring':m>=6&&m<=8?'summer':m>=9&&m<=11?'autumn':'winter';
+  unlockRoads();
+  checkDemo();
+}
+
+// ═══════════════════════════════════════
+// MAP — Real US Continental (220×140 tiles)
+// 3-canvas stack: terrain (pre-rendered) / entity / fog
+// ═══════════════════════════════════════
+const terrainCV=document.getElementById('terrain-cv');
+const terrainCX=terrainCV.getContext('2d');
+const entityCV =document.getElementById('entity-cv');
+const entityCX =entityCV.getContext('2d');
+const fogCV    =document.getElementById('fog-cv');
+const fogCX    =fogCV.getContext('2d');
+const mv=document.getElementById('mmc');
+const mx=mv.getContext('2d');
+const cv=terrainCV; // alias — cv.width/height used throughout
+
+const TS=20, MW=220, MH=140;
+let tiles=[];
+
+// Tile type IDs
+const T={OCEAN:0,GULF:1,LAKE:2,COAST:3,E_FOREST:4,GRASS:5,
+         PLAINS:6,APPALACHIAN:7,ROCKY:8,DESERT:9,SWAMP:10,
+         RIVER:11,W_FOREST:12,TUNDRA:13,HARBOR:14};
+
+// Tile visual + info definitions
+const TILE_DEF={
+  [T.OCEAN]:      {col:'#1a3a5c',name:'Atlantic Ocean',    res:'Fishing · Trade Routes',    hist:'Gateway to Europe',        icon:'🌊'},
+  [T.GULF]:       {col:'#1e4d6b',name:'Gulf of Mexico',    res:'Fishing · Salt · Trade',    hist:'Spanish territory',        icon:'🌊'},
+  [T.LAKE]:       {col:'#2a5a8a',name:'Great Lakes',       res:'Fresh Water · Fishing',     hist:'Iroquois homeland',        icon:'💧'},
+  [T.COAST]:      {col:'#c8b878',name:'Coastline',         res:'Fishing · Harbors · Salt',  hist:'First landing sites',      icon:'🏖️'},
+  [T.E_FOREST]:   {col:'#3a6b3a',name:'Eastern Forest',    res:'Lumber · Game · Fur',       hist:'Ancient woodland',         icon:'🌲'},
+  [T.GRASS]:      {col:'#5a8a3a',name:'Grassland',         res:'Farming · Grazing',         hist:'Native hunting grounds',   icon:'🌾'},
+  [T.PLAINS]:     {col:'#8aa050',name:'Great Plains',      res:'Bison · Wheat · Grazing',   hist:'Buffalo Nation territory', icon:'🌾'},
+  [T.APPALACHIAN]:{col:'#7a6050',name:'Appalachian Mts.',  res:'Iron · Coal · Timber',      hist:'Natural western barrier',  icon:'⛰️'},
+  [T.ROCKY]:      {col:'#6a5848',name:'Rocky Mountains',   res:'Gold · Silver · Timber',    hist:'Impassable until 1840s',   icon:'🏔️'},
+  [T.DESERT]:     {col:'#c8a060',name:'Desert Southwest',  res:'Copper · Adobe · Salt',     hist:'Ancient Pueblo lands',     icon:'🏜️'},
+  [T.SWAMP]:      {col:'#2a7030',name:'Southern Swamp',    res:'Lumber · Fur · Rice',       hist:'Disease-ridden lowlands',  icon:'🌿'},
+  [T.RIVER]:      {col:'#3a7888',name:'River',             res:'Fresh Water · Trade · Fish',hist:'Lifeline of settlement',   icon:'🏞️'},
+  [T.W_FOREST]:   {col:'#4a7030',name:'Pacific Forest',    res:'Timber · Fur · Game',       hist:'Vast untouched wilderness',icon:'🌲'},
+  [T.TUNDRA]:     {col:'#a0b0c0',name:'Tundra',            res:'Fur · Game',                hist:'Extreme northern cold',    icon:'❄️'},
+  [T.HARBOR]:     {col:'#5888a8',name:'Natural Harbor',    res:'Trade · Shipbuilding · Fish',hist:'Prime settlement site',   icon:'⚓'},
+};
+
+// Starting positions on the real map
+const SCENARIO_ANCHORS={
+  'Jamestown':     {tx:Math.floor(MW*0.725), ty:Math.floor(MH*0.27)},
+  'Plymouth':      {tx:Math.floor(MW*0.755), ty:Math.floor(MH*0.14)},
+  'New Amsterdam': {tx:Math.floor(MW*0.733), ty:Math.floor(MH*0.19)},
+};
+
+// Underground resource definitions (unchanged)
+const UNDER_DEF={
+  stone:    {col:'#80807a',glow:'#aaa',label:'Stone',     icon:'🪨',era:1607,rarity:.72},
+  clay:     {col:'#a07858',glow:'#c9a',label:'Clay',      icon:'🧱',era:1607,rarity:.58},
+  limestone:{col:'#c0b898',glow:'#eee',label:'Limestone', icon:'⬜',era:1607,rarity:.42},
+  iron:     {col:'#c04828',glow:'#f84',label:'Iron Ore',  icon:'⚙️',era:1650,rarity:.30},
+  copper:   {col:'#b87830',glow:'#fb6',label:'Copper',    icon:'🔶',era:1650,rarity:.22},
+  coal:     {col:'#303028',glow:'#888',label:'Coal Seam', icon:'⬛',era:1750,rarity:.20},
+  granite:  {col:'#6e8888',glow:'#9bb',label:'Granite',   icon:'🗿',era:1700,rarity:.40},
+  silver:   {col:'#a8a8c0',glow:'#ccf',label:'Silver',    icon:'✨',era:1700,rarity:.07},
+  gold:     {col:'#d4a020',glow:'#fd0',label:'Gold',      icon:'🪙',era:1607,rarity:.04},
+};
+
+// ── Improved Perlin noise ─────────────────────────────────────────
+const PERM=(()=>{
+  const p=Array.from({length:256},(_,i)=>i);
+  for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]];}
+  return[...p,...p];
+})();
+function fade(t){return t*t*t*(t*(t*6-15)+10);}
+function lerp(a,b,t){return a+t*(b-a);}
+function gradP(h,x,y){const v=h&3;return(v<2?x:-x)+(v%2===0?y:-y);}
+function noise2(x,y){
+  const X=Math.floor(x)&255,Y=Math.floor(y)&255;
+  x-=Math.floor(x);y-=Math.floor(y);
+  const u=fade(x),v=fade(y),a=PERM[X]+Y,b=PERM[X+1]+Y;
+  return lerp(lerp(gradP(PERM[a],x,y),gradP(PERM[b],x-1,y),u),
+              lerp(gradP(PERM[a+1],x,y-1),gradP(PERM[b+1],x-1,y-1),u),v);
+}
+function octave(x,y,octs,persist){
+  let v=0,amp=1,freq=1,max=0;
+  for(let i=0;i<octs;i++){v+=noise2(x*freq,y*freq)*amp;max+=amp;amp*=persist;freq*=2;}
+  return v/max;
+}
+function tileRand(x,y,s=1){const r=Math.sin(x*127.1*s+y*311.7)*43758.5453;return r-Math.floor(r);}
+
+// ── US Outline polygon (normalized 0–1 coords) ──
+const US_OUTLINE=[
+  [0.72,0.05],[0.74,0.07],[0.75,0.10],[0.74,0.12],[0.76,0.13],[0.77,0.15],
+  [0.75,0.17],[0.76,0.19],[0.74,0.20],[0.75,0.22],[0.73,0.23],[0.74,0.25],
+  [0.72,0.26],[0.73,0.28],[0.71,0.30],[0.72,0.32],[0.70,0.34],
+  [0.71,0.36],[0.69,0.38],[0.70,0.40],[0.68,0.42],[0.69,0.44],
+  [0.67,0.46],[0.68,0.48],[0.66,0.50],[0.67,0.52],[0.65,0.53],
+  [0.66,0.55],[0.64,0.57],[0.65,0.59],[0.63,0.61],[0.62,0.63],
+  [0.63,0.65],[0.61,0.67],[0.60,0.70],[0.59,0.72],[0.58,0.74],
+  [0.56,0.77],[0.54,0.79],[0.52,0.80],[0.50,0.81],[0.48,0.80],
+  [0.46,0.79],[0.44,0.78],[0.42,0.77],[0.40,0.76],[0.38,0.75],
+  [0.36,0.74],[0.34,0.73],[0.32,0.72],[0.30,0.71],[0.28,0.72],
+  [0.26,0.73],[0.24,0.73],[0.22,0.72],[0.20,0.73],[0.18,0.74],
+  [0.16,0.73],[0.14,0.72],[0.12,0.73],[0.10,0.74],[0.08,0.73],
+  [0.06,0.72],[0.04,0.70],[0.03,0.67],[0.02,0.65],[0.02,0.60],
+  [0.02,0.55],[0.02,0.50],[0.03,0.45],[0.03,0.40],[0.02,0.35],
+  [0.02,0.30],[0.03,0.25],[0.04,0.22],[0.05,0.18],[0.06,0.15],
+  [0.06,0.12],[0.07,0.09],[0.08,0.07],[0.07,0.05],[0.08,0.03],
+  [0.09,0.05],[0.10,0.07],[0.09,0.09],[0.10,0.12],[0.09,0.14],
+  [0.08,0.16],[0.09,0.18],[0.08,0.20],[0.09,0.22],[0.08,0.24],
+  [0.09,0.26],[0.10,0.28],[0.09,0.30],[0.10,0.32],
+  [0.09,0.34],[0.10,0.36],[0.09,0.38],[0.10,0.40],
+  [0.11,0.38],[0.12,0.36],[0.13,0.34],[0.14,0.33],
+  [0.15,0.30],[0.17,0.28],[0.18,0.25],[0.20,0.22],[0.22,0.20],
+  [0.24,0.18],[0.26,0.16],[0.28,0.14],[0.30,0.12],[0.32,0.10],
+  [0.35,0.08],[0.38,0.07],[0.41,0.06],[0.44,0.06],[0.47,0.05],
+  [0.50,0.05],[0.53,0.05],[0.56,0.05],[0.59,0.05],[0.62,0.05],
+  [0.65,0.05],[0.67,0.05],[0.69,0.05],[0.70,0.05],[0.72,0.05],
+];
+const GREAT_LAKES=[
+  [[0.535,0.09],[0.56,0.09],[0.575,0.11],[0.565,0.13],[0.545,0.14],[0.525,0.13],[0.52,0.11]],
+  [[0.60,0.12],[0.615,0.14],[0.61,0.17],[0.595,0.19],[0.58,0.18],[0.578,0.15],[0.588,0.13]],
+  [[0.625,0.12],[0.645,0.13],[0.655,0.15],[0.645,0.17],[0.63,0.18],[0.615,0.17],[0.61,0.14]],
+  [[0.645,0.19],[0.665,0.19],[0.675,0.21],[0.66,0.22],[0.645,0.21]],
+  [[0.675,0.17],[0.695,0.17],[0.705,0.19],[0.695,0.20],[0.68,0.20],[0.672,0.19]],
+];
+function pointInPolygon(px,py,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+    if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
+function pointInAnyLake(px,py){
+  for(const lake of GREAT_LAKES) if(pointInPolygon(px,py,lake)) return true;
+  return false;
+}
+
+// ── Region classifier ─────────────────────
+function getRegion(nx,ny){
+  if(nx<0.15){return ny>0.55?'texas_south':ny>0.35?'texas':'california';}
+  if(nx<0.25){return ny>0.50?'gulf_coast':ny>0.30?'southwest':'pacific_nw';}
+  if(nx<0.38){return ny>0.60?'gulf_coast':ny>0.45?'southeast':ny>0.25?'great_plains':'northwest';}
+  if(nx<0.52){return ny>0.65?'deep_south':ny>0.45?'midwest':ny>0.20?'great_plains':'north_plains';}
+  if(nx<0.65){return ny>0.60?'florida':ny>0.45?'southeast':ny>0.25?'midwest':'great_lakes';}
+  return ny>0.55?'florida':ny>0.40?'southeast':ny>0.25?'mid_atlantic':'new_england';
+}
+function assignBiome(nx,ny,isLand,isCoast,isLake,region){
+  if(!isLand){if(isLake)return T.LAKE;return ny>0.60?T.GULF:T.OCEAN;}
+  if(isCoast){
+    const harbors=[[0.735,0.15],[0.720,0.22],[0.710,0.30],[0.695,0.38],[0.090,0.08],[0.088,0.14],[0.090,0.25],[0.190,0.74],[0.245,0.73]];
+    for(const[hx,hy] of harbors) if(Math.abs(nx-hx)<0.015&&Math.abs(ny-hy)<0.015) return T.HARBOR;
+    return T.COAST;
+  }
+  const n1=octave(nx*8,ny*8,4,0.5),n2=octave(nx*4+100,ny*4+100,3,0.6);
+  switch(region){
+    case 'new_england':case 'mid_atlantic': return n1>0.1?T.E_FOREST:T.APPALACHIAN;
+    case 'southeast':   return n2>0.15?T.E_FOREST:(n2<-0.2?T.SWAMP:T.GRASS);
+    case 'deep_south':case 'florida': return n1<-0.1?T.SWAMP:T.GRASS;
+    case 'gulf_coast':  return n1<0?T.SWAMP:T.GRASS;
+    case 'midwest':case 'great_lakes': return n1>0.2?T.E_FOREST:T.GRASS;
+    case 'great_plains':case 'north_plains': return T.PLAINS;
+    case 'southwest':   return n1>0.1?T.ROCKY:T.DESERT;
+    case 'texas':case 'texas_south': return n1>0.2?T.E_FOREST:(n2<-0.1?T.DESERT:T.PLAINS);
+    case 'california':  return ny<0.12?T.W_FOREST:(n1>0.1?T.W_FOREST:T.DESERT);
+    case 'pacific_nw':case 'northwest': return n1>-0.1?T.W_FOREST:T.ROCKY;
+    default: return T.GRASS;
+  }
+}
+
+// ── Major US rivers ───────────────────────
+const RIVER_PATHS=[
+  {pts:[[0.515,0.10],[0.510,0.15],[0.505,0.20],[0.500,0.25],[0.495,0.30],[0.490,0.35],[0.485,0.40],[0.482,0.45],[0.480,0.50],[0.478,0.55],[0.476,0.60],[0.474,0.65],[0.472,0.68],[0.470,0.71]],w:3},
+  {pts:[[0.28,0.18],[0.32,0.20],[0.36,0.22],[0.40,0.24],[0.44,0.26],[0.46,0.28],[0.48,0.30],[0.49,0.32],[0.495,0.35],[0.500,0.38]],w:2},
+  {pts:[[0.680,0.30],[0.660,0.32],[0.640,0.33],[0.620,0.34],[0.600,0.35],[0.580,0.36],[0.560,0.37],[0.540,0.38],[0.520,0.39],[0.500,0.40]],w:2},
+  {pts:[[0.660,0.40],[0.640,0.42],[0.620,0.43],[0.600,0.44],[0.575,0.45],[0.550,0.46],[0.530,0.47],[0.510,0.48],[0.495,0.49]],w:1},
+  {pts:[[0.22,0.28],[0.20,0.32],[0.18,0.36],[0.16,0.40],[0.14,0.44],[0.12,0.50],[0.10,0.55],[0.08,0.60],[0.06,0.65]],w:2},
+  {pts:[[0.22,0.22],[0.19,0.25],[0.16,0.27],[0.13,0.29],[0.10,0.31],[0.09,0.33]],w:2},
+  {pts:[[0.720,0.16],[0.718,0.19],[0.716,0.22],[0.714,0.25],[0.713,0.27]],w:1},
+  {pts:[[0.695,0.31],[0.700,0.33],[0.705,0.35],[0.710,0.37],[0.712,0.39]],w:1},
+  {pts:[[0.20,0.38],[0.17,0.44],[0.14,0.50],[0.11,0.56],[0.08,0.62],[0.06,0.68]],w:1},
+  {pts:[[0.695,0.17],[0.710,0.16],[0.725,0.14],[0.738,0.12]],w:2},
+  {pts:[[0.33,0.38],[0.37,0.42],[0.41,0.46],[0.45,0.50],[0.478,0.53]],w:1},
+];
+const MOUNTAIN_ZONES=[
+  {x0:0.69,y0:0.10,x1:0.65,y1:0.50,width:0.025,type:T.APPALACHIAN},
+  {x0:0.67,y0:0.35,x1:0.63,y1:0.55,width:0.018,type:T.APPALACHIAN},
+  {x0:0.26,y0:0.12,x1:0.18,y1:0.55,width:0.040,type:T.ROCKY},
+  {x0:0.13,y0:0.10,x1:0.11,y1:0.30,width:0.020,type:T.ROCKY},
+  {x0:0.13,y0:0.28,x1:0.11,y1:0.40,width:0.018,type:T.ROCKY},
+  {x0:0.49,y0:0.40,x1:0.46,y1:0.50,width:0.022,type:T.APPALACHIAN},
+];
+function carveRivers(){
+  for(const river of RIVER_PATHS){
+    for(let p=0;p<river.pts.length-1;p++){
+      const[x0,y0]=river.pts[p],[x1,y1]=river.pts[p+1];
+      const steps=Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))*MW*2);
+      for(let s=0;s<=steps;s++){
+        const t=s/steps;
+        const rx=Math.round((x0+(x1-x0)*t)*MW),ry=Math.round((y0+(y1-y0)*t)*MH);
+        for(let dy2=-Math.floor(river.w/2);dy2<=Math.floor(river.w/2);dy2++)
+        for(let dx2=-Math.floor(river.w/2);dx2<=Math.floor(river.w/2);dx2++){
+          const tx2=rx+dx2,ty2=ry+dy2;
+          if(tx2>=0&&tx2<MW&&ty2>=0&&ty2<MH){
+            const tile=tiles[ty2]?.[tx2];
+            if(tile&&tile.type!==T.OCEAN&&tile.type!==T.GULF&&tile.type!==T.LAKE){
+              tile.type=T.RIVER;tile.isRiver=true;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+function raiseMountains(){
+  for(const mz of MOUNTAIN_ZONES){
+    const dx=mz.x1-mz.x0,dy=mz.y1-mz.y0,len2=dx*dx+dy*dy;
+    for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+      const tile=tiles[y]?.[x];
+      if(!tile||tile.isRiver||tile.type===T.OCEAN||tile.type===T.GULF||tile.type===T.LAKE||tile.type===T.COAST) continue;
+      const nx=x/MW,ny=y/MH;
+      const t=Math.max(0,Math.min(1,((nx-mz.x0)*dx+(ny-mz.y0)*dy)/len2));
+      const cx2=mz.x0+t*dx,cy2=mz.y0+t*dy;
+      const dist=Math.sqrt((nx-cx2)**2+(ny-cy2)**2);
+      if(dist<mz.width+octave(nx*12,ny*12,2,0.5)*0.012) tile.type=mz.type;
+    }
+  }
+}
+
+// ── Underground resources (adapted for T.* biomes) ───────────────
+function genUnderground(){
+  const WATER_T=new Set([T.OCEAN,T.GULF,T.LAKE,T.RIVER]);
+  const COAST_T=new Set([T.COAST,T.HARBOR,T.SWAMP]);
+  const MOUNT_T=new Set([T.APPALACHIAN,T.ROCKY]);
+  const FOREST_T=new Set([T.E_FOREST,T.W_FOREST]);
+  const PLAIN_T=new Set([T.GRASS,T.PLAINS,T.DESERT]);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x];
+    if(!tile||WATER_T.has(tile.type)){if(tile)tile.under=null;continue;}
+    const isCoast=COAST_T.has(tile.type);
+    const isMount=MOUNT_T.has(tile.type);
+    const isForest=FOREST_T.has(tile.type);
+    const isPlain=PLAIN_T.has(tile.type);
+    const isRiver2=tile.isRiver||false;
+    const r2=tileRand(x,y,2),r3=tileRand(x,y,3);
+    const cands=[];
+    for(const[k,ud] of Object.entries(UNDER_DEF)){
+      let p=ud.rarity*0.6;
+      if(k==='clay'     &&(isRiver2||isCoast)) p*=2.8;
+      if(k==='clay'     &&isMount)             p*=0.2;
+      if(k==='gold'     &&isRiver2)            p*=3.5;
+      if(k==='gold'     &&isMount)             p*=1.8;
+      if(k==='iron'     &&isMount)             p*=2.2;
+      if(k==='iron'     &&isForest)            p*=1.4;
+      if(k==='coal'     &&isMount)             p*=3.0;
+      if(k==='granite'  &&isMount)             p*=3.5;
+      if(k==='limestone'&&(isPlain||isCoast))  p*=1.6;
+      if(k==='copper'   &&(isMount||isForest)) p*=1.5;
+      if(k==='silver'   &&isMount)             p*=2.0;
+      cands.push({k,p});
+    }
+    cands.sort((a,b)=>b.p-a.p);
+    let type=null;for(const c of cands){if(r2<c.p){type=c.k;break;}}
+    tile.under=type?{type,qty:Math.floor(60+r3*240),revealed:false,mining:false,mineProgress:0}:null;
+  }
+}
+
+// ── Pre-render terrain to offscreen buffer ─────────────────────────
+let terrainBuffer=null;
+// ── Color utilities ───────────────────────────────────────────────
+function hexShift(hex,r,g,b){
+  const rr=Math.max(0,Math.min(255,parseInt(hex.slice(1,3),16)+r));
+  const gg=Math.max(0,Math.min(255,parseInt(hex.slice(3,5),16)+g));
+  const bb=Math.max(0,Math.min(255,parseInt(hex.slice(5,7),16)+b));
+  return'#'+[rr,gg,bb].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Per-biome color palettes (dark / mid / light) ─────────────────
+const BPAL={
+  [T.OCEAN]:      ['#0a1e30','#112a42','#1a3a5c'],
+  [T.GULF]:       ['#0c2030','#152e45','#1e4d6b'],
+  [T.LAKE]:       ['#102235','#1a3852','#2a5a8a'],
+  [T.COAST]:      ['#a08840','#b49a58','#c8b878'],
+  [T.E_FOREST]:   ['#1c3a14','#285220','#3a6b3a'],
+  [T.GRASS]:      ['#3a5c18','#486828','#5a8a3a'],
+  [T.PLAINS]:     ['#60721a','#728430','#8aa050'],
+  [T.APPALACHIAN]:['#4e3c28','#604e38','#7a6050'],
+  [T.ROCKY]:      ['#483428','#5a4838','#6a5848'],
+  [T.DESERT]:     ['#906820','#a87c2e','#c8a060'],
+  [T.SWAMP]:      ['#142814','#1e3c1e','#2a7030'],
+  [T.RIVER]:      ['#1c5060','#285e70','#3a7888'],
+  [T.W_FOREST]:   ['#243010','#344020','#4a7030'],
+  [T.TUNDRA]:     ['#6a7880','#7e9098','#a0b0c0'],
+  [T.HARBOR]:     ['#2e5068','#3e6478','#5888a8'],
+};
+const BPAL_WATER=new Set([T.OCEAN,T.GULF,T.LAKE,T.RIVER,T.HARBOR]);
+
+// ── US State border data (normalized coords, same as US_OUTLINE) ──
+// Polylines — each is [[x,y],[x,y],...] drawn as thin lines on terrain buffer
+const US_STATE_BORDERS=[
+  // === NORTHEAST ===
+  [[0.758,0.065],[0.756,0.09],[0.754,0.125],[0.754,0.14]],       // ME west
+  [[0.751,0.065],[0.749,0.09],[0.748,0.125],[0.747,0.138]],      // NH/VT
+  [[0.751,0.143],[0.744,0.145],[0.737,0.143],[0.732,0.147]],     // MA south
+  [[0.737,0.065],[0.734,0.10],[0.731,0.143],[0.729,0.175],[0.727,0.200]], // NY east
+  [[0.747,0.138],[0.742,0.138]],                                 // VT south
+  [[0.727,0.200],[0.717,0.202],[0.706,0.206],[0.700,0.210]],     // NY/PA
+  [[0.724,0.210],[0.722,0.240],[0.720,0.268],[0.719,0.295]],     // NJ east (Delaware R)
+  [[0.700,0.210],[0.700,0.240],[0.700,0.265]],                   // PA west side
+  [[0.700,0.265],[0.710,0.265],[0.720,0.265]],                   // Mason-Dixon
+  [[0.700,0.265],[0.695,0.28],[0.690,0.30],[0.685,0.34]],        // WV/VA mtn
+  [[0.685,0.34],[0.678,0.36],[0.672,0.38],[0.666,0.39]],         // VA outline
+  [[0.712,0.390],[0.700,0.390],[0.683,0.391],[0.668,0.392],[0.655,0.400],[0.647,0.410]], // VA/NC
+  [[0.660,0.475],[0.649,0.487],[0.640,0.499],[0.630,0.504]],     // NC/SC
+  [[0.630,0.504],[0.618,0.524],[0.608,0.543],[0.602,0.557]],     // SC/GA
+  [[0.602,0.557],[0.580,0.558],[0.560,0.560],[0.540,0.562],[0.537,0.565]], // GA/FL
+  [[0.656,0.366],[0.638,0.368],[0.616,0.369],[0.595,0.369],[0.575,0.369],[0.561,0.369]], // KY/TN
+  [[0.656,0.370],[0.650,0.400],[0.644,0.440],[0.640,0.476]],     // TN/NC mtn
+  [[0.640,0.476],[0.618,0.472],[0.596,0.470],[0.574,0.468],[0.558,0.468]], // TN/AL/MS south
+  [[0.595,0.468],[0.594,0.510],[0.593,0.560],[0.592,0.605],[0.595,0.630]], // AL/GA
+  [[0.558,0.468],[0.558,0.516],[0.556,0.564],[0.554,0.605],[0.554,0.668]], // MS/AL
+  [[0.554,0.668],[0.527,0.668],[0.503,0.672],[0.480,0.700]],     // MS/LA
+  [[0.435,0.600],[0.460,0.600],[0.492,0.598],[0.510,0.592]],     // LA/AR
+  [[0.510,0.450],[0.490,0.450],[0.466,0.452],[0.450,0.452]],     // AR/MO
+  [[0.450,0.380],[0.450,0.416],[0.450,0.452]],                   // AR/OK east
+  // === MIDWEST ===
+  [[0.630,0.175],[0.630,0.215],[0.630,0.265],[0.628,0.310],[0.626,0.326]], // OH/IN
+  [[0.626,0.326],[0.614,0.320],[0.598,0.320]],                   // KY/IN/OH
+  [[0.598,0.175],[0.598,0.225],[0.596,0.285],[0.594,0.345],[0.593,0.385]], // IN/IL
+  [[0.570,0.175],[0.570,0.220],[0.568,0.285]],                   // IL upper
+  [[0.450,0.300],[0.472,0.300],[0.502,0.300],[0.530,0.300],[0.556,0.300],[0.568,0.300]], // MO/IA
+  [[0.534,0.060],[0.534,0.100],[0.534,0.140],[0.534,0.175]],     // WI/MN
+  [[0.455,0.055],[0.455,0.090],[0.455,0.130],[0.454,0.175]],     // MN west
+  [[0.455,0.175],[0.480,0.175],[0.506,0.175],[0.534,0.175]],     // MN/IA
+  // === GREAT PLAINS ===
+  [[0.352,0.100],[0.382,0.100],[0.414,0.100],[0.440,0.100],[0.455,0.100]], // ND/SD
+  [[0.352,0.185],[0.382,0.185],[0.414,0.185],[0.440,0.185],[0.455,0.185]], // SD/NE
+  [[0.370,0.275],[0.396,0.275],[0.424,0.275],[0.450,0.275],[0.468,0.275]], // NE/KS
+  [[0.268,0.368],[0.300,0.368],[0.336,0.368],[0.370,0.368],[0.404,0.368],[0.436,0.368],[0.460,0.368]], // KS/OK
+  [[0.175,0.382],[0.200,0.382],[0.232,0.382],[0.268,0.382]],     // TX panhandle north
+  [[0.460,0.282],[0.460,0.320],[0.460,0.368]],                   // TX panhandle east
+  [[0.330,0.282],[0.365,0.282],[0.400,0.282],[0.436,0.282],[0.460,0.282]], // TX panel top
+  [[0.370,0.055],[0.370,0.090],[0.370,0.135],[0.370,0.185],[0.370,0.228],[0.370,0.275]], // CO/KS/NE/SD eastern
+  [[0.352,0.055],[0.352,0.080],[0.352,0.100],[0.352,0.135]],     // MT/ND western
+  [[0.268,0.228],[0.298,0.228],[0.328,0.228],[0.358,0.228],[0.370,0.228]], // CO/WY border
+  [[0.268,0.135],[0.300,0.135],[0.335,0.135],[0.368,0.135],[0.400,0.135],[0.420,0.135]], // WY/MT border
+  [[0.268,0.055],[0.268,0.090],[0.268,0.135],[0.268,0.175],[0.268,0.228]], // MT/ID/WY west
+  // === MOUNTAIN WEST ===
+  [[0.200,0.335],[0.232,0.335],[0.266,0.335],[0.300,0.335],[0.335,0.335],[0.368,0.335]], // CO/NM
+  [[0.268,0.228],[0.268,0.268],[0.268,0.300],[0.268,0.335]],     // CO/UT west
+  [[0.200,0.345],[0.232,0.345],[0.258,0.345],[0.268,0.345]],     // UT/AZ
+  [[0.197,0.335],[0.198,0.375],[0.200,0.425],[0.203,0.478],[0.206,0.530]], // AZ/NM
+  [[0.204,0.175],[0.204,0.220],[0.202,0.280],[0.200,0.335]],     // UT/NV
+  [[0.204,0.175],[0.204,0.135],[0.205,0.095]],                   // NV upper
+  [[0.175,0.278],[0.165,0.322],[0.158,0.372],[0.150,0.422],[0.144,0.482]], // NV/AZ
+  [[0.210,0.055],[0.210,0.090],[0.210,0.135],[0.210,0.175],[0.210,0.225]], // ID east
+  [[0.268,0.175],[0.245,0.190],[0.225,0.200],[0.210,0.225]],     // ID/WY zigzag
+  [[0.090,0.198],[0.115,0.198],[0.148,0.198],[0.178,0.198],[0.210,0.198]], // OR/WA
+  [[0.127,0.225],[0.127,0.255],[0.125,0.285],[0.122,0.312]],     // OR/CA
+  [[0.130,0.095],[0.128,0.135],[0.126,0.175],[0.122,0.215],[0.119,0.258],[0.117,0.298]], // CA/NV
+];
+
+// ── Region labels to paint onto terrain buffer ────────────────────
+const TERRAIN_LABELS=[
+  {t:'NEW ENGLAND',     nx:0.752,ny:0.100},
+  {t:'MID-ATLANTIC',    nx:0.718,ny:0.230},
+  {t:'CHESAPEAKE',      nx:0.712,ny:0.340},
+  {t:'THE SOUTH',       nx:0.668,ny:0.468},
+  {t:'FLORIDA',         nx:0.575,ny:0.700},
+  {t:'GULF COAST',      nx:0.395,ny:0.720},
+  {t:'GREAT PLAINS',    nx:0.430,ny:0.225},
+  {t:'MIDWEST',         nx:0.582,ny:0.220},
+  {t:'GREAT LAKES',     nx:0.598,ny:0.128},
+  {t:'APPALACHIANS',    nx:0.672,ny:0.360},
+  {t:'ROCKY MTNS',      nx:0.230,ny:0.250},
+  {t:'SOUTHWEST',       nx:0.182,ny:0.435},
+  {t:'TEXAS',           nx:0.210,ny:0.560},
+  {t:'PACIFIC NW',      nx:0.115,ny:0.300},
+  {t:'CALIFORNIA',      nx:0.100,ny:0.180},
+  {t:'MISSISSIPPI',     nx:0.478,ny:0.520},
+  {t:'ATLANTIC OCEAN',  nx:0.820,ny:0.280},
+  {t:'GULF OF MEXICO',  nx:0.360,ny:0.820},
+];
+
+function renderTerrainToBuffer(){
+  terrainBuffer=document.createElement('canvas');
+  terrainBuffer.width=MW*TS; terrainBuffer.height=MH*TS;
+  const btx=terrainBuffer.getContext('2d');
+
+  // === PASS 1: Ocean background ===
+  btx.fillStyle='#0a1e30'; btx.fillRect(0,0,MW*TS,MH*TS);
+
+  // === PASS 2: Rich per-tile base fill (NO grid lines) ===
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x]; if(!tile) continue;
+    const pal=BPAL[tile.type]||BPAL[T.GRASS];
+    const px=x*TS, py=y*TS;
+    const n1=tileRand(x,y,1);
+    const n2=tileRand(x,y,2);
+
+    // Select shade from 3-tone palette based on noise
+    const shade=n1<0.35?pal[0]:n1<0.68?pal[1]:pal[2];
+    btx.fillStyle=shade; btx.fillRect(px,py,TS,TS);
+
+    // Micro color variation (warm/cool shift)
+    if(!BPAL_WATER.has(tile.type)){
+      const v=(n2-0.5)*0.14;
+      btx.fillStyle=v>0?`rgba(255,240,180,${v.toFixed(3)})`:`rgba(0,20,40,${(-v).toFixed(3)})`;
+      btx.fillRect(px,py,TS,TS);
+    }
+
+    // Directional light bevel (top=light, bottom=shadow)
+    const grd=btx.createLinearGradient(px,py,px,py+TS);
+    grd.addColorStop(0,'rgba(255,255,210,0.08)');
+    grd.addColorStop(0.45,'rgba(0,0,0,0)');
+    grd.addColorStop(1,'rgba(0,0,0,0.11)');
+    btx.fillStyle=grd; btx.fillRect(px,py,TS,TS);
+  }
+
+  // === PASS 3: Large cross-tile features ===
+  _drawForestCanopies(btx);
+  _drawMountainRidges(btx);
+  _drawDesertDunes(btx);
+  _drawSwampPools(btx);
+  _drawWaterDetails(btx);
+
+  // === PASS 4: State / territory borders ===
+  _drawStateBorders(btx);
+
+  // === PASS 5: Region labels ===
+  _drawTerrainLabels(btx);
+}
+
+function _drawForestCanopies(btx){
+  const FOREST=new Set([T.E_FOREST,T.W_FOREST]);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x]; if(!tile||!FOREST.has(tile.type)) continue;
+    const r1=tileRand(x,y,50),r2=tileRand(x,y,51),r3=tileRand(x,y,52);
+    if(r1>0.62) continue; // ~38% of tiles get a visible tree
+    const isW=(tile.type===T.W_FOREST);
+    // Center of canopy, allowed to stray ±60% of tile width
+    const cx2=x*TS+TS*0.5+(r2-0.5)*TS*1.1;
+    const cy2=y*TS+TS*0.5+(r3-0.5)*TS*1.1;
+    const rad=5+r1*11; // 5–16px
+    // Drop shadow
+    btx.beginPath(); btx.arc(cx2+2,cy2+3,rad*0.9,0,Math.PI*2);
+    btx.fillStyle='rgba(0,0,0,0.24)'; btx.fill();
+    // Dark base canopy
+    btx.beginPath(); btx.arc(cx2,cy2,rad,0,Math.PI*2);
+    btx.fillStyle=isW?'#2c3e14':'#1e3410'; btx.fill();
+    // Mid canopy
+    btx.beginPath(); btx.arc(cx2-rad*0.2,cy2-rad*0.2,rad*0.72,0,Math.PI*2);
+    btx.fillStyle=isW?'#485a22':'#385018'; btx.fill();
+    // Highlight top
+    btx.beginPath(); btx.arc(cx2-rad*0.35,cy2-rad*0.38,rad*0.40,0,Math.PI*2);
+    btx.fillStyle=isW?'rgba(110,155,55,0.55)':'rgba(90,140,45,0.50)'; btx.fill();
+  }
+}
+
+function _drawMountainRidges(btx){
+  const MTYPES=new Set([T.APPALACHIAN,T.ROCKY]);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x]; if(!tile||!MTYPES.has(tile.type)) continue;
+    const r1=tileRand(x,y,60),r2=tileRand(x,y,61),r3=tileRand(x,y,62);
+    if(r1>0.55) continue;
+    const px=x*TS, py=y*TS;
+    const isR=(tile.type===T.ROCKY);
+    const bx=px+r2*TS; // base x
+    const peak=[bx+(-0.2+r3*0.4)*TS, py+TS*(0.12+r1*0.22)];
+    const baseL=[bx-TS*(0.38+r1*0.15), py+TS*0.90];
+    const baseR=[bx+TS*(0.40+r2*0.18), py+TS*0.90];
+    // Shadow (right face)
+    btx.beginPath(); btx.moveTo(peak[0],peak[1]); btx.lineTo(baseR[0],baseR[1]); btx.lineTo(bx,py+TS*0.88);
+    btx.fillStyle=isR?'rgba(0,0,0,0.32)':'rgba(0,0,0,0.20)'; btx.fill();
+    // Light face (left)
+    btx.beginPath(); btx.moveTo(baseL[0],baseL[1]); btx.lineTo(peak[0],peak[1]); btx.lineTo(bx,py+TS*0.88);
+    btx.fillStyle=isR?'rgba(220,210,190,0.20)':'rgba(200,190,170,0.14)'; btx.fill();
+    // Ridge line
+    btx.beginPath(); btx.moveTo(peak[0],peak[1]); btx.lineTo(baseR[0],baseR[1]);
+    btx.strokeStyle=isR?'rgba(140,130,115,0.50)':'rgba(120,110,95,0.38)';
+    btx.lineWidth=0.8; btx.stroke();
+  }
+}
+
+function _drawDesertDunes(btx){
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x]; if(!tile||tile.type!==T.DESERT) continue;
+    const r1=tileRand(x,y,70),r2=tileRand(x,y,71);
+    if(r1>0.5) continue;
+    const px=x*TS, py=y*TS;
+    const dy2=py+TS*(0.35+r1*0.30);
+    btx.beginPath(); btx.moveTo(px,dy2);
+    btx.quadraticCurveTo(px+TS*0.5,dy2-TS*(0.06+r2*0.06),px+TS,dy2+TS*0.02);
+    btx.strokeStyle='rgba(160,120,40,0.22)'; btx.lineWidth=1.2; btx.stroke();
+  }
+}
+
+function _drawSwampPools(btx){
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x]; if(!tile||tile.type!==T.SWAMP) continue;
+    const r1=tileRand(x,y,80),r2=tileRand(x,y,81),r3=tileRand(x,y,82);
+    if(r1>0.45) continue;
+    const px=x*TS+r2*TS*0.6+TS*0.1, py=y*TS+r3*TS*0.6+TS*0.1;
+    btx.beginPath(); btx.ellipse(px,py,TS*0.22,TS*0.12,r1*Math.PI,0,Math.PI*2);
+    btx.fillStyle='rgba(25,60,30,0.45)'; btx.fill();
+    btx.strokeStyle='rgba(50,100,50,0.30)'; btx.lineWidth=0.5; btx.stroke();
+  }
+}
+
+function _drawWaterDetails(btx){
+  const WATER=new Set([T.OCEAN,T.GULF,T.LAKE,T.RIVER,T.HARBOR]);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x]; if(!tile||!WATER.has(tile.type)) continue;
+    const r1=tileRand(x,y,90),r2=tileRand(x,y,91),r3=tileRand(x,y,92);
+    if(r1>0.40) continue;
+    const px=x*TS, py=y*TS;
+    // Ripple/shimmer line
+    const wy=py+TS*(0.28+r2*0.44);
+    btx.beginPath(); btx.moveTo(px+r3*TS*0.3,wy); btx.lineTo(px+TS*(0.5+r3*0.4),wy-r1*TS*0.04);
+    btx.strokeStyle='rgba(160,215,255,0.16)'; btx.lineWidth=0.8; btx.stroke();
+    // Deep water darkening for ocean
+    if(tile.type===T.OCEAN||tile.type===T.GULF){
+      btx.fillStyle='rgba(0,15,40,0.07)'; btx.fillRect(px,py,TS,TS);
+    }
+  }
+}
+
+// ── State border rendering ────────────────────────────────────────
+function _drawStateBorders(btx){
+  const W=MW*TS, H=MH*TS;
+  for(const poly of US_STATE_BORDERS){
+    if(poly.length<2) continue;
+    btx.beginPath();
+    btx.moveTo(poly[0][0]*W, poly[0][1]*H);
+    for(let i=1;i<poly.length;i++) btx.lineTo(poly[i][0]*W, poly[i][1]*H);
+    // Outer glow
+    btx.strokeStyle='rgba(0,0,0,0.30)'; btx.lineWidth=3.5; btx.lineCap='round';btx.lineJoin='round'; btx.stroke();
+    // Main border line — warm golden-sepia
+    btx.strokeStyle='rgba(210,180,100,0.72)'; btx.lineWidth=1.8; btx.stroke();
+  }
+}
+
+function _drawTerrainLabels(btx){
+  const W=MW*TS, H=MH*TS;
+  btx.textAlign='center'; btx.textBaseline='middle';
+  for(const lb of TERRAIN_LABELS){
+    const sx=lb.nx*W, sy=lb.ny*H;
+    // Shadow
+    btx.font='bold 22px Georgia,serif';
+    btx.fillStyle='rgba(0,0,0,0.45)'; btx.fillText(lb.t,sx+1.5,sy+1.5);
+    // Label
+    btx.fillStyle='rgba(230,205,140,0.80)'; btx.fillText(lb.t,sx,sy);
+  }
+  btx.textAlign='left'; btx.textBaseline='alphabetic';
+}
+
+// legacy stub — no longer used but kept as safety
+function drawTileTexture(){}
+
+// ── Fog of war ────────────────────────────
+let showFogOfWar=true;
+function revealRadius(tx,ty,radius){
+  for(let dy=-radius;dy<=radius;dy++) for(let dx=-radius;dx<=radius;dx++){
+    if(dx*dx+dy*dy>radius*radius) continue;
+    const x=tx+dx,y=ty+dy;
+    if(x>=0&&x<MW&&y>=0&&y<MH&&tiles[y]?.[x]) tiles[y][x].revealed=true;
+  }
+}
+function revealAll(){for(let y=0;y<MH;y++) for(let x=0;x<MW;x++) if(tiles[y]?.[x]) tiles[y][x].revealed=true;drawAll();}
+function toggleFog(){showFogOfWar=!showFogOfWar;drawAll();}
+
+// ── Async map generation ──────────────────
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function setLoad(pct,msg){
+  const lb=document.getElementById('loadBar'),lm=document.getElementById('loadMsg');
+  if(lb)lb.style.width=pct+'%';if(lm)lm.textContent=msg;
+}
+async function generateMap(){
+  const lo=document.getElementById('mapLoading');if(lo)lo.style.display='flex';
+  setLoad(5,'Tracing US coastline...');await sleep(30);
+  const landMask=new Uint8Array(MW*MH),lakeMask=new Uint8Array(MW*MH),coastMask=new Uint8Array(MW*MH);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const nx=x/MW,ny=y/MH;
+    landMask[y*MW+x]=pointInPolygon(nx,ny,US_OUTLINE)?1:0;
+    lakeMask[y*MW+x]=pointInAnyLake(nx,ny)?1:0;
+    if(lakeMask[y*MW+x]) landMask[y*MW+x]=0;
+  }
+  setLoad(25,'Eroding coastlines...');await sleep(30);
+  for(let y=1;y<MH-1;y++) for(let x=1;x<MW-1;x++){
+    if(!landMask[y*MW+x]) continue;
+    const nb=[landMask[(y-1)*MW+x],landMask[(y+1)*MW+x],landMask[y*MW+x-1],landMask[y*MW+x+1],
+              lakeMask[(y-1)*MW+x],lakeMask[(y+1)*MW+x],lakeMask[y*MW+x-1],lakeMask[y*MW+x+1]];
+    if(nb.some(n=>n===0)) coastMask[y*MW+x]=1;
+  }
+  setLoad(40,'Painting biomes...');await sleep(30);
+  tiles=[];
+  for(let y=0;y<MH;y++){
+    tiles[y]=[];
+    for(let x=0;x<MW;x++){
+      const nx=x/MW,ny=y/MH;
+      const type=assignBiome(nx,ny,landMask[y*MW+x]===1,coastMask[y*MW+x]===1,lakeMask[y*MW+x]===1,getRegion(nx,ny));
+      tiles[y][x]={type,revealed:false,region:getRegion(nx,ny),nx,ny,under:null,isRiver:false};
+    }
+  }
+  setLoad(55,'Carving rivers...');await sleep(30);carveRivers();
+  setLoad(68,'Raising mountains...');await sleep(30);raiseMountains();
+  setLoad(78,'Seeding underground resources...');await sleep(30);genUnderground();
+  setLoad(88,'Rendering terrain...');await sleep(30);renderTerrainToBuffer();
+  setLoad(94,'Initializing fog of war...');await sleep(30);
+  const anc=SCENARIO_ANCHORS[selectedScenario.name]||SCENARIO_ANCHORS['Jamestown'];
+  revealRadius(anc.tx,anc.ty,10);
+  // Update town position to match real map anchor
+  G.towns[0].x=anc.tx;G.towns[0].y=anc.ty;
+  setLoad(100,'Ready!');await sleep(150);
+  if(lo)lo.style.display='none';
+}
+
+// ── Rendering state ───────────────────────
+let showUnderground=false;
+let currentZS=TS*1.0;
+let tileInspect=null;
+let mineAnimT=0;
+
+function resize(){
+  [terrainCV,entityCV,fogCV].forEach(c=>{c.width=window.innerWidth;c.height=window.innerHeight;});
+  const mm=document.getElementById('mmw');
+  mv.width=mm?mm.clientWidth||160:160;mv.height=mm?mm.clientHeight||100:100;
+  drawAll();drawMM();
+}
+
+// ── Main draw — 3 canvas layers ─────────────────────────────────────
+function drawAll(){
+  currentZS=TS*G.zoom;
+  drawTerrain();
+  drawEntityLayer();
+  drawFogLayer();
+}
+function draw(){drawAll();} // alias for game loop
+
+function drawTerrain(){
+  terrainCX.clearRect(0,0,terrainCV.width,terrainCV.height);
+  terrainCX.fillStyle='#1a3a5c';terrainCX.fillRect(0,0,terrainCV.width,terrainCV.height);
+  if(!terrainBuffer) return;
+  terrainCX.save();
+  terrainCX.setTransform(G.zoom,0,0,G.zoom,G.cam.x,G.cam.y);
+  terrainCX.drawImage(terrainBuffer,0,0);
+  // Underground overlay on revealed tiles
+  if(showUnderground){
+    const sx=Math.max(0,Math.floor(-G.cam.x/currentZS)-1);
+    const sy=Math.max(0,Math.floor(-G.cam.y/currentZS)-1);
+    const ex=Math.min(MW,sx+Math.ceil(terrainCV.width/currentZS)+2);
+    const ey=Math.min(MH,sy+Math.ceil(terrainCV.height/currentZS)+2);
+    for(let y=sy;y<ey;y++) for(let x=sx;x<ex;x++){
+      const tile=tiles[y]?.[x];if(!tile) continue;
+      if(!showFogOfWar||tile.revealed){
+        const px=x*TS,py=y*TS;
+        if(tile.under&&tile.under.revealed){
+          const ud=UNDER_DEF[tile.under.type];
+          terrainCX.fillStyle=ud.col+'aa';terrainCX.fillRect(px+1,py+1,TS-2,TS-2);
+          terrainCX.fillStyle=ud.glow+'55';
+          terrainCX.beginPath();terrainCX.arc(px+TS/2,py+TS/2,TS*.28,0,Math.PI*2);terrainCX.fill();
+          terrainCX.font=Math.round(TS*.6)+'px serif';
+          terrainCX.textAlign='center';terrainCX.textBaseline='middle';
+          terrainCX.fillText(ud.icon,px+TS/2,py+TS/2);
+          terrainCX.textAlign='left';terrainCX.textBaseline='alphabetic';
+        } else if(tile.under&&!tile.under.revealed){
+          terrainCX.fillStyle='rgba(20,10,3,.45)';terrainCX.fillRect(px,py,TS,TS);
+          terrainCX.font='bold '+Math.round(TS*.5)+'px Cinzel,serif';
+          terrainCX.fillStyle='rgba(180,140,60,.35)';
+          terrainCX.textAlign='center';terrainCX.textBaseline='middle';
+          terrainCX.fillText('?',px+TS/2,py+TS/2);
+          terrainCX.textAlign='left';terrainCX.textBaseline='alphabetic';
+        }
+      }
+    }
+  }
+  terrainCX.restore();
+}
+
+function drawEntityLayer(){
+  entityCX.clearRect(0,0,entityCV.width,entityCV.height);
+  if(!tiles.length) return;
+  entityCX.save();
+  entityCX.setTransform(G.zoom,0,0,G.zoom,G.cam.x,G.cam.y);
+  // Tile inspect highlight
+  if(tileInspect){
+    const px=tileInspect.x*TS,py=tileInspect.y*TS;
+    entityCX.strokeStyle='rgba(240,192,64,.95)';entityCX.lineWidth=2/G.zoom;
+    entityCX.strokeRect(px+1,py+1,TS-2,TS-2);
+    entityCX.fillStyle='rgba(240,192,64,.1)';entityCX.fillRect(px,py,TS,TS);
+  }
+  // Roads
+  G.roads.forEach(r=>{
+    const rd=RD[r.type]||RD.dirt;
+    const x1=r.fx*TS+TS/2,y1=r.fy*TS+TS/2,x2=r.tx*TS+TS/2,y2=r.ty*TS+TS/2;
+    entityCX.beginPath();entityCX.moveTo(x1+1,y1+1);entityCX.lineTo(x2+1,y2+1);
+    entityCX.strokeStyle='rgba(0,0,0,.4)';entityCX.lineWidth=(rd.w+2)/G.zoom;entityCX.lineCap='round';entityCX.stroke();
+    entityCX.beginPath();entityCX.moveTo(x1,y1);entityCX.lineTo(x2,y2);
+    entityCX.strokeStyle=rd.col;entityCX.lineWidth=rd.w/G.zoom;entityCX.lineCap='round';entityCX.stroke();
+    entityCX.font=Math.round(8/G.zoom)+'px Cinzel,serif';entityCX.fillStyle='rgba(240,200,120,.6)';
+    entityCX.fillText(rd.label,(x1+x2)/2+4,(y1+y2)/2-3);
+  });
+  // Active mines
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x];
+    if(tile&&tile.under&&tile.under.mining&&(!showFogOfWar||tile.revealed)) drawMineOnTile(x*TS,y*TS,tile);
+  }
+  // Towns
+  G.towns.forEach((t,i)=>{
+    const tile=tiles[t.y]?.[t.x];if(!tile||(!showFogOfWar?false:!tile.revealed)) return;
+    const px=t.x*TS,py=t.y*TS;
+    if(i===G.selectedTown){
+      entityCX.strokeStyle='rgba(240,192,64,.7)';entityCX.lineWidth=2/G.zoom;
+      entityCX.strokeRect(px,py,TS,TS);
+    }
+    entityCX.font=Math.round(TS*.7)+'px serif';entityCX.fillText('🏘️',px+1,py+Math.round(TS*.75));
+    entityCX.font='bold '+Math.round(TS*.3)+'px Cinzel,serif';entityCX.fillStyle='#f0c040';
+    entityCX.fillText(t.name,px+1,py+TS-1);
+    // Subtle reveal radius ring
+    entityCX.beginPath();entityCX.arc(px+TS/2,py+TS/2,10*TS,0,Math.PI*2);
+    entityCX.strokeStyle='rgba(240,192,64,0.05)';entityCX.lineWidth=1.5/G.zoom;entityCX.stroke();
+  });
+  // Road build start point
+  if(G.rdStart){
+    const px=G.rdStart.x*TS,py=G.rdStart.y*TS;
+    entityCX.fillStyle='rgba(240,192,64,.25)';entityCX.fillRect(px,py,TS,TS);
+    entityCX.strokeStyle='rgba(240,192,64,.8)';entityCX.lineWidth=2/G.zoom;entityCX.strokeRect(px,py,TS,TS);
+  }
+  entityCX.restore();
+}
+
+function drawFogLayer(){
+  fogCX.clearRect(0,0,fogCV.width,fogCV.height);
+  if(!showFogOfWar||!tiles.length) return;
+  fogCX.save();
+  fogCX.setTransform(G.zoom,0,0,G.zoom,G.cam.x,G.cam.y);
+  const sx=Math.max(0,Math.floor(-G.cam.x/currentZS)-1);
+  const sy=Math.max(0,Math.floor(-G.cam.y/currentZS)-1);
+  const ex=Math.min(MW,sx+Math.ceil(fogCV.width/currentZS)+2);
+  const ey=Math.min(MH,sy+Math.ceil(fogCV.height/currentZS)+2);
+  for(let y=sy;y<ey;y++) for(let x=sx;x<ex;x++){
+    const tile=tiles[y]?.[x];if(!tile||tile.revealed) continue;
+    fogCX.fillStyle='rgba(8,4,2,0.9)';fogCX.fillRect(x*TS,y*TS,TS,TS);
+  }
+  fogCX.restore();
+}
+
+function drawMineOnTile(px,py,tile){
+  const ZS=TS,cycle=(mineAnimT%3200)/3200,cartOff=Math.sin(cycle*Math.PI*2);
+  entityCX.fillStyle='#0e0702';entityCX.fillRect(px+ZS*.25,py+ZS*.52,ZS*.50,ZS*.44);
+  entityCX.strokeStyle='#7a4a18';entityCX.lineWidth=1.5/G.zoom;
+  entityCX.strokeRect(px+ZS*.25,py+ZS*.52,ZS*.50,ZS*.44);
+  entityCX.beginPath();entityCX.moveTo(px+ZS*.25,py+ZS*.58);entityCX.lineTo(px+ZS*.75,py+ZS*.58);
+  entityCX.strokeStyle='#6a3a10';entityCX.lineWidth=1/G.zoom;entityCX.stroke();
+  const cartY=py+ZS*(.62+cartOff*.15);
+  entityCX.fillStyle='#8a5520';entityCX.fillRect(px+ZS*.36,cartY,ZS*.28,ZS*.13);
+  entityCX.strokeStyle='#6a3810';entityCX.lineWidth=0.8/G.zoom;entityCX.strokeRect(px+ZS*.36,cartY,ZS*.28,ZS*.13);
+  if(cartOff<-.25&&tile.under){
+    const ud=UNDER_DEF[tile.under.type];
+    entityCX.fillStyle=ud.col;entityCX.fillRect(px+ZS*.39,cartY-ZS*.03,ZS*.22,ZS*.07);
+  }
+  if(tile.under){
+    const ud=UNDER_DEF[tile.under.type];
+    entityCX.font=Math.round(ZS*.3)+'px Cinzel,serif';entityCX.fillStyle='rgba(200,170,80,.85)';
+    entityCX.textAlign='center';entityCX.textBaseline='bottom';
+    entityCX.fillText(ud.label,px+ZS/2,py+ZS*.50);
+    entityCX.textAlign='left';entityCX.textBaseline='alphabetic';
+  }
+}
+
+// ── Minimap ──────────────────────────────────────────────────────────
+function drawMM(){
+  if(!tiles.length) return;
+  const mw=mv.width,mh=mv.height,tw=mw/MW,th=mh/MH;
+  mx.clearRect(0,0,mw,mh);mx.fillStyle='#1a3a5c';mx.fillRect(0,0,mw,mh);
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const tile=tiles[y]?.[x];if(!tile) continue;
+    mx.fillStyle=(showFogOfWar&&!tile.revealed)?'#080402':(TILE_DEF[tile.type]?.col||'#333');
+    mx.fillRect(x*tw,y*th,tw+.5,th+.5);
+  }
+  G.roads.forEach(r=>{
+    const rd=RD[r.type]||RD.dirt;
+    mx.beginPath();mx.moveTo(r.fx*tw+tw/2,r.fy*th+th/2);mx.lineTo(r.tx*tw+tw/2,r.ty*th+th/2);
+    mx.strokeStyle=rd.col;mx.lineWidth=2;mx.stroke();
+  });
+  G.towns.forEach((t,i)=>{
+    mx.fillStyle=i===G.selectedTown?'#f0c040':'#c0a030';
+    mx.fillRect(t.x*tw-1.5,t.y*th-1.5,5,5);
+  });
+  updMMVP();
+}
+function updMMVP(){
+  const ZS=currentZS,mw=mv.width,mh=mv.height;
+  const vp=document.getElementById('mmv');if(!vp) return;
+  vp.style.left=Math.max(0,-G.cam.x/(MW*ZS)*mw)+'px';
+  vp.style.top=Math.max(0,-G.cam.y/(MH*ZS)*mh)+'px';
+  vp.style.width=Math.min(mw,terrainCV.width/(MW*ZS)*mw)+'px';
+  vp.style.height=Math.min(mh,terrainCV.height/(MH*ZS)*mh)+'px';
+}
+
+// Tile info lookup by T.* numeric ID (for tile inspector)
+function getTileMeta(type){return TILE_DEF[type]||{name:'Unknown',icon:'🗺️',res:'',hist:''};}
+
+
+// ═══════════════════════════════════════
+// SIDE PANEL WINDOWS
+// ═══════════════════════════════════════
+const SP_WINS={
+  underground:'win-underground',
+  tech:'win-tech',
+  colony:'win-colony',
+  factions:'win-factions',
+  codex:'win-codex',
+  settings:'win-settings',
+};
+const SP_BTNS={
+  underground:'ugBtn',tech:'spTech',colony:'spColony',
+  factions:'spFaction',codex:'spCodex',settings:'spSettings',
+};
+let _openPanel=null;
+
+function spOpen(key){
+  // Toggle — click same button again to close
+  if(_openPanel===key){spClose();return;}
+  // Close any open panel
+  Object.values(SP_WINS).forEach(id=>document.getElementById(id)?.classList.remove('open'));
+  Object.values(SP_BTNS).forEach(id=>document.getElementById(id)?.classList.remove('on'));
+  _openPanel=key;
+  document.getElementById(SP_WINS[key])?.classList.add('open');
+  document.getElementById(SP_BTNS[key])?.classList.add('on');
+  // Populate dynamic content
+  if(key==='tech')     buildTechPanel();
+  if(key==='colony')   buildColonyPanel();
+  if(key==='factions') buildFactionPanel();
+  if(key==='codex')    buildCodexPanel();
+  if(key==='underground') buildUgLegend();
+  // Sync settings toggles
+  if(key==='settings'){
+    document.getElementById('lightToggle')?.classList.toggle('on',document.body.classList.contains('light-mode'));
+    updateZoomUI();
+  }
+}
+function spClose(){
+  Object.values(SP_WINS).forEach(id=>document.getElementById(id)?.classList.remove('open'));
+  Object.values(SP_BTNS).forEach(id=>document.getElementById(id)?.classList.remove('on'));
+  _openPanel=null;
+}
+
+// Override toggleUnderground to also sync the panel toggle
+function toggleUnderground(){
+  showUnderground=!showUnderground;
+  document.getElementById('ugToggle')?.classList.toggle('on',showUnderground);
+  document.getElementById('ug-badge')?.classList.toggle('show',showUnderground);
+  addAlert(showUnderground?'i':'i','⛏️',
+    showUnderground?'Underground view ON — click tiles to survey & mine.':'Underground view OFF.');
+  draw();
+}
+
+function buildUgLegend(){
+  const el=document.getElementById('ugLegend');
+  if(!el)return;
+  el.innerHTML='';
+  for(const[k,ud] of Object.entries(UNDER_DEF)){
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 8px;background:rgba(0,0,0,.25);border-radius:3px;';
+    row.innerHTML=`<div style="width:14px;height:14px;border-radius:50%;background:${ud.col};box-shadow:0 0 6px ${ud.glow};flex-shrink:0;"></div>
+      <div style="flex:1;font-family:'Cinzel',serif;font-size:11px;color:var(--parch-lt);">${ud.icon} ${ud.label}</div>
+      <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--parch-dk);">Unlocks ${ud.era}</div>`;
+    el.appendChild(row);
+  }
+}
+
+// ── Technology Panel ──────────────────
+const TECH_TREE=[
+  {era:1607,ic:'🪓',n:'Hand Tools',desc:'Basic axes, shovels and saws for early construction.',status:'done'},
+  {era:1607,ic:'🌾',n:'Native Crops',desc:'Corn, beans, squash — the Three Sisters. Core food supply.',status:'done'},
+  {era:1620,ic:'🎣',n:'Fishing Nets',desc:'Greatly increases coastal and river fish yield.',status:'avail'},
+  {era:1650,ic:'⚒️',n:'Iron Smelting',desc:'Unlocks the Blacksmith. Required for tools and weapons.',status:'avail'},
+  {era:1650,ic:'💊',n:'Herbal Medicine',desc:'Reduces disease mortality by 40%.',status:'lock'},
+  {era:1700,ic:'💧',n:'Aqueducts',desc:'Permanent water supply. Removes water scarcity events.',status:'lock'},
+  {era:1700,ic:'🧱',n:'Masonry',desc:'Enables stone buildings. Required for Town Hall and Church.',status:'lock'},
+  {era:1750,ic:'⚙️',n:'Steam Power',desc:'Unlocks factories, mills and faster resource processing.',status:'lock'},
+  {era:1800,ic:'🚂',n:'Railroads',desc:'Connect settlements. Transforms trade and troop movement.',status:'lock'},
+  {era:1830,ic:'⚡',n:'Telegraph',desc:'Removes fog of war over known territory instantly.',status:'lock'},
+  {era:1860,ic:'🏭',n:'Mass Production',desc:'Factories produce 3× resources per worker.',status:'lock'},
+  {era:1870,ic:'💡',n:'Electric Power',desc:'Unlocks electric lighting; boosts nighttime productivity.',status:'lock'},
+];
+function buildTechPanel(){
+  const el=document.getElementById('techBody');if(!el)return;
+  el.innerHTML=`<div class="sp-sec">Technology Tree · ${G.yr}</div>`;
+  for(const t of TECH_TREE){
+    const avail=G.yr>=t.era;
+    const s=t.status==='done'?'done':avail?'avail':'lock';
+    const badge=s==='done'?'✓ Researched':s==='avail'?'Available':'Locked '+t.era;
+    const div=document.createElement('div');
+    div.className='tech-item'+(s==='lock'?' locked':'');
+    div.innerHTML=`<div class="tech-ic">${t.ic}</div>
+      <div class="tech-info">
+        <div class="tech-name">${t.n}</div>
+        <div class="tech-desc">${t.desc}</div>
+        <div class="tech-era">Era ${t.era}+</div>
+      </div>
+      <div class="tech-badge ${s}">${badge}</div>`;
+    el.appendChild(div);
+  }
+}
+
+// ── Colony Overview Panel ─────────────
+function buildColonyPanel(){
+  const el=document.getElementById('colonyBody');if(!el)return;
+  const r=G.res;
+  const totalPop=G.towns.reduce((s,t)=>s+t.pop,0);
+  const era=ERAS.find(e=>G.yr>=e.y[0]&&G.yr<e.y[1])||ERAS[0];
+  el.innerHTML=`
+    <div class="sp-sec">Current Status · ${fmtDate()}</div>
+    <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);margin-bottom:4px;">${era.n}</div>
+    ${statRow('👥','Population',totalPop+' settlers','of '+G.pop.max+' capacity')}
+    ${statRow('🏘️','Settlements',G.towns.length+' founded','')}
+    ${statRow('📅','Year',G.yr,'Season: '+G.season)}
+    <div class="sp-sec">Resources</div>
+    ${statRow('🪵','Lumber',r.wood,'units stockpiled')}
+    ${statRow('🪨','Stone',Math.floor(r.stone),'units stockpiled')}
+    ${statRow('🥩','Food',Math.floor(r.food),'units stockpiled')}
+    ${statRow('💧','Water',Math.floor(r.water),'units stockpiled')}
+    ${statRow('🦫','Fur & Hide',r.fur,'tradeable')}
+    ${statRow('⚙️','Iron Ore',Math.floor(r.iron),'units')}
+    ${statRow('🪙','Gold',Math.floor(r.gold),'coins')}
+    <div class="sp-sec">Settlements</div>
+    ${G.towns.map(t=>`
+      <div class="fac-row">
+        <div class="fac-ic">🏘️</div>
+        <div class="fac-info">
+          <div class="fac-name">${t.name}</div>
+          <div class="fac-status" style="color:var(--parch-dk)">Pop ${t.pop}/${t.maxPop} · Founded ${t.founded}</div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            ${miniBar(t.food,'#d08040')} ${miniBar(t.water,'#3898d0')} ${miniBar(t.mood,'#c050d0')}
+          </div>
+        </div>
+      </div>`).join('')}`;
+}
+function statRow(ic,lbl,val,note){
+  return `<div class="cov-stat">
+    <div class="cov-ic">${ic}</div>
+    <div class="cov-lbl">${lbl}</div>
+    <div class="cov-val">${val}</div>
+    <div class="cov-note">${note}</div>
+  </div>`;
+}
+function miniBar(pct,col){
+  return `<div style="flex:1;height:5px;background:rgba(0,0,0,.4);border-radius:2px;overflow:hidden;"><div style="width:${Math.max(0,Math.min(100,pct))}%;height:100%;background:${col};border-radius:2px;"></div></div>`;
+}
+
+// ── Factions Panel ────────────────────
+const FACTIONS=[
+  {ic:'🪶',n:'Powhatan Confederacy',region:'Virginia Coast',rel:12,desc:'Cautious trading partners. Chief Wahunsenacah watches your settlement closely.'},
+  {ic:'⚓',n:'English Crown',region:'London, England',rel:55,desc:'You owe your charter to the Crown. Maintain loyalty or risk losing your patent.'},
+  {ic:'🌷',n:'Dutch West India Co.',region:'New Amsterdam',rel:8,desc:'Rivals for trade routes. Will deal if profitable.'},
+  {ic:'⚜️',n:'New France',region:'Quebec & Mississippi',rel:-15,desc:'French missionaries and traders compete for native alliances in the interior.'},
+  {ic:'🦅',n:'Iroquois Confederacy',region:'Great Lakes',rel:0,desc:'The most powerful native alliance. Neutral for now — approach carefully.'},
+];
+function buildFactionPanel(){
+  const el=document.getElementById('factionBody');if(!el)return;
+  el.innerHTML=`<div class="sp-sec">Known Factions · ${G.yr}</div>`;
+  for(const f of FACTIONS){
+    const pct=(f.rel+100)/2; // -100→0, 0→50, +100→100
+    const col=f.rel>=50?'#50c050':f.rel>=10?'#d0a030':f.rel>=-10?'#888':f.rel>=-50?'#d06020':'#cc3030';
+    const status=f.rel>=50?'Allied':f.rel>=10?'Friendly':f.rel>=-10?'Neutral':f.rel>=-50?'Tense':'Hostile';
+    const div=document.createElement('div');
+    div.className='fac-row';
+    div.innerHTML=`<div class="fac-ic">${f.ic}</div>
+      <div class="fac-info">
+        <div class="fac-name">${f.n}</div>
+        <div class="fac-status" style="color:${col}">${status} · ${f.region}</div>
+        <div class="tech-desc" style="margin-top:3px;">${f.desc}</div>
+      </div>
+      <div>
+        <div class="fac-bar-wrap"><div class="fac-bar" style="width:${pct}%;background:${col};"></div></div>
+        <div style="font-family:'Cinzel',serif;font-size:9px;color:var(--parch-dk);text-align:center;margin-top:2px;">${f.rel>0?'+':''}${f.rel}</div>
+      </div>`;
+    el.appendChild(div);
+  }
+  el.insertAdjacentHTML('beforeend',`
+    <div class="sp-sec">Diplomacy Actions</div>
+    <div style="font-family:'IM Fell English',serif;font-size:11px;color:var(--parch-dk);line-height:1.7;">
+      Full diplomacy actions (send gifts, propose trade, declare war) will be available in the <b style="color:var(--parch-lt)">Diplomacy</b> tab in the bottom panel. Relationship scores shift based on your actions each season.
+    </div>`);
+}
+
+// ── Codex Panel ───────────────────────
+const CODEX_ENTRIES=[
+  {h:'Terrain Types',b:`<b>Forest / Dense Forest</b> — Provides lumber and hunting, but slows movement by 40–60%.<br><b>Plains / Grassland</b> — Fast movement, ideal for farming but exposed to raids.<br><b>Marsh / Wetland</b> — Disease risk. Rich in wildlife but costly to traverse.<br><b>Mountains / Hills</b> — Contains valuable ore deposits. Blocks rapid expansion.<br><b>River</b> — Water source, fishing, and trade route. Watch for spring floods.<br><b>Ocean / Bay</b> — Coastal access unlocks fishing, trade ships, and naval defense.`},
+  {h:'Survival Basics',b:`Settlers need <b>water first</b> (dehydration kills in ~3 days), then <b>food</b> (starvation takes ~20 days). Build a <b>Well</b> immediately. Assign <b>Hunters</b> and <b>Farmers</b> early.<br><br>Winter increases calorie needs by 25%. Stock food before the first frost — watch the season indicator.`},
+  {h:'Underground Resources',b:`Tiles can contain hidden deposits. <b>Survey</b> (5 Gold) to reveal what's below. Resources vary by terrain — look for gold in riverbeds, iron and coal in hills, granite on rocky coasts.<br><br>Start mining with the tile inspector once revealed. Active mines yield resources automatically each game day.`},
+  {h:'Building Priorities',b:`<b>Era 1 priority order:</b><br>1. Lean-to Shelters (protect settlers from cold)<br>2. Fire Pit (cook food, morale)<br>3. Well (critical water source)<br>4. Storehouse (food rots without storage)<br>5. Palisade Wall (defense)<br>6. Farm Plot + Smokehouse (food security)<br>7. Watch Tower (early raid warning)`},
+  {h:'Era Progression',b:`Eras unlock buildings, roads, and technologies. Progress your era by completing key buildings and surviving historical events. Each era is 40–300 years of in-game history — from First Contact (1607) through the Gilded Age (1920).`},
+  {h:'Road System',b:`Roads connect settlements and speed up troop and trade movement. <b>Dirt roads</b> (+15%) are available from the start. Better roads unlock with each era — Gravel (1700), Brick (1800), Paved (1870), Concrete (1920). Use the Roads tab to place them.`},
+];
+function buildCodexPanel(){
+  const el=document.getElementById('codexBody');if(!el)return;
+  el.innerHTML='<div class="sp-sec">Game Reference</div>';
+  for(const e of CODEX_ENTRIES){
+    const d=document.createElement('div');
+    d.className='cod-entry';
+    d.innerHTML=`<div class="cod-head" onclick="this.parentElement.classList.toggle('open')">${e.h}<span>▾</span></div><div class="cod-body">${e.b}</div>`;
+    el.appendChild(d);
+  }
+}
+
+// ═══════════════════════════════════════
+// LIGHT MODE
+// ═══════════════════════════════════════
+function toggleLightMode(){
+  document.body.classList.toggle('light-mode');
+  const on=document.body.classList.contains('light-mode');
+  document.getElementById('lightToggle')?.classList.toggle('on',on);
+}
+
+// ═══════════════════════════════════════
+// ZOOM SYSTEM
+// ═══════════════════════════════════════
+const ZOOM_MIN=0.35, ZOOM_MAX=2.5;
+
+function doZoom(delta){
+  setZoom(G.zoom+delta);
+}
+function setZoom(z){
+  const prev=G.zoom;
+  G.zoom=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,z));
+  // Zoom toward viewport center
+  const cx2=cv.width/2, cy2=cv.height/2;
+  G.cam.x=cx2-(cx2-G.cam.x)*(G.zoom/prev);
+  G.cam.y=cy2-(cy2-G.cam.y)*(G.zoom/prev);
+  clamp();draw();updMMVP();
+  updateZoomUI();
+}
+function clickZoomTrack(e){
+  const rect=e.currentTarget.getBoundingClientRect();
+  const pct=(e.clientX-rect.left)/rect.width;
+  setZoom(ZOOM_MIN+(ZOOM_MAX-ZOOM_MIN)*pct);
+}
+function updateZoomUI(){
+  const pct=Math.round(G.zoom*100);
+  const el=document.getElementById('zoomLbl');if(el)el.textContent=pct+'%';
+  const fill=document.getElementById('zoomFill');
+  if(fill)fill.style.width=((G.zoom-ZOOM_MIN)/(ZOOM_MAX-ZOOM_MIN)*100)+'%';
+}
+
+// ═══════════════════════════════════════
+// CAMERA & TILE COORDS (zoom-aware)
+// ═══════════════════════════════════════
+let _inspTile=null;
+let _hasDragged=false;
+let _mdPos={x:0,y:0};
+
+function openTileInspect(tx,ty,screenX,screenY){
+  const tile=tiles[ty]?.[tx];
+  if(!tile||tile.type===undefined) return;
+  _inspTile={x:tx,y:ty};
+  tileInspect={x:tx,y:ty};
+
+  const def=getTileMeta(tile.type);
+  document.getElementById('ti-icon').textContent=def.icon||'🗺️';
+  document.getElementById('ti-name').textContent=def.name||'Terrain';
+  document.getElementById('ti-coord').textContent=`Tile ${tx}, ${ty}`;
+  document.getElementById('ti-terrain-desc').textContent=(def.name||'Unknown')+' — '+( def.res||'');
+
+  const oreRow=document.getElementById('ti-ore-row');
+  const unkRow=document.getElementById('ti-unknown-row');
+  const emptyRow=document.getElementById('ti-empty-row');
+  const survBtn=document.getElementById('ti-survey-btn');
+  const mineBtn=document.getElementById('ti-mine-btn');
+  [oreRow,unkRow,emptyRow].forEach(e=>e.style.display='none');
+
+  if(tile.under){
+    if(tile.under.revealed){
+      const ud=UNDER_DEF[tile.under.type];
+      document.getElementById('ti-ore-dot').style.cssText=
+        `background:${ud.col};box-shadow:0 0 6px ${ud.glow};`;
+      document.getElementById('ti-ore-name').textContent=ud.icon+' '+ud.label;
+      document.getElementById('ti-ore-qty').textContent=
+        `~${tile.under.qty} units remaining · Era ${ud.era}`;
+      oreRow.style.display='flex';
+      survBtn.style.display='none';
+      mineBtn.style.display='block';
+      if(tile.under.mining){
+        mineBtn.textContent='🛑 Stop Mining';
+        mineBtn.className='ti-btn active';
+      } else {
+        mineBtn.textContent=`⛏️ Begin Mining ${ud.label}`;
+        mineBtn.className='ti-btn';
+      }
+    } else {
+      unkRow.style.display='flex';
+      survBtn.style.display='block';mineBtn.style.display='none';
+    }
+  } else {
+    emptyRow.style.display='flex';
+    survBtn.style.display='none';mineBtn.style.display='none';
+  }
+
+  // Position panel near cursor, keeping on-screen
+  const panel=document.getElementById('tile-inspect');
+  panel.style.display='block'; // temp to get offsetHeight
+  let px2=screenX+18, py2=screenY-10;
+  const ph=panel.offsetHeight||160, pw=panel.offsetWidth||200;
+  if(px2+pw+10>window.innerWidth)  px2=screenX-pw-10;
+  if(py2+ph>window.innerHeight-210) py2=screenY-ph-5;
+  if(py2<80) py2=80;
+  panel.style.left=px2+'px'; panel.style.top=py2+'px';
+  panel.classList.add('show');
+  draw();
+}
+
+function closeTileInspect(){
+  tileInspect=null; _inspTile=null;
+  document.getElementById('tile-inspect').classList.remove('show');
+  draw();
+}
+
+function surveyTile(){
+  if(!_inspTile) return;
+  if(G.res.gold<5){ addAlert('','❌','Need 5 Gold to survey!'); return; }
+  const tile=tiles[_inspTile.y]?.[_inspTile.x];
+  if(!tile) return;
+  G.res.gold-=5;
+  if(tile.under) tile.under.revealed=true;
+  tile.revealed=true;
+  const ty2=_inspTile.y*currentZS+G.cam.y;
+  openTileInspect(_inspTile.x,_inspTile.y,_inspTile.x*currentZS+G.cam.x+currentZS,ty2);
+  if(tile.under){
+    const ud=UNDER_DEF[tile.under.type];
+    addAlert('ok','🔍',`Survey found: ${ud.icon} ${ud.label}!`);
+  } else {
+    addAlert('i','🔍','Survey complete — no notable deposits here.');
+  }
+  draw();
+}
+
+function toggleMining(){
+  if(!_inspTile) return;
+  const tile=tiles[_inspTile.y]?.[_inspTile.x];
+  if(!tile||!tile.under||!tile.under.revealed) return;
+  tile.under.mining=!tile.under.mining;
+  const ud=UNDER_DEF[tile.under.type];
+  openTileInspect(_inspTile.x,_inspTile.y,
+    _inspTile.x*currentZS+G.cam.x+currentZS, _inspTile.y*currentZS+G.cam.y);
+  addAlert(tile.under.mining?'ok':'i',
+    tile.under.mining?'⛏️':'⏸',
+    tile.under.mining
+      ? `Mining ${ud.label} started!`
+      : `Mining ${ud.label} paused.`);
+}
+
+// ═══════════════════════════════════════
+// CAMERA
+// ═══════════════════════════════════════
+const gc=document.getElementById('gc');
+
+// Scroll wheel zoom (must be after gc declaration)
+gc.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const delta=e.deltaY>0?-0.1:0.1;
+  const prev=G.zoom;
+  G.zoom=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,G.zoom+delta));
+  G.cam.x=e.clientX-(e.clientX-G.cam.x)*(G.zoom/prev);
+  G.cam.y=e.clientY-(e.clientY-G.cam.y)*(G.zoom/prev);
+  clamp();draw();updMMVP();
+  updateZoomUI();
+},{passive:false});
+
+gc.addEventListener('mousedown',e=>{
+  if(e.button!==0)return;
+  if(G.rdMode){rdClick(e.clientX,e.clientY);return;}
+  G.drag=true;G.ds={x:e.clientX,y:e.clientY};G.dc={...G.cam};
+  _hasDragged=false;_mdPos={x:e.clientX,y:e.clientY};
+  gc.classList.add('drag');
+});
+window.addEventListener('mousemove',e=>{
+  if(!G.drag)return;
+  const dx=e.clientX-_mdPos.x,dy=e.clientY-_mdPos.y;
+  if(Math.abs(dx)>5||Math.abs(dy)>5)_hasDragged=true;
+  G.cam.x=G.dc.x+(e.clientX-G.ds.x);G.cam.y=G.dc.y+(e.clientY-G.ds.y);
+  clamp();draw();updMMVP();
+});
+window.addEventListener('mouseup',e=>{
+  if(G.drag&&!_hasDragged&&!G.rdMode&&e.button===0){
+    const ZS=currentZS;
+    const tx=Math.floor((e.clientX-G.cam.x)/ZS);
+    const ty=Math.floor((e.clientY-G.cam.y)/ZS);
+    if(tx>=0&&tx<MW&&ty>=0&&ty<MH){
+      const t=tiles[ty]?.[tx];
+      if(t&&t.type!==undefined) openTileInspect(tx,ty,e.clientX,e.clientY);
+      else closeTileInspect();
+    } else closeTileInspect();
+  }
+  G.drag=false;gc.classList.remove('drag');
+});
+let ts0={};
+gc.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    if(G.rdMode){rdClick(t.clientX,t.clientY);return;}
+    G.drag=true;ts0={x:t.clientX,y:t.clientY,cx:G.cam.x,cy:G.cam.y};
+  }
+},{passive:false});
+gc.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===1&&G.drag){
+    const t=e.touches[0];
+    G.cam.x=ts0.cx+(t.clientX-ts0.x);G.cam.y=ts0.cy+(t.clientY-ts0.y);
+    clamp();draw();updMMVP();
+  }
+},{passive:false});
+gc.addEventListener('touchend',e=>{if(e.touches.length===0)G.drag=false;});
+function clamp(){
+  const ZS=currentZS;
+  G.cam.x=Math.max(-(MW*ZS-cv.width+60),Math.min(60,G.cam.x));
+  G.cam.y=Math.max(-(MH*ZS-cv.height+220),Math.min(60,G.cam.y));
+}
+
+// ═══════════════════════════════════════
+// ROAD SYSTEM
+// ═══════════════════════════════════════
+function rdMode(type){
+  const rd=RD[type];
+  if(G.yr<rd.yr){addAlert('','⚠️',`${rd.label} unlocks in ${rd.yr}. Now: ${G.yr}`);return;}
+  if(G.rdMode===type){
+    G.rdMode=null;G.rdStart=null;
+    document.getElementById('rdbanner').classList.remove('show');
+    document.querySelectorAll('[id^="rd-"]').forEach(b=>b.classList.remove('am'));
+  } else {
+    G.rdMode=type;G.rdStart=null;
+    document.querySelectorAll('[id^="rd-"]').forEach(b=>b.classList.remove('am'));
+    document.getElementById('rd-'+type)?.classList.add('am');
+    const ban=document.getElementById('rdbanner');
+    ban.textContent=`🛤 ${rd.label} — click START point on map`;
+    ban.classList.add('show');
+  }
+  draw();
+}
+function rdClick(cx2,cy2){
+  const ZS=currentZS;
+  const tx=Math.floor((cx2-G.cam.x)/ZS),ty=Math.floor((cy2-G.cam.y)/ZS);
+  if(tx<0||tx>=MW||ty<0||ty>=MH)return;
+  if(!G.rdStart){
+    G.rdStart={x:tx,y:ty};
+    document.getElementById('rdbanner').textContent=`🛤 ${RD[G.rdMode].label} — click END point`;
+    draw();
+  } else {
+    buildRoad(G.rdStart.x,G.rdStart.y,tx,ty,G.rdMode);
+    G.rdStart=null;G.rdMode=null;
+    document.getElementById('rdbanner').classList.remove('show');
+    document.querySelectorAll('[id^="rd-"]').forEach(b=>b.classList.remove('am'));
+    draw();drawMM();
+  }
+}
+function buildRoad(fx,fy,tx,ty,type){
+  const rd=RD[type];
+  const dist=Math.abs(tx-fx)+Math.abs(ty-fy);
+  const rc=type==='dirt'?{wood:dist*5}:type==='gravel'?{stone:dist*10}:{stone:dist*20,iron:dist*5};
+  for(const[r,amt] of Object.entries(rc)){if(G.res[r]<amt){addAlert('','❌',`Not enough ${r}! Need ${amt}`);return;}}
+  for(const[r,amt] of Object.entries(rc))G.res[r]-=amt;
+  G.roads=G.roads.filter(r=>!(r.fx===fx&&r.fy===fy&&r.tx===tx&&r.ty===ty));
+  G.roads.push({fx,fy,tx,ty,type});
+  addAlert('ok','🛤️',`${rd.label} built! (${dist} tiles)`);
+}
+function bestRoad(yr){let b='dirt';for(const[t,r] of Object.entries(RD))if(yr>=r.yr)b=t;return b;}
+function autoConnect(){
+  if(G.towns.length<2){addAlert('','🏘️','Found the New World — settle a 2nd location to connect towns.');return;}
+  const t1=G.towns[0],t2=G.towns[1],type=bestRoad(G.yr);
+  G.roads=G.roads.filter(r=>!(r.fx===t1.x&&r.fy===t1.y&&r.tx===t2.x&&r.ty===t2.y));
+  G.roads.push({fx:t1.x,fy:t1.y,tx:t2.x,ty:t2.y,type});
+  addAlert('ok','🔗',`${RD[type].label} built between ${t1.name} and ${t2.name}!`);
+  draw();drawMM();
+}
+function upgradeRoads(){
+  const best=bestRoad(G.yr);let n=0;
+  G.roads.forEach(r=>{if(RD[r.type].yr<RD[best].yr){r.type=best;n++;}});
+  addAlert(n?'ok':'i','⬆️',n?`${n} road(s) upgraded to ${RD[best].label}.`:'All roads at current era standard.');
+  draw();drawMM();
+}
+function unlockRoads(){
+  const map={brick:'rd-brick',paved:'rd-paved',concrete:'rd-concrete'};
+  for(const[type,id] of Object.entries(map)){
+    const el=document.getElementById(id);
+    if(el&&G.yr>=RD[type].yr){el.classList.remove('lk');el.setAttribute('onclick',`rdMode('${type}')`);}
+  }
+}
+function toggleRL(){document.getElementById('rl').classList.toggle('show');}
+
+// ═══════════════════════════════════════
+// TOWN MANAGEMENT
+// ═══════════════════════════════════════
+function selectTown(el,idx){
+  G.selectedTown=idx;
+  document.querySelectorAll('.town-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  refreshTownPanel();
+  draw();
+}
+
+function refreshTownPanel(){
+  const t=G.towns[G.selectedTown];
+  if(!t)return;
+  st('tnName',t.name);
+  st('tnSub',`Founded ${t.founded} · Pop. ${t.pop}`);
+  // Stats
+  const popPct=Math.round(t.pop/t.maxPop*100);
+  setSB('tbPop','tvPop',popPct,t.pop+'/'+t.maxPop);
+  setSB('tbFood','tvFood',t.food,Math.round(t.food)+'%');
+  setSB('tbWater','tvWater',t.water,Math.round(t.water)+'%');
+  setSB('tbMood','tvMood',t.mood,Math.round(t.mood)+'%');
+  setSB('tbDef','tvDef',t.def,Math.round(t.def)+'%');
+}
+
+function rebuildTownTabs(){
+  const tabs=document.getElementById('townTabs');
+  tabs.innerHTML='';
+  G.towns.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='town-tab'+(i===G.selectedTown?' on':'');
+    d.textContent=t.name;
+    d.onclick=()=>selectTown(d,i);
+    tabs.appendChild(d);
+  });
+}
+
+function nextTown(){
+  G.selectedTown=(G.selectedTown+1)%G.towns.length;
+  rebuildTownTabs();
+  refreshTownPanel();
+  const t=G.towns[G.selectedTown];
+  G.cam.x=-t.x*TS+cv.width/2;G.cam.y=-t.y*TS+(cv.height)/2-60;
+  clamp();draw();updMMVP();
+}
+
+// ═══════════════════════════════════════
+// GAME LOOP  — Cities Skylines time model
+// Speed 1 = 1 game-day per real minute
+// Speed 2 = 1 game-day per 20 real seconds
+// Speed 3 = 1 game-day per 6 real seconds
+// ═══════════════════════════════════════
+// Game-minutes added per real second at each speed level
+// 1 real minute = 0.8 game-days at speed 1 → 1152 game-min/real-min → 19.2/sec
+const SPEED_RATES=[0, 19.2, 57.6, 192]; // spd 0,1,2,3
+
+let lt=0;
+function loop(ts){
+  if(G.paused){mineAnimT=ts;draw();requestAnimationFrame(loop);return;}
+  const dt=Math.min(ts-lt, 100); // cap at 100ms to avoid big jumps
+  lt=ts;
+  mineAnimT=ts;
+
+  // Advance game time (game-minutes this frame)
+  const gmFrame=(dt/1000)*SPEED_RATES[G.spd];
+  G.min+=gmFrame;
+  while(G.min>=60){G.min-=60;G.hr++;}
+  while(G.hr>=24){G.hr=0;advanceDay();}
+
+  tick(gmFrame);hud();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function tick(gmFrame){
+  // gmFrame = game-minutes elapsed this frame
+  // Resources drain per game-day (1440 game-min)
+  const dayFrac=gmFrame/1440;
+  const r=G.res, p=G.pop.n;
+
+  // Food: settlers consume ~0.5 units/day each
+  r.food=Math.max(0, r.food - p * 0.5 * dayFrac);
+  // Water: settlers consume ~1.2 units/day each
+  r.water=Math.max(0, r.water - p * 1.2 * dayFrac);
+
+  // Era progress (slow crawl)
+  G.eraP=Math.min(100, G.eraP + 0.8 * dayFrac);
+
+  // Mining — active mines yield resources per game-day
+  for(let y=0;y<MH;y++) for(let x=0;x<MW;x++){
+    const t=tiles[y]?.[x];
+    if(!t||!t.under||!t.under.mining||!t.under.revealed)continue;
+    const yield2=0.6*dayFrac; // ~0.6 units per game-day per mine
+    if(t.under.qty>0){
+      t.under.qty=Math.max(0,t.under.qty-yield2);
+      const ud=UNDER_DEF[t.under.type];
+      if(t.under.type==='iron'&&G.yr>=ud.era) G.res.iron=(G.res.iron||0)+yield2;
+      else if(t.under.type==='gold') G.res.gold+=yield2*.05;
+      else if(t.under.type==='stone') G.res.stone+=yield2*.5;
+      if(t.under.qty<=0){
+        t.under.mining=false;
+        addAlert('i','⛏️','A mine has been exhausted!');
+      }
+    }
+  }
+
+  // Town stats drift (gentle)
+  G.towns.forEach(t=>{
+    t.food=Math.max(0,Math.min(100,t.food - 0.3*dayFrac));
+    t.water=Math.max(0,Math.min(100,t.water - 0.5*dayFrac));
+  });
+}
+
+function hud(){
+  const r=G.res;
+  rv('vW',r.wood);rv('vS',r.stone);rv('vF',r.food);
+  rv('vH',r.water);rv('vFr',r.fur);rv('vI',r.iron);rv('vG',r.gold);
+
+  // Date and time badge
+  const era=ERAS.find(e=>G.yr>=e.y[0]&&G.yr<e.y[1])||ERAS[0];
+  st('dtEra',era.n);
+  st('dtDate',fmtDate());
+  st('dtTime', G.season.charAt(0).toUpperCase()+G.season.slice(1)); // kept in DOM but hidden
+
+  // Era progress
+  document.getElementById('ef').style.width=G.eraP+'%';
+
+  // Season + pop (both rows)
+  const si=SSNS[G.season],sn=G.season[0].toUpperCase()+G.season.slice(1);
+  ['si1','si2'].forEach(id=>st(id,si));
+  ['sl1','sl2'].forEach(id=>st(id,sn));
+  ['pn1','pn2'].forEach(id=>st(id,G.pop.n));
+  ['pm1','pm2'].forEach(id=>st(id,G.pop.max));
+
+  // Town panel
+  refreshTownPanel();
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function rv(id,v){
+  const e=document.getElementById(id);if(!e)return;
+  e.textContent=Math.floor(v);
+  e.className='ri-v'+(v<50?(v<20?' c':' w'):'');
+}
+function st(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function setSB(barid,varid,pct,label){
+  const b=document.getElementById(barid),vl=document.getElementById(varid);
+  if(b)b.style.width=Math.max(0,Math.min(100,pct))+'%';
+  if(vl)vl.textContent=label||Math.floor(pct)+'%';
+}
+
+// ═══════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════
+function dismissAlert(el){
+  el.style.animation='fadeOut .3s ease forwards';
+  setTimeout(()=>{if(el.parentNode)el.remove();},280);
+}
+function addAlert(cls,icon,text){
+  const panel=document.getElementById('al');
+  while(panel.children.length>=4)panel.removeChild(panel.lastChild);
+  const el=document.createElement('div');
+  el.className='a'+(cls?' '+cls:'');
+  el.innerHTML=`<span class="a-ic">${icon}</span>`+
+    `<span class="a-tx">${text}</span>`+
+    `<span class="a-x" title="Dismiss">✕</span>`;
+  el.querySelector('.a-x').onclick=e=>{e.stopPropagation();dismissAlert(el);};
+  panel.insertBefore(el,panel.firstChild);
+  setTimeout(()=>{if(el.parentNode)dismissAlert(el);},5000);
+}
+
+// ═══════════════════════════════════════
+// UI
+// ═══════════════════════════════════════
+function swTab(el,name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.style.display='none');
+  const tgt=document.getElementById('tab-'+name);if(tgt)tgt.style.display='grid';
+}
+function setSp(s){
+  G.spd=s;G.paused=(s===0);
+  ['d0','d1','d2','d3','m0','m1','m2','m3'].forEach((id,i)=>{
+    document.getElementById(id)?.classList.toggle('on',i%4===s);
+  });
+}
+function tip(e,t,b,c){
+  const el=document.getElementById('tip');
+  document.getElementById('tt').textContent=t;
+  document.getElementById('tb2').textContent=b||'';
+  const ce=document.getElementById('tc');
+  if(c){ce.textContent='Cost: '+c;ce.style.display='block';}else ce.style.display='none';
+  el.style.display='block';
+  const r=e.target.getBoundingClientRect();
+  let x=r.left,y=r.top-el.offsetHeight-8;
+  if(y<80)y=r.bottom+8;
+  if(x+215>window.innerWidth)x=window.innerWidth-220;
+  el.style.left=x+'px';el.style.top=y+'px';
+}
+function htip(){document.getElementById('tip').style.display='none';}
+
+var selectedScenario={name:'Jamestown',yr:1607,month:5,day:14};
+function pickSc(el,name,yr){
+  document.querySelectorAll('.sc').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const dates={Jamestown:{yr:1607,m:5,d:14},Plymouth:{yr:1620,m:12,d:21},'New Amsterdam':{yr:1624,m:5,d:4}};
+  const d=dates[name]||dates.Jamestown;
+  selectedScenario={name,yr:d.yr,month:d.m,day:d.d};
+}
+
+function startGame(){
+  // Apply scenario
+  G.yr=selectedScenario.yr;
+  G.month=selectedScenario.month;
+  G.dayOfMonth=selectedScenario.day;
+  G.towns[0].name=selectedScenario.name;
+  G.towns[0].founded=MONTHS[G.month-1]+' '+G.dayOfMonth+', '+G.yr;
+  rebuildTownTabs();
+
+  // Fade out scenario screen, generate the real US map, then start
+  const ov=document.getElementById('so');
+  ov.style.opacity='0';
+  setTimeout(async ()=>{
+    ov.style.display='none';
+    await generateMap();  // async: shows loading bar, builds terrain, reveals starting area
+    const anc=SCENARIO_ANCHORS[selectedScenario.name]||SCENARIO_ANCHORS['Jamestown'];
+    G.cam.x=-anc.tx*TS*G.zoom+cv.width/2;
+    G.cam.y=-anc.ty*TS*G.zoom+(cv.height)/2-60;
+    clamp();drawAll();drawMM();
+    document.getElementById('ev').querySelector('.evm-t').textContent=
+      `⚓ Landfall! — ${G.towns[0].founded}`;
+    document.getElementById('ev').style.display='block';
+    requestAnimationFrame(ts=>{lt=ts;requestAnimationFrame(loop);});
+  },800);
+}
+
+function dismissEv(){
+  document.getElementById('ev').style.display='none';
+  setTimeout(()=>addAlert('','💧','Water critically low! Build a well immediately.'),400);
+  setTimeout(()=>addAlert('w','❄️','Winter approaches — stock food before first frost.'),1000);
+  setTimeout(()=>addAlert('ok','🪵','Settlers began felling trees automatically.'),1600);
+}
+
+function goHome(){
+  const t=G.towns[G.selectedTown]||G.towns[0];
+  G.cam.x=-t.x*TS*G.zoom+cv.width/2;G.cam.y=-t.y*TS*G.zoom+(cv.height)/2-60;
+  clamp();drawAll();updMMVP();
+}
+
+// Demo: second town appears on day 6
+let town2done=false;
+function checkDemo(){
+  const totalDays=Math.floor((G.yr-1607)*365+(G.month-1)*30+G.dayOfMonth);
+  if(!town2done&&totalDays>5){
+    town2done=true;
+    const type=bestRoad(G.yr);
+    const t0=G.towns[0];
+    const newTown={x:t0.x+7,y:t0.y+6,name:'Hampton Falls',founded:fmtDate(),
+      pop:12,maxPop:40,food:80,water:75,mood:90,def:10};
+    G.towns.push(newTown);
+    G.roads.push({fx:t0.x,fy:t0.y,tx:newTown.x,ty:newTown.y,type});
+    rebuildTownTabs();
+    addAlert('ok','🏘️',`Hampton Falls founded! A ${RD[type].label} connects the settlements.`);
+    drawAll();drawMM();
+  }
+}
+
+// ═══════════════════════════════════════
+// INIT — generate map on load (for start screen preview)
+// ═══════════════════════════════════════
+window.addEventListener('resize',resize);
+resize();
+// Generate the real US map immediately for start screen background
+generateMap().then(()=>{
+  const anc=SCENARIO_ANCHORS['Jamestown'];
+  G.cam.x=-anc.tx*TS+cv.width/2;
+  G.cam.y=-anc.ty*TS+cv.height/2-60;
+  clamp();drawAll();drawMM();
+});
+</script>
+</body>
+</html>
