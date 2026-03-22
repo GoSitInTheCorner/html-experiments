@@ -4,21 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Dashboard</title>
+
+<!-- PWA / iOS Home Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<meta name="mobile-web-app-capable" content="yes">
+<meta id="theme-color-meta" name="theme-color" content="#0e0e10">
+<link rel="apple-touch-icon" id="pwa-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230e0e10'/%3E%3Ctext x='256' y='340' text-anchor='middle' font-size='280' font-family='system-ui'%3E✦%3C/text%3E%3C/svg%3E">
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0e0e10;--surface:#18181c;--surface2:#222228;--border:#2e2e38;
   --accent:#60aaff;--accent2:#a0cfff;--accent3:#60d4ff;--accent4:#f0a060;--accent5:#60c8f0;
   --text:#e8e8f0;--muted:#888898;--danger:#f06060;
+  --sz:1;
+}
+/* Light theme */
+[data-theme="light"]{
+  --bg:#f0f0f4;--surface:#ffffff;--surface2:#e8e8ee;--border:#d0d0dc;
+  --text:#1a1a2e;--muted:#6666888;--accent:#2266cc;--accent2:#3377dd;
+  --accent3:#1188cc;--accent4:#cc6600;--accent5:#2288aa;--danger:#cc2222;
+  --muted:#666688;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:clamp(12px,1.5vw,15px)}
-body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:1rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+html{font-size:clamp(13px,1.8vw,17px)}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:calc(1rem * var(--sz));height:100dvh;display:flex;flex-direction:column;overflow:hidden;transition:background .2s,color .2s}
 
 /* ── NAV ── */
-#main-nav{display:flex;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
-.mnav{flex:1;padding:13px 6px;text-align:center;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+#main-nav{display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;position:relative}
+.mnav{flex:1;padding:13px 6px;text-align:center;font-size:calc(.65rem * var(--sz));text-transform:uppercase;letter-spacing:.08em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
 .mnav.active{color:var(--accent);border-bottom-color:var(--accent)}
+#settings-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:calc(1.1rem * var(--sz));padding:4px;line-height:1;z-index:10}
+#settings-btn:active{color:var(--accent)}
 
 /* ── SCREENS ── */
 .screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex-direction:column}
@@ -29,9 +48,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 
 .dash-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .dash-sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;border-bottom:1px solid var(--border)}
-.dash-sec-title{font-family:'Fraunces',serif;font-size:1rem;font-weight:200;color:var(--accent)}
-.dash-sec-sub{font-size:.65rem;color:var(--muted)}
-.dash-add-btn{background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;color:var(--muted);font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer}
+.dash-sec-title{font-family:'Fraunces',serif;font-size:calc(1rem * var(--sz));font-weight:200;color:var(--accent)}
+.dash-sec-sub{font-size:calc(.65rem * var(--sz));color:var(--muted)}
+.dash-add-btn{background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;color:var(--muted);font-family:'DM Mono',monospace;font-size:calc(.65rem * var(--sz));cursor:pointer}
 .dash-add-btn:active{border-color:var(--accent);color:var(--accent)}
 
 /* Projects list on dashboard */
@@ -39,33 +58,37 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .dash-proj-item:last-child{border-bottom:none}
 .dash-proj-item:active{background:var(--surface2)}
 .dash-proj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dash-proj-name{flex:1;font-size:.85rem;font-family:'Fraunces',serif;font-weight:200}
-.dash-proj-status{font-size:.6rem;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;flex-shrink:0}
-.dash-proj-app{font-size:.65rem;color:var(--accent2);flex-shrink:0;text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:6px}
+.dash-proj-name{flex:1;font-size:calc(.85rem * var(--sz));font-family:'Fraunces',serif;font-weight:200}
+.dash-proj-status{font-size:calc(.6rem * var(--sz));padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;flex-shrink:0}
+.dash-proj-app{font-size:calc(.65rem * var(--sz));color:var(--accent2);flex-shrink:0;text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:6px}
 .dash-proj-app:hover{border-color:var(--accent2)}
 .sp-ns{background:#2e2e38;color:var(--muted)}
 .sp-ip{background:#0e2040;color:var(--accent)}
 .sp-dn{background:#0e2535;color:var(--accent2)}
 .sp-oh{background:#2e1e1e;color:var(--accent4)}
-#dash-proj-empty{padding:20px 14px;font-size:.8rem;color:var(--muted);text-align:center}
-.dash-proj-add{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;color:var(--muted);font-size:.8rem;border-top:1px dashed var(--border)}
+[data-theme="light"] .sp-ns{background:#e0e0ea;color:var(--muted)}
+[data-theme="light"] .sp-ip{background:#ddeeff;color:var(--accent)}
+[data-theme="light"] .sp-dn{background:#ddeef8;color:var(--accent2)}
+[data-theme="light"] .sp-oh{background:#fff0dd;color:var(--accent4)}
+#dash-proj-empty{padding:20px 14px;font-size:calc(.8rem * var(--sz));color:var(--muted);text-align:center}
+.dash-proj-add{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;color:var(--muted);font-size:calc(.8rem * var(--sz));border-top:1px dashed var(--border)}
 .dash-proj-add:active{color:var(--accent)}
 
 /* Notes */
-#dash-notes{width:100%;min-height:100px;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;line-height:1.7;padding:12px 14px;resize:none}
+#dash-notes{width:100%;min-height:100px;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));line-height:1.7;padding:12px 14px;resize:none}
 #dash-notes::placeholder{color:var(--muted)}
 
 /* Tasks */
 #dash-tasks-list{display:flex;flex-direction:column}
 .dash-task{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)}
 .dash-task:last-child{border-bottom:none}
-.dash-chk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+.dash-chk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:calc(.65rem * var(--sz))}
 .dash-chk.chk{background:var(--accent);border-color:var(--accent);color:#0e0e10}
-.dash-task-inp{flex:1;font-size:.8rem;color:var(--text);background:transparent;border:none;outline:none;font-family:'DM Mono',monospace}
+.dash-task-inp{flex:1;font-size:calc(.8rem * var(--sz));color:var(--text);background:transparent;border:none;outline:none;font-family:'DM Mono',monospace}
 .dash-task-inp.done{text-decoration:line-through;color:var(--muted)}
-.dash-task-del{background:transparent;border:none;color:var(--border);font-size:.9rem;cursor:pointer;padding:0 3px;flex-shrink:0}
+.dash-task-del{background:transparent;border:none;color:var(--border);font-size:calc(.9rem * var(--sz));cursor:pointer;padding:0 3px;flex-shrink:0}
 .dash-task-del:active{color:var(--danger)}
-.dash-task-add{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;color:var(--muted);font-size:.8rem;border-top:1px dashed var(--border)}
+.dash-task-add{display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;color:var(--muted);font-size:calc(.8rem * var(--sz));border-top:1px dashed var(--border)}
 .dash-task-add:active{color:var(--accent)}
 
 /* ── PROJECTS TAB ── */
@@ -73,36 +96,37 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .proj-app-card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);transition:border-color .15s;position:relative;cursor:pointer}
 .proj-app-card:active{background:var(--surface2)}
 .proj-app-icon{font-size:24px;margin-bottom:8px}
-.proj-app-name{font-family:'Fraunces',serif;font-size:.9rem;font-weight:200;line-height:1.2;margin-bottom:4px}
-.proj-app-desc{font-size:.6rem;color:var(--muted);line-height:1.5;text-transform:uppercase;letter-spacing:.06em}
+.proj-app-name{font-family:'Fraunces',serif;font-size:calc(.9rem * var(--sz));font-weight:200;line-height:1.2;margin-bottom:4px}
+.proj-app-desc{font-size:calc(.6rem * var(--sz));color:var(--muted);line-height:1.5;text-transform:uppercase;letter-spacing:.06em}
 /* card open-count badge */
-.card-opens{position:absolute;top:8px;right:8px;font-size:.5rem;padding:2px 5px;border-radius:6px;background:var(--surface2);color:var(--muted);pointer-events:none}
+.card-opens{position:absolute;top:8px;right:8px;font-size:calc(.5rem * var(--sz));padding:2px 5px;border-radius:6px;background:var(--surface2);color:var(--muted);pointer-events:none}
 /* Tools sort pills */
 .tools-sort-bar{display:flex;gap:5px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.sort-pill{background:transparent;border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.sort-pill{background:transparent;border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'DM Mono',monospace;font-size:calc(.58rem * var(--sz));color:var(--muted);cursor:pointer;white-space:nowrap}
 .sort-pill.active{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
 /* Dashboard tools section */
-.dash-tool-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.dash-tool-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)}
 .dash-tool-item:last-child{border-bottom:none}
 .dash-tool-item:active{background:var(--surface2)}
-.dash-tool-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center;padding-top:2px}
+.dash-tool-icon{font-size:calc(1rem * var(--sz));flex-shrink:0;width:24px;text-align:center}
 .dash-tool-info{flex:1;min-width:0}
-.dash-tool-name{font-size:.82rem;font-family:'Fraunces',serif;font-weight:200}
-.dash-tool-meta{font-size:.58rem;color:var(--muted);margin-top:2px}
-.dash-tool-actions{display:flex;gap:5px;margin-top:6px}
-.dash-tool-pill{background:transparent;border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-family:'DM Mono',monospace;font-size:.55rem;color:var(--muted);cursor:pointer;white-space:nowrap;transition:border-color .1s,color .1s}
-.dash-tool-pill:active{border-color:var(--accent);color:var(--accent)}
+.dash-tool-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dash-tool-name{font-size:calc(.82rem * var(--sz));font-family:'Fraunces',serif;font-weight:200;white-space:nowrap}
+.dash-tool-meta{font-size:calc(.58rem * var(--sz));color:var(--muted);margin-top:3px}
+/* inline action pills — sized to match nav tab labels */
+.dash-tool-pill{background:transparent;border:1px solid var(--border);border-radius:20px;padding:calc(3px * var(--sz)) calc(10px * var(--sz));font-family:'DM Mono',monospace;font-size:calc(.65rem * var(--sz));color:var(--muted);cursor:pointer;white-space:nowrap;transition:border-color .12s,color .12s;text-decoration:none;display:inline-block}
+.dash-tool-pill:active,.dash-tool-pill:hover{border-color:var(--accent);color:var(--accent)}
 /* Tool detail modal */
 #tool-modal .modal{max-height:88dvh}
 .tool-modal-hdr{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .tool-modal-icon{font-size:28px}
-.tool-modal-title{font-family:'Fraunces',serif;font-weight:200;font-size:1.2rem;color:var(--accent)}
-.tool-modal-desc{font-size:.75rem;color:var(--muted);line-height:1.6;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.tool-modal-stats{display:flex;gap:16px;margin-bottom:14px;font-size:.65rem;color:var(--muted)}
-.tool-modal-stat span{color:var(--text);font-size:.75rem}
-.tool-modal-sec{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;margin-top:14px}
-.tool-note-item{background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:6px;font-size:.78rem;line-height:1.5;position:relative}
-.tool-note-date{font-size:.55rem;color:var(--muted);margin-top:4px}
+.tool-modal-title{font-family:'Fraunces',serif;font-weight:200;font-size:calc(1.2rem * var(--sz));color:var(--accent)}
+.tool-modal-desc{font-size:calc(.75rem * var(--sz));color:var(--muted);line-height:1.6;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.tool-modal-stats{display:flex;gap:16px;margin-bottom:14px;font-size:calc(.65rem * var(--sz));color:var(--muted)}
+.tool-modal-stat span{color:var(--text);font-size:calc(.75rem * var(--sz))}
+.tool-modal-sec{font-size:calc(.65rem * var(--sz));text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;margin-top:14px}
+.tool-note-item{background:var(--surface2);border-radius:8px;padding:9px 11px;margin-bottom:6px;font-size:calc(.78rem * var(--sz));line-height:1.5;position:relative}
+.tool-note-date{font-size:calc(.55rem * var(--sz));color:var(--muted);margin-top:4px}
 .tool-note-del{position:absolute;top:7px;right:8px;background:transparent;border:none;color:var(--border);font-size:.9rem;cursor:pointer}
 .tool-note-del:active{color:var(--danger)}
 .tool-task-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -110,29 +134,46 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .tool-task-chk{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.55rem;margin-top:1px}
 .tool-task-chk.chk{background:var(--accent);border-color:var(--accent);color:#0e0e10}
 .tool-task-body{flex:1;min-width:0}
-.tool-task-inp{width:100%;font-size:.78rem;color:var(--text);background:transparent;border:none;outline:none;font-family:'DM Mono',monospace}
+.tool-task-inp{width:100%;font-size:calc(.78rem * var(--sz));color:var(--text);background:transparent;border:none;outline:none;font-family:'DM Mono',monospace}
 .tool-task-inp.done{text-decoration:line-through;color:var(--muted)}
-.tool-task-date{font-size:.55rem;color:var(--muted);margin-top:2px}
+.tool-task-date{font-size:calc(.55rem * var(--sz));color:var(--muted);margin-top:2px}
 .tool-task-del{background:transparent;border:none;color:var(--border);font-size:.9rem;cursor:pointer;flex-shrink:0}
 .tool-task-del:active{color:var(--danger)}
 .tool-add-row{display:flex;gap:8px;margin-top:8px}
-.tool-add-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.78rem;outline:none}
+.tool-add-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:calc(.78rem * var(--sz));outline:none}
 .tool-add-inp:focus{border-color:var(--accent)}
-.tool-add-btn{background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;cursor:pointer}
-.tool-open-btn{display:block;width:100%;background:var(--accent);color:#0e0e10;border:none;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500;cursor:pointer;text-align:center;text-decoration:none;margin-top:16px}
+.tool-add-btn{background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:calc(.75rem * var(--sz));font-weight:500;cursor:pointer}
+.tool-open-btn{display:block;width:100%;background:var(--accent);color:#0e0e10;border:none;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:calc(.85rem * var(--sz));font-weight:500;cursor:pointer;text-align:center;text-decoration:none;margin-top:16px}
 
-/* ── MODAL ── */
+/* ── TOOL VIEWER (full-screen iframe, stays in PWA) ── */
+#tool-viewer{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#tool-viewer.open{transform:translateY(0)}
+#tool-viewer-bar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;padding-top:max(12px,env(safe-area-inset-top))}
+#tool-viewer-back{background:transparent;border:none;color:var(--accent);font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));cursor:pointer;padding:4px 2px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+#tool-viewer-title{flex:1;font-family:'Fraunces',serif;font-weight:200;font-size:calc(.9rem * var(--sz));color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tool-viewer-iframe{flex:1;border:none;width:100%;height:100%}
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end}
 .modal-ov.active{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:20px 16px 40px;width:100%;animation:slideUp .22s ease;max-height:80dvh;overflow-y:auto}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal h2{font-family:'Fraunces',serif;font-weight:200;font-size:1.25rem;margin-bottom:14px;color:var(--accent)}
-.mi{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;width:100%;outline:none;margin-bottom:10px}
+.modal h2{font-family:'Fraunces',serif;font-weight:200;font-size:calc(1.25rem * var(--sz));margin-bottom:14px;color:var(--accent)}
+.mi{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));width:100%;outline:none;margin-bottom:10px}
 .mi:focus{border-color:var(--accent)}
 .mi::placeholder{color:var(--muted)}
 .mact{display:flex;gap:8px;margin-top:6px}
-.mprim{flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;font-weight:500;cursor:pointer}
-.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:.8rem;cursor:pointer}
+.mprim{flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));font-weight:500;cursor:pointer}
+.msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));cursor:pointer}
+
+/* ── SETTINGS ── */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:calc(.8rem * var(--sz));color:var(--text)}
+.settings-sub{font-size:calc(.6rem * var(--sz));color:var(--muted);margin-top:2px}
+.seg-ctrl{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg-btn{padding:6px 14px;font-family:'DM Mono',monospace;font-size:calc(.7rem * var(--sz));background:transparent;border:none;color:var(--muted);cursor:pointer;border-right:1px solid var(--border)}
+.seg-btn:last-child{border-right:none}
+.seg-btn.active{background:var(--accent);color:#0e0e10;font-weight:500}
+.size-slider{width:120px;accent-color:var(--accent);cursor:pointer}
 </style>
 </head>
 <body>
@@ -140,6 +181,51 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 <div id="main-nav">
   <div class="mnav active" onclick="showScreen('dashboard')">Dashboard</div>
   <div class="mnav" onclick="showScreen('projects')">Projects</div>
+  <button id="settings-btn" onclick="openSettings()" title="Settings">⚙︎</button>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-ov" id="settings-modal">
+  <div class="modal">
+    <h2>Settings</h2>
+
+    <div class="settings-row" id="pwa-install-row" style="display:none">
+      <div>
+        <div class="settings-label">Install as App</div>
+        <div class="settings-sub">Tap <strong>Share → Add to Home Screen</strong> in Safari for full-screen mode with no browser UI</div>
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Theme</div>
+      </div>
+      <div class="seg-ctrl">
+        <button class="seg-btn" data-theme-btn="dark" onclick="setTheme('dark')">Dark</button>
+        <button class="seg-btn" data-theme-btn="light" onclick="setTheme('light')">Light</button>
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Text Size</div>
+        <div class="settings-sub" id="size-label">Medium</div>
+      </div>
+      <input class="size-slider" type="range" min="0.85" max="1.4" step="0.05" id="size-slider" oninput="setSize(this.value)" />
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Refresh App</div>
+        <div class="settings-sub">Reload without losing data</div>
+      </div>
+      <button class="seg-btn active" style="border-radius:8px;border:1px solid var(--border)" onclick="location.reload()">↺ Refresh</button>
+    </div>
+
+    <div class="mact" style="margin-top:16px">
+      <button class="msec" onclick="closeSettings()">Done</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ DASHBOARD ══════════ -->
@@ -400,7 +486,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
       <input class="tool-add-inp" id="tm-task-inp" placeholder="Add a task..." />
       <button class="tool-add-btn" onclick="addToolTask()">Add</button>
     </div>
-    <a class="tool-open-btn" id="tm-open-btn" href="#">↗ Open Tool</a>
+    <button class="tool-open-btn" id="tm-open-btn" onclick="">↗ Open Tool</button>
     <div class="mact" style="margin-top:10px">
       <button class="msec" onclick="closeToolModal()">Close</button>
     </div>
@@ -743,7 +829,7 @@ function renderDashTools() {
     sorted = [...gridKeys];
   }
 
-  count.textContent = usedCount > 0 ? usedCount + ' used' : 'none used yet';
+  count.textContent = usedCount > 0 ? usedCount + ' used' : '';
   list.innerHTML = '';
   empty.style.display = 'none';
 
@@ -772,19 +858,19 @@ function renderDashTools() {
     row.innerHTML = `
       <div class="dash-tool-icon">${meta.icon}</div>
       <div class="dash-tool-info">
-        <div class="dash-tool-name">${escH(meta.name)}</div>
-        ${metaHtml}
-        <div class="dash-tool-actions">
+        <div class="dash-tool-name-row">
+          <span class="dash-tool-name">${escH(meta.name)}</span>
           <button class="dash-tool-pill" data-action="task">+ Task</button>
           <button class="dash-tool-pill" data-action="note">+ Note</button>
         </div>
+        ${metaHtml}
       </div>
-      <a class="dash-tool-pill" href="${escH(key)}" style="align-self:center;flex-shrink:0;text-decoration:none;border-color:var(--border)" data-action="open">↗ Open</a>
+      <button class="dash-tool-pill" style="flex-shrink:0" data-action="open">↗ Open</button>
     `;
     row.onclick = () => openToolModal(meta.card);
     row.querySelector('[data-action="task"]').onclick = e => { e.stopPropagation(); quickAddToTool(meta.card, 'task'); };
     row.querySelector('[data-action="note"]').onclick = e => { e.stopPropagation(); quickAddToTool(meta.card, 'note'); };
-    row.querySelector('[data-action="open"]').onclick = e => { e.stopPropagation(); recordToolOpen(key); };
+    row.querySelector('[data-action="open"]').onclick = e => { e.stopPropagation(); openToolViewer(key, meta.name); };
     list.appendChild(row);
   });
 }
@@ -813,12 +899,7 @@ function openToolModal(card) {
   document.getElementById('tm-desc').textContent = TOOL_DESC[key] || card.querySelector('.proj-app-desc')?.textContent || 'No description available.';
   document.getElementById('tm-opens').textContent = data.opens || 0;
   document.getElementById('tm-last').textContent = fmtDate(data.lastVisit);
-  document.getElementById('tm-open-btn').href = key;
-  document.getElementById('tm-open-btn').onclick = (e) => {
-    e.preventDefault();
-    recordToolOpen(key);
-    window.location.href = key;
-  };
+  document.getElementById('tm-open-btn').onclick = () => openToolViewer(key, name);
   document.getElementById('tm-note-inp').value = '';
   document.getElementById('tm-task-inp').value = '';
 
@@ -946,12 +1027,93 @@ function addToolTask() {
 }
 document.getElementById('tm-task-inp').onkeydown = e => { if (e.key==='Enter') addToolTask(); };
 
+// ── Settings ──
+const SETTINGS_SK = 'dash_settings_v1';
+function settingsLoad() { try{return JSON.parse(localStorage.getItem(SETTINGS_SK))||{}}catch{return{}} }
+function settingsSave(d) { localStorage.setItem(SETTINGS_SK, JSON.stringify(d)) }
+
+function setTheme(t) {
+  const s = settingsLoad(); s.theme = t; settingsSave(s);
+  document.documentElement.dataset.theme = t;
+  const meta = document.getElementById('theme-color-meta');
+  if (meta) meta.content = t === 'light' ? '#f0f0f4' : '#0e0e10';
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('active', b.dataset.themeBtn === t));
+}
+
+const SIZE_LABELS = {0.85:'Small', 0.9:'Small', 0.95:'Small', 1:'Medium', 1.05:'Medium', 1.1:'Medium', 1.15:'Large', 1.2:'Large', 1.25:'Large', 1.3:'X-Large', 1.35:'X-Large', 1.4:'X-Large'};
+function setSize(v) {
+  const s = settingsLoad(); s.size = +v; settingsSave(s);
+  document.documentElement.style.setProperty('--sz', v);
+  const slider = document.getElementById('size-slider');
+  if (slider) slider.value = v;
+  const lbl = document.getElementById('size-label');
+  if (lbl) lbl.textContent = SIZE_LABELS[Math.round(v*20)/20] || 'Custom';
+}
+
+function openSettings() {
+  const s = settingsLoad();
+  const theme = s.theme || 'dark';
+  const size = s.size || 1.1;
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('active', b.dataset.themeBtn === theme));
+  const slider = document.getElementById('size-slider');
+  if (slider) slider.value = size;
+  const lbl = document.getElementById('size-label');
+  if (lbl) lbl.textContent = SIZE_LABELS[Math.round(size*20)/20] || 'Custom';
+  document.getElementById('settings-modal').classList.add('active');
+}
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+document.getElementById('settings-modal').onclick = e => { if (e.target === document.getElementById('settings-modal')) closeSettings(); };
+
+function applySettings() {
+  const s = settingsLoad();
+  const theme = s.theme || 'dark';
+  document.documentElement.dataset.theme = theme;
+  const meta = document.getElementById('theme-color-meta');
+  if (meta) meta.content = theme === 'light' ? '#f0f0f4' : '#0e0e10';
+  setSize(s.size || 1.1);
+}
+
+// Show PWA install hint on iOS Safari when not already in standalone
+(function() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = navigator.standalone === true;
+  const row = document.getElementById('pwa-install-row');
+  if (row && isIOS && !isStandalone) row.style.display = 'flex';
+})();
+
+// ── Tool Viewer (iframe, stays in PWA) ──
+function openToolViewer(url, name) {
+  recordToolOpen(url);
+  document.getElementById('tool-viewer-title').textContent = name || url;
+  document.getElementById('tool-viewer-iframe').src = url;
+  document.getElementById('tool-viewer').classList.add('open');
+  // Close any open modals behind it
+  document.getElementById('tool-modal').classList.remove('active');
+}
+function closeToolViewer() {
+  const viewer = document.getElementById('tool-viewer');
+  viewer.classList.remove('open');
+  // Blank the iframe after transition so it stops running
+  setTimeout(() => { document.getElementById('tool-viewer-iframe').src = ''; }, 300);
+  renderDashTools();
+}
+
 // ── Init ──
+applySettings();
 buildGridOrder();
 renderDashProjects();
 renderTasks();
 initToolCards();
 renderDashTools();
 </script>
+<!-- Full-screen tool viewer -->
+<div id="tool-viewer">
+  <div id="tool-viewer-bar">
+    <button id="tool-viewer-back" onclick="closeToolViewer()">← Back</button>
+    <div id="tool-viewer-title"></div>
+  </div>
+  <iframe id="tool-viewer-iframe" src="" allow="fullscreen"></iframe>
+</div>
+
 </body>
 </html>
