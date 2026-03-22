@@ -146,11 +146,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .tool-open-btn{display:block;width:100%;background:var(--accent);color:#0e0e10;border:none;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:calc(.85rem * var(--sz));font-weight:500;cursor:pointer;text-align:center;text-decoration:none;margin-top:16px}
 
 /* ── TOOL VIEWER (full-screen iframe, stays in PWA) ── */
-#tool-viewer{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#tool-viewer{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;background:#000;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
 #tool-viewer.open{transform:translateY(0)}
-#tool-viewer-bar{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;padding-top:max(12px,env(safe-area-inset-top))}
-#tool-viewer-back{background:transparent;border:none;color:var(--accent);font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));cursor:pointer;padding:4px 2px;display:flex;align-items:center;gap:4px;white-space:nowrap}
-#tool-viewer-title{flex:1;font-family:'Fraunces',serif;font-weight:200;font-size:calc(.9rem * var(--sz));color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tool-viewer-bar{position:absolute;top:max(10px,env(safe-area-inset-top));left:12px;z-index:10;display:flex;align-items:center;gap:8px}
+#tool-viewer-back{background:rgba(0,0,0,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15);border-radius:20px;color:#fff;font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer;padding:6px 14px;display:flex;align-items:center;gap:5px;white-space:nowrap}
 #tool-viewer-iframe{flex:1;border:none;width:100%;height:100%}
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end}
 .modal-ov.active{display:flex}
@@ -164,7 +163,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .mprim{flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));font-weight:500;cursor:pointer}
 .msec{flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));cursor:pointer}
 
-/* ── SETTINGS ── */
+/* ── FLOWCHART ── */
+.flow-tool-btn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-family:'DM Mono',monospace;font-size:calc(.65rem * var(--sz));color:var(--muted);cursor:pointer;white-space:nowrap}
+.flow-tool-btn.active{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.flow-list-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.flow-list-item:last-child{border-bottom:none}
+.flow-list-name{flex:1;font-size:calc(.8rem * var(--sz));font-family:'Fraunces',serif;font-weight:200;cursor:pointer;color:var(--accent)}
+.flow-list-del{background:transparent;border:none;color:var(--border);font-size:.9rem;cursor:pointer}
+.flow-list-del:active{color:var(--danger)}
 .settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
 .settings-row:last-child{border-bottom:none}
 .settings-label{font-size:calc(.8rem * var(--sz));color:var(--text)}
@@ -490,7 +496,33 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
     <div class="mact" style="margin-top:10px">
       <button class="msec" onclick="closeToolModal()">Close</button>
     </div>
+
+    <div class="tool-modal-sec" style="margin-top:22px;display:flex;align-items:center;justify-content:space-between">
+      <span>Flowcharts</span>
+      <button class="dash-tool-pill" style="font-size:calc(.6rem * var(--sz))" onclick="newFlowchart()">+ New</button>
+    </div>
+    <div id="tm-flow-list"></div>
+
   </div>
+</div>
+
+<!-- Flowchart Editor -->
+<div id="flow-editor" style="display:none;position:fixed;inset:0;z-index:600;background:var(--bg);flex-direction:column">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;padding-top:max(10px,env(safe-area-inset-top))">
+    <button onclick="closeFlowEditor()" style="background:transparent;border:none;color:var(--accent);font-family:'DM Mono',monospace;font-size:calc(.8rem * var(--sz));cursor:pointer">← Back</button>
+    <input id="flow-title-inp" style="flex:1;background:transparent;border:none;outline:none;font-family:'Fraunces',serif;font-weight:200;font-size:calc(1rem * var(--sz));color:var(--text)" placeholder="Flowchart name..." />
+    <button onclick="saveFlowchart()" style="background:var(--accent);color:#0e0e10;border:none;border-radius:8px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:calc(.72rem * var(--sz));font-weight:500;cursor:pointer">Save</button>
+  </div>
+  <!-- Toolbar -->
+  <div id="flow-toolbar" style="display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0;background:var(--surface)">
+    <button class="flow-tool-btn active" data-tool="select" onclick="setFlowTool('select')">↖ Select</button>
+    <button class="flow-tool-btn" data-tool="process" onclick="setFlowTool('process')">☐ Process</button>
+    <button class="flow-tool-btn" data-tool="decision" onclick="setFlowTool('decision')">◇ Decision</button>
+    <button class="flow-tool-btn" data-tool="start" onclick="setFlowTool('start')">◯ Start/End</button>
+    <button class="flow-tool-btn" data-tool="arrow" onclick="setFlowTool('arrow')">→ Arrow</button>
+    <button class="flow-tool-btn" data-tool="delete" onclick="setFlowTool('delete')" style="color:var(--danger)">✕ Delete</button>
+  </div>
+  <canvas id="flow-canvas" style="flex:1;touch-action:none;cursor:crosshair"></canvas>
 </div>
 
 
@@ -858,14 +890,14 @@ function renderDashTools() {
     row.innerHTML = `
       <div class="dash-tool-icon">${meta.icon}</div>
       <div class="dash-tool-info">
-        <div class="dash-tool-name-row">
-          <span class="dash-tool-name">${escH(meta.name)}</span>
-          <button class="dash-tool-pill" data-action="task">+ Task</button>
-          <button class="dash-tool-pill" data-action="note">+ Note</button>
-        </div>
+        <div class="dash-tool-name">${escH(meta.name)}</div>
         ${metaHtml}
       </div>
-      <button class="dash-tool-pill" style="flex-shrink:0" data-action="open">↗ Open</button>
+      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+        <button class="dash-tool-pill" data-action="task">+ Task</button>
+        <button class="dash-tool-pill" data-action="note">+ Note</button>
+        <button class="dash-tool-pill" style="color:var(--accent);border-color:var(--accent)" data-action="open">↗ Open</button>
+      </div>
     `;
     row.onclick = () => openToolModal(meta.card);
     row.querySelector('[data-action="task"]').onclick = e => { e.stopPropagation(); quickAddToTool(meta.card, 'task'); };
@@ -905,6 +937,7 @@ function openToolModal(card) {
 
   renderToolNotes(data);
   renderToolTasks(data);
+  renderFlowList(key);
   document.getElementById('tool-modal').classList.add('active');
 }
 
@@ -1098,6 +1131,538 @@ function closeToolViewer() {
   renderDashTools();
 }
 
+// ── Flowchart Engine ──
+const FLOWS_SK = 'dash_flows_v1';
+function flowsLoad() { try{return JSON.parse(localStorage.getItem(FLOWS_SK))||{}}catch{return{}} }
+function flowsSave(d) { localStorage.setItem(FLOWS_SK, JSON.stringify(d)) }
+
+let _flowToolKey = null; // which tool's flowcharts we're editing
+let _flowId = null;      // current flowchart id
+let _flowNodes = [];     // [{id,type,x,y,w,h,label}]
+let _flowArrows = [];    // [{id,from,to}]
+let _flowTool = 'select';
+let _flowSel = null;     // selected node id
+let _flowArrowFrom = null;
+let _flowDrag = null;    // {id, ox, oy, mx, my}
+let _flowEditing = null; // node id being text-edited
+let _flowCanvas, _flowCtx;
+let _flowPinch = null;
+let _flowScale = 1, _flowOffX = 0, _flowOffY = 0;
+let _flowPan = null;
+
+const NODE_W = 140, NODE_H = 54, OVAL_W = 120, OVAL_H = 48, DIA_W = 150, DIA_H = 70;
+
+function nodeDefaults(type, x, y) {
+  if (type === 'start')    return {w:OVAL_W, h:OVAL_H, x, y};
+  if (type === 'decision') return {w:DIA_W,  h:DIA_H,  x, y};
+  return {w:NODE_W, h:NODE_H, x, y};
+}
+
+function renderFlowList(toolKey) {
+  const all = flowsLoad();
+  const flows = Object.values(all).filter(f => f.toolKey === toolKey);
+  const el = document.getElementById('tm-flow-list');
+  if (!el) return;
+  if (!flows.length) { el.innerHTML = '<div style="font-size:calc(.72rem * var(--sz));color:var(--muted);padding:6px 0 4px">No flowcharts yet.</div>'; return; }
+  el.innerHTML = '';
+  flows.sort((a,b)=>b.updated-a.updated).forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'flow-list-item';
+    row.innerHTML = `
+      <span class="flow-list-name" data-fid="${f.id}">⬡ ${escH(f.name||'Untitled')}</span>
+      <span style="font-size:calc(.55rem * var(--sz));color:var(--muted)">${f.nodes?.length||0} nodes</span>
+      <button class="flow-list-del" data-fid="${f.id}">×</button>
+    `;
+    row.querySelector('.flow-list-name').onclick = () => openFlowEditor(toolKey, f.id);
+    row.querySelector('.flow-list-del').onclick = () => {
+      const d = flowsLoad(); delete d[f.id]; flowsSave(d);
+      renderFlowList(toolKey);
+    };
+    el.appendChild(row);
+  });
+}
+
+function newFlowchart() {
+  if (!_currentToolKey) return;
+  const id = 'flow_' + Date.now();
+  openFlowEditor(_currentToolKey, id, true);
+}
+
+function openFlowEditor(toolKey, id, isNew=false) {
+  _flowToolKey = toolKey;
+  _flowId = id;
+  const all = flowsLoad();
+  const f = all[id] || {id, toolKey, name:'', nodes:[], arrows:[], updated:Date.now()};
+  _flowNodes = JSON.parse(JSON.stringify(f.nodes||[]));
+  _flowArrows = JSON.parse(JSON.stringify(f.arrows||[]));
+  _flowTool = 'select'; _flowSel = null; _flowArrowFrom = null;
+  _flowScale = 1; _flowOffX = 0; _flowOffY = 0;
+
+  document.getElementById('flow-title-inp').value = f.name || '';
+  document.getElementById('flow-editor').style.display = 'flex';
+  document.getElementById('tool-modal').classList.remove('active');
+  setFlowTool('select');
+
+  requestAnimationFrame(() => {
+    _flowCanvas = document.getElementById('flow-canvas');
+    _flowCtx = _flowCanvas.getContext('2d');
+    resizeFlowCanvas();
+    drawFlow();
+    bindFlowEvents();
+  });
+}
+
+function closeFlowEditor() {
+  document.getElementById('flow-editor').style.display = 'none';
+  const overlay = document.getElementById('flow-label-overlay');
+  if (overlay) overlay.style.display = 'none';
+  unbindFlowEvents();
+  // Re-open the tool modal
+  const card = document.querySelector(`.proj-app-card[data-href="${CSS.escape(_flowToolKey)}"]`);
+  if (card) openToolModal(card);
+}
+
+function saveFlowchart() {
+  const all = flowsLoad();
+  all[_flowId] = {id:_flowId, toolKey:_flowToolKey, name:document.getElementById('flow-title-inp').value.trim()||'Untitled', nodes:_flowNodes, arrows:_flowArrows, updated:Date.now()};
+  flowsSave(all);
+  renderFlowList(_flowToolKey);
+  // flash save button
+  const btn = document.querySelector('#flow-editor button[onclick="saveFlowchart()"]');
+  if (btn) { const orig=btn.textContent; btn.textContent='Saved ✓'; setTimeout(()=>btn.textContent=orig,1200); }
+}
+
+function setFlowTool(t) {
+  _flowTool = t; _flowArrowFrom = null; _flowSel = null; _flowSelArrow = null;
+  document.querySelectorAll('.flow-tool-btn').forEach(b => b.classList.toggle('active', b.dataset.tool===t));
+  if (_flowCanvas) _flowCanvas.style.cursor = t==='select'?'default':t==='delete'?'not-allowed':'crosshair';
+  drawFlow();
+}
+
+function resizeFlowCanvas() {
+  if (!_flowCanvas) return;
+  _flowCanvas.width = _flowCanvas.offsetWidth * devicePixelRatio;
+  _flowCanvas.height = _flowCanvas.offsetHeight * devicePixelRatio;
+  _flowCtx.scale(devicePixelRatio, devicePixelRatio);
+}
+
+const COLORS = {
+  process:  {fill:'#1a2a3a', stroke:'#60aaff'},
+  decision: {fill:'#2a1a0a', stroke:'#f0a060'},
+  start:    {fill:'#0a2a1a', stroke:'#60d4a0'},
+  default:  {fill:'#1a1a2a', stroke:'#888898'},
+};
+function nodeColor(type) { return COLORS[type]||COLORS.default; }
+
+// 8 ports clockwise from top-center: 0=N 1=NE 2=E 3=SE 4=S 5=SW 6=W 7=NW
+function getPortXY(n, port=0) {
+  const cx=n.x+n.w/2, cy=n.y+n.h/2;
+  const pts = [
+    {x:cx,       y:n.y},         // 0 N
+    {x:n.x+n.w,  y:n.y},         // 1 NE
+    {x:n.x+n.w,  y:cy},          // 2 E
+    {x:n.x+n.w,  y:n.y+n.h},     // 3 SE
+    {x:cx,       y:n.y+n.h},     // 4 S
+    {x:n.x,      y:n.y+n.h},     // 5 SW
+    {x:n.x,      y:cy},          // 6 W
+    {x:n.x,      y:n.y},         // 7 NW
+  ];
+  return pts[port % 8];
+}
+
+let _flowSelArrow = null; // selected arrow id for port editing
+
+function drawFlow() {
+  if (!_flowCtx || !_flowCanvas) return;
+  const W = _flowCanvas.offsetWidth, H = _flowCanvas.offsetHeight;
+  const ctx = _flowCtx;
+  ctx.clearRect(0,0,W,H);
+
+  ctx.save();
+  ctx.translate(_flowOffX, _flowOffY);
+  ctx.scale(_flowScale, _flowScale);
+
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  const gridSize = 24;
+  const startX = Math.floor(-_flowOffX/_flowScale/gridSize)*gridSize;
+  const startY = Math.floor(-_flowOffY/_flowScale/gridSize)*gridSize;
+  for(let x=startX; x<startX+W/_flowScale+gridSize; x+=gridSize) { ctx.beginPath(); ctx.moveTo(x,startY); ctx.lineTo(x,startY+H/_flowScale+gridSize); ctx.stroke(); }
+  for(let y=startY; y<startY+H/_flowScale+gridSize; y+=gridSize) { ctx.beginPath(); ctx.moveTo(startX,y); ctx.lineTo(startX+W/_flowScale+gridSize,y); ctx.stroke(); }
+
+  // Draw arrows
+  _flowArrows.forEach(a => {
+    const from = _flowNodes.find(n=>n.id===a.from);
+    const to   = _flowNodes.find(n=>n.id===a.to);
+    if (!from||!to) return;
+    const fp = getPortXY(from, a.fromPort||4); // default bottom
+    const tp = getPortXY(to,   a.toPort  ||0); // default top
+    const sel = a.id === _flowSelArrow;
+    ctx.save();
+    ctx.strokeStyle = sel ? '#fff' : '#60aaff';
+    ctx.lineWidth = sel ? 2.5 : 2;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(fp.x,fp.y); ctx.lineTo(tp.x,tp.y); ctx.stroke();
+    // arrowhead
+    const ang = Math.atan2(tp.y-fp.y, tp.x-fp.x);
+    const al = 11;
+    ctx.fillStyle = sel ? '#fff' : '#60aaff';
+    ctx.beginPath();
+    ctx.moveTo(tp.x, tp.y);
+    ctx.lineTo(tp.x-al*Math.cos(ang-0.4), tp.y-al*Math.sin(ang-0.4));
+    ctx.lineTo(tp.x-al*Math.cos(ang+0.4), tp.y-al*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fill();
+    // If selected: draw port cycle handles
+    if (sel) {
+      [[fp,'from'],[tp,'to']].forEach(([pt, side]) => {
+        ctx.save();
+        ctx.fillStyle='#60aaff'; ctx.strokeStyle='#fff'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#0e0e10'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('⟳', pt.x, pt.y);
+        ctx.restore();
+      });
+    }
+    ctx.restore();
+  });
+
+  // Arrow-in-progress: highlight source node with a ring
+  if (_flowArrowFrom) {
+    const from = _flowNodes.find(n=>n.id===_flowArrowFrom);
+    if (from) {
+      ctx.save();
+      ctx.strokeStyle='rgba(96,170,255,0.9)';
+      ctx.lineWidth=3;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      ctx.roundRect(from.x-6, from.y-6, from.w+12, from.h+12, 12);
+      ctx.stroke();
+      ctx.restore();
+      // Label hint at bottom of canvas
+      ctx.save();
+      ctx.fillStyle='rgba(96,170,255,0.8)';
+      ctx.font=`12px 'DM Mono',monospace`;
+      ctx.textAlign='center';
+      ctx.fillText('Now tap a target node', W/2, H-16);
+      ctx.restore();
+    }
+  }
+
+  // Draw nodes
+  _flowNodes.forEach(n => {
+    const sel = n.id === _flowSel;
+    const c = nodeColor(n.type);
+    ctx.save();
+    if (sel) { ctx.shadowColor=c.stroke; ctx.shadowBlur=14; }
+    ctx.strokeStyle = sel ? '#fff' : c.stroke;
+    ctx.lineWidth = sel ? 2.5 : 1.5;
+    ctx.fillStyle = c.fill;
+
+    ctx.beginPath();
+    if (n.type==='start') {
+      // Rounded pill
+      const r = n.h/2;
+      ctx.roundRect(n.x, n.y, n.w, n.h, r);
+    } else if (n.type==='decision') {
+      // Diamond
+      ctx.moveTo(n.x+n.w/2, n.y);
+      ctx.lineTo(n.x+n.w, n.y+n.h/2);
+      ctx.lineTo(n.x+n.w/2, n.y+n.h);
+      ctx.lineTo(n.x, n.y+n.h/2);
+      ctx.closePath();
+    } else {
+      ctx.roundRect(n.x, n.y, n.w, n.h, 8);
+    }
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // Label
+    ctx.save();
+    ctx.fillStyle = '#e8e8f0';
+    ctx.font = `${13/_flowScale < 9 ? 9 : 13}px 'DM Mono', monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const maxW = n.w - 16;
+    const label = n.label || (n.type==='start'?'Start/End': n.type==='decision'?'Decision':'Process');
+    // word wrap
+    const words = label.split(' ');
+    let line='', lines=[];
+    words.forEach(w => {
+      const test = line ? line+' '+w : w;
+      if (ctx.measureText(test).width > maxW && line) { lines.push(line); line=w; }
+      else line=test;
+    });
+    lines.push(line);
+    const lh = 16;
+    lines.forEach((l,i) => ctx.fillText(l, n.x+n.w/2, n.y+n.h/2 + (i-(lines.length-1)/2)*lh));
+    ctx.restore();
+  });
+
+  ctx.restore();
+}
+
+// Convert canvas pointer coords to flow coords
+function toFlow(cx, cy) {
+  return { x: (cx - _flowOffX) / _flowScale, y: (cy - _flowOffY) / _flowScale };
+}
+
+function hitNode(fx, fy) {
+  // reverse order so top nodes are hit first
+  for (let i=_flowNodes.length-1;i>=0;i--) {
+    const n=_flowNodes[i];
+    if (fx>=n.x && fx<=n.x+n.w && fy>=n.y && fy<=n.y+n.h) return n;
+  }
+  return null;
+}
+
+function hitArrowLine(fx, fy) {
+  const thresh = 10 / _flowScale;
+  for (let i=_flowArrows.length-1;i>=0;i--) {
+    const a = _flowArrows[i];
+    const fromN = _flowNodes.find(n=>n.id===a.from);
+    const toN   = _flowNodes.find(n=>n.id===a.to);
+    if (!fromN||!toN) continue;
+    const p1 = getPortXY(fromN, a.fromPort||4);
+    const p2 = getPortXY(toN,   a.toPort  ||0);
+    const dx=p2.x-p1.x, dy=p2.y-p1.y;
+    const lenSq = dx*dx+dy*dy;
+    if (lenSq===0) continue;
+    const t = Math.max(0,Math.min(1,((fx-p1.x)*dx+(fy-p1.y)*dy)/lenSq));
+    const px=p1.x+t*dx, py=p1.y+t*dy;
+    if (Math.hypot(fx-px, fy-py) < thresh) return a;
+  }
+  return null;
+}
+
+let _boundPointerDown, _boundPointerMove, _boundPointerUp, _boundWheel, _boundResize;
+
+function bindFlowEvents() {
+  unbindFlowEvents();
+  const c = document.getElementById('flow-canvas');
+  _boundPointerDown = onFlowDown.bind(null);
+  _boundPointerMove = onFlowMove.bind(null);
+  _boundPointerUp   = onFlowUp.bind(null);
+  _boundWheel       = onFlowWheel.bind(null);
+  _boundResize      = ()=>{ resizeFlowCanvas(); drawFlow(); };
+  c.addEventListener('pointerdown', _boundPointerDown);
+  c.addEventListener('pointermove', _boundPointerMove);
+  c.addEventListener('pointerup',   _boundPointerUp);
+  c.addEventListener('wheel',       _boundWheel, {passive:false});
+  window.addEventListener('resize', _boundResize);
+}
+function unbindFlowEvents() {
+  const c = document.getElementById('flow-canvas');
+  if (!c) return;
+  if (_boundPointerDown) c.removeEventListener('pointerdown', _boundPointerDown);
+  if (_boundPointerMove) c.removeEventListener('pointermove', _boundPointerMove);
+  if (_boundPointerUp)   c.removeEventListener('pointerup',   _boundPointerUp);
+  if (_boundWheel)       c.removeEventListener('wheel',       _boundWheel);
+  if (_boundResize)      window.removeEventListener('resize', _boundResize);
+}
+
+const _activePtrs = {};
+let _lastTap = {time:0, x:0, y:0, nodeId:null};
+
+function onFlowDown(e) {
+  e.preventDefault();
+  _activePtrs[e.pointerId] = {x:e.offsetX, y:e.offsetY};
+  const ptrs = Object.values(_activePtrs);
+
+  if (ptrs.length === 2) {
+    _flowPinch = { dist: Math.hypot(ptrs[1].x-ptrs[0].x, ptrs[1].y-ptrs[0].y), scale: _flowScale };
+    _flowPan = null; _flowDrag = null;
+    return;
+  }
+
+  const cx=e.offsetX, cy=e.offsetY;
+  const {x:fx, y:fy} = toFlow(cx, cy);
+
+  // Double-tap detection (works on touch and mouse)
+  const now = Date.now();
+  const hitN = hitNode(fx, fy);
+  const sameTap = hitN && hitN.id === _lastTap.nodeId && (now - _lastTap.time) < 400;
+  _lastTap = {time: now, x:cx, y:cy, nodeId: hitN?.id || null};
+  if (sameTap) {
+    editNodeLabel(hitN);
+    return;
+  }
+
+  if (_flowTool === 'select') {
+    const n = hitNode(fx,fy);
+
+    // Check if tapping a port handle on a selected arrow
+    if (_flowSelArrow) {
+      const a = _flowArrows.find(x=>x.id===_flowSelArrow);
+      if (a) {
+        const fromN = _flowNodes.find(x=>x.id===a.from);
+        const toN   = _flowNodes.find(x=>x.id===a.to);
+        if (fromN && toN) {
+          const fp = getPortXY(fromN, a.fromPort||4);
+          const tp = getPortXY(toN,   a.toPort  ||0);
+          const hitR = 14 / _flowScale;
+          if (Math.hypot(fx-fp.x, fy-fp.y) < hitR) {
+            a.fromPort = ((a.fromPort||4) + 1) % 8;
+            drawFlow(); return;
+          }
+          if (Math.hypot(fx-tp.x, fy-tp.y) < hitR) {
+            a.toPort = ((a.toPort||0) + 1) % 8;
+            drawFlow(); return;
+          }
+        }
+      }
+    }
+
+    if (n) {
+      _flowSel = n.id;
+      _flowSelArrow = null;
+      _flowDrag = {id:n.id, ox:n.x-fx, oy:n.y-fy};
+      _flowPan = null;
+    } else {
+      // Check if tapping near an arrow line
+      const hitArrow = hitArrowLine(fx, fy);
+      if (hitArrow) {
+        _flowSelArrow = hitArrow.id;
+        _flowSel = null;
+        _flowDrag = null;
+        _flowPan = null;
+      } else {
+        _flowSel = null;
+        _flowSelArrow = null;
+        _flowPan = {sx:cx, sy:cy, ox:_flowOffX, oy:_flowOffY};
+        _flowDrag = null;
+      }
+    }
+    drawFlow();
+  } else if (_flowTool === 'arrow') {
+    const n = hitNode(fx,fy);
+    if (!n) {
+      // Tapped empty space — cancel selection
+      _flowArrowFrom = null;
+      drawFlow();
+    } else if (!_flowArrowFrom) {
+      // First tap — select source
+      _flowArrowFrom = n.id;
+      drawFlow();
+    } else if (_flowArrowFrom === n.id) {
+      // Tapped same node — deselect
+      _flowArrowFrom = null;
+      drawFlow();
+    } else {
+      // Second tap on different node — connect
+      const exists = _flowArrows.find(a => a.from===_flowArrowFrom && a.to===n.id);
+      if (!exists) _flowArrows.push({id:'a'+Date.now(), from:_flowArrowFrom, to:n.id});
+      _flowArrowFrom = null;
+      drawFlow();
+    }
+  } else if (_flowTool === 'delete') {
+    const n = hitNode(fx,fy);
+    if (n) {
+      _flowNodes = _flowNodes.filter(x=>x.id!==n.id);
+      _flowArrows = _flowArrows.filter(a=>a.from!==n.id&&a.to!==n.id);
+      drawFlow();
+    } else {
+      const a = hitArrowLine(fx, fy);
+      if (a) { _flowArrows = _flowArrows.filter(x=>x.id!==a.id); drawFlow(); }
+    }
+  } else {
+    // Place new node
+    const type = _flowTool;
+    const def = nodeDefaults(type, fx-NODE_W/2, fy-NODE_H/2);
+    _flowNodes.push({id:'n'+Date.now(), type, label:'', ...def});
+    drawFlow();
+  }
+}
+
+function editNodeLabel(n) {
+  // Show inline overlay input positioned over the node on canvas
+  let overlay = document.getElementById('flow-label-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'flow-label-overlay';
+    overlay.style.cssText = 'position:absolute;z-index:10;display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;box-shadow:0 4px 24px rgba(0,0,0,.5);min-width:180px';
+    document.getElementById('flow-editor').appendChild(overlay);
+  }
+  // Position near node in screen coords
+  const canvas = document.getElementById('flow-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const sx = n.x * _flowScale + _flowOffX + rect.left;
+  const sy = n.y * _flowScale + _flowOffY + rect.top;
+  // Keep within viewport
+  const ox = Math.min(sx, window.innerWidth - 220);
+  const oy = Math.min(sy + n.h * _flowScale + 6, window.innerHeight - 100);
+  overlay.style.left = Math.max(8, ox) + 'px';
+  overlay.style.top  = Math.max(8, oy) + 'px';
+  overlay.innerHTML = `
+    <input id="flow-label-inp" value="${(n.label||'').replace(/"/g,'&quot;')}"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.85rem;outline:none;width:100%"
+      placeholder="Label..." />
+    <div style="display:flex;gap:6px">
+      <button id="flow-label-ok"
+        style="flex:1;background:var(--accent);color:#0e0e10;border:none;border-radius:6px;padding:6px;font-family:'DM Mono',monospace;font-size:.75rem;font-weight:500;cursor:pointer">
+        Done
+      </button>
+      <button id="flow-label-cancel"
+        style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer">
+        Cancel
+      </button>
+    </div>
+  `;
+  overlay.style.display = 'flex';
+  const inp = document.getElementById('flow-label-inp');
+  setTimeout(() => { inp.focus(); inp.select(); }, 50);
+
+  const commit = () => {
+    n.label = inp.value;
+    overlay.style.display = 'none';
+    drawFlow();
+  };
+  const cancel = () => { overlay.style.display = 'none'; };
+
+  document.getElementById('flow-label-ok').onclick = commit;
+  document.getElementById('flow-label-cancel').onclick = cancel;
+  inp.onkeydown = e => { if (e.key==='Enter') commit(); if (e.key==='Escape') cancel(); };
+}
+
+function onFlowMove(e) {
+  e.preventDefault();
+  _activePtrs[e.pointerId] = {x:e.offsetX, y:e.offsetY};
+  const ptrs = Object.values(_activePtrs);
+
+  if (ptrs.length === 2 && _flowPinch) {
+    const dist = Math.hypot(ptrs[1].x-ptrs[0].x, ptrs[1].y-ptrs[0].y);
+    _flowScale = Math.max(0.3, Math.min(3, _flowPinch.scale * dist / _flowPinch.dist));
+    drawFlow(); return;
+  }
+
+  const cx=e.offsetX, cy=e.offsetY;
+  const {x:fx, y:fy} = toFlow(cx,cy);
+
+  if (_flowDrag?.id) {
+    const n = _flowNodes.find(n=>n.id===_flowDrag.id);
+    if (n) { n.x=fx+_flowDrag.ox; n.y=fy+_flowDrag.oy; drawFlow(); }
+  } else if (_flowPan) {
+    _flowOffX = _flowPan.ox + (cx-_flowPan.sx);
+    _flowOffY = _flowPan.oy + (cy-_flowPan.sy);
+    drawFlow();
+  }
+}
+
+function onFlowUp(e) {
+  delete _activePtrs[e.pointerId];
+  if (Object.keys(_activePtrs).length < 2) _flowPinch = null;
+  _flowDrag = null; _flowPan = null;
+}
+
+function onFlowWheel(e) {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  const cx=e.offsetX, cy=e.offsetY;
+  _flowOffX = cx - (cx-_flowOffX)*factor;
+  _flowOffY = cy - (cy-_flowOffY)*factor;
+  _flowScale = Math.max(0.3, Math.min(3, _flowScale*factor));
+  drawFlow();
+}
+
 // ── Init ──
 applySettings();
 buildGridOrder();
@@ -1110,7 +1675,6 @@ renderDashTools();
 <div id="tool-viewer">
   <div id="tool-viewer-bar">
     <button id="tool-viewer-back" onclick="closeToolViewer()">← Back</button>
-    <div id="tool-viewer-title"></div>
   </div>
   <iframe id="tool-viewer-iframe" src="" allow="fullscreen"></iframe>
 </div>
