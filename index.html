@@ -82,15 +82,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font
 .sort-pill{background:transparent;border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);cursor:pointer;white-space:nowrap}
 .sort-pill.active{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
 /* Dashboard tools section */
-.dash-tool-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.dash-tool-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer}
 .dash-tool-item:last-child{border-bottom:none}
 .dash-tool-item:active{background:var(--surface2)}
-.dash-tool-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.dash-tool-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center;padding-top:2px}
 .dash-tool-info{flex:1;min-width:0}
 .dash-tool-name{font-size:.82rem;font-family:'Fraunces',serif;font-weight:200}
 .dash-tool-meta{font-size:.58rem;color:var(--muted);margin-top:2px}
-.dash-tool-link{font-size:.65rem;color:var(--accent2);flex-shrink:0;text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:6px}
-.dash-tool-link:hover{border-color:var(--accent2)}
+.dash-tool-actions{display:flex;gap:5px;margin-top:6px}
+.dash-tool-pill{background:transparent;border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-family:'DM Mono',monospace;font-size:.55rem;color:var(--muted);cursor:pointer;white-space:nowrap;transition:border-color .1s,color .1s}
+.dash-tool-pill:active{border-color:var(--accent);color:var(--accent)}
 /* Tool detail modal */
 #tool-modal .modal{max-height:88dvh}
 .tool-modal-hdr{display:flex;align-items:center;gap:10px;margin-bottom:6px}
@@ -773,12 +774,28 @@ function renderDashTools() {
       <div class="dash-tool-info">
         <div class="dash-tool-name">${escH(meta.name)}</div>
         ${metaHtml}
+        <div class="dash-tool-actions">
+          <button class="dash-tool-pill" data-action="task">+ Task</button>
+          <button class="dash-tool-pill" data-action="note">+ Note</button>
+        </div>
       </div>
-      <div style="font-size:.7rem;color:var(--muted);flex-shrink:0">›</div>
+      <a class="dash-tool-pill" href="${escH(key)}" style="align-self:center;flex-shrink:0;text-decoration:none;border-color:var(--border)" data-action="open">↗ Open</a>
     `;
     row.onclick = () => openToolModal(meta.card);
+    row.querySelector('[data-action="task"]').onclick = e => { e.stopPropagation(); quickAddToTool(meta.card, 'task'); };
+    row.querySelector('[data-action="note"]').onclick = e => { e.stopPropagation(); quickAddToTool(meta.card, 'note'); };
+    row.querySelector('[data-action="open"]').onclick = e => { e.stopPropagation(); recordToolOpen(key); };
     list.appendChild(row);
   });
+}
+
+// ── Quick add from dashboard row ──
+function quickAddToTool(card, type) {
+  openToolModal(card);
+  setTimeout(() => {
+    const inp = document.getElementById(type === 'task' ? 'tm-task-inp' : 'tm-note-inp');
+    if (inp) inp.focus();
+  }, 120);
 }
 
 // ── Tool Modal ──
